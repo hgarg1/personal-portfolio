@@ -393,10 +393,23 @@
       overflow: hidden;
     }
 
+    .hero-avatar-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 999px;
+    }
+
     .hero-avatar-initials {
       font-size: 1.6rem;
       font-weight: 700;
       letter-spacing: 0.12em;
+      position: absolute;
+      z-index: 1;
+    }
+
+    .hero-avatar-ring img ~ .hero-avatar-initials {
+      display: none;
     }
 
     .hero-roles {
@@ -564,6 +577,39 @@
       flex-wrap: wrap;
       gap: 0.45rem;
       margin-top: 0.2rem;
+    }
+
+    /* Photo Gallery */
+    .photo-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .photo-item {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 3 / 4;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    }
+
+    .photo-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.95);
+      border-color: rgba(248, 250, 252, 0.7);
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .tag-chip {
@@ -759,7 +805,7 @@
 
     .metrics-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 0.7rem;
     }
 
@@ -1752,6 +1798,11 @@
         font-size: 0.72rem;
         padding: 0.18rem 0.55rem;
       }
+
+      .photo-gallery {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.9rem;
+      }
     }
 
     @media (max-width: 480px) {
@@ -1911,6 +1962,11 @@
       .tag-chip {
         font-size: 0.7rem;
         padding: 0.22rem 0.55rem;
+      }
+
+      .photo-gallery {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
       }
 
       .skill-pill {
@@ -2201,6 +2257,7 @@
     <div class="hero-grid">
       <div>
         <div class="hero-avatar-ring">
+          <img src="images/photo1.jpeg" alt="Harshit Garg" class="hero-avatar-image" />
           <div class="hero-avatar-initials">HG</div>
         </div>
         <div class="hero-roles">
@@ -2335,6 +2392,19 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Photo Gallery -->
+        <div class="photo-gallery">
+          <div class="photo-item">
+            <img src="images/photo1.jpeg" alt="Harshit Garg - University of Maryland Computer Science" loading="lazy" />
+          </div>
+          <div class="photo-item">
+            <img src="images/photo2.jpeg" alt="Harshit Garg - Professional Portrait" loading="lazy" />
+          </div>
+          <div class="photo-item">
+            <img src="images/photo3.jpeg" alt="Harshit Garg - University of Maryland" loading="lazy" />
           </div>
         </div>
       </section>
@@ -2556,7 +2626,37 @@
             <div class="metric-card">
               <div class="metric-label">Favorite metric</div>
               <div class="metric-value">Time-to-insight ↓</div>
-              <div class="metric-footnote">How fast users get to “oh wow, this just clicked.”</div>
+              <div class="metric-footnote">How fast users get to "oh wow, this just clicked."</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Years of experience</div>
+              <div class="metric-value">5+</div>
+              <div class="metric-footnote">Building products across the stack.</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Technical internships</div>
+              <div class="metric-value">9+</div>
+              <div class="metric-footnote">From startups to Fortune 500 companies.</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Companies founded</div>
+              <div class="metric-value">3</div>
+              <div class="metric-footnote">Venture-backed and bootstrapped.</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Languages mastered</div>
+              <div class="metric-value">10+</div>
+              <div class="metric-footnote">From Python to TypeScript to Kotlin.</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Cloud platforms</div>
+              <div class="metric-value">AWS · Azure · GCP</div>
+              <div class="metric-footnote">Multi-cloud architecture expertise.</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Code quality</div>
+              <div class="metric-value">Production-ready</div>
+              <div class="metric-footnote">Tested, documented, and maintainable.</div>
             </div>
           </div>
         </div>
