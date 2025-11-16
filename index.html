@@ -632,7 +632,12 @@
       cursor: default;
     }
 
-    .project-card:hover {
+    a .project-card {
+      cursor: pointer;
+    }
+
+    .project-card:hover,
+    a:hover .project-card {
       transform: translateY(-4px) translateX(1px);
       box-shadow: 0 18px 45px rgba(15, 23, 42, 0.95);
       border-color: rgba(248, 250, 252, 0.9);
@@ -1782,21 +1787,74 @@
         </div>
 
         <div class="projects-grid">
-          <article class="project-card">
-            <div class="project-title-row">
-              <div class="project-title">PlayerXChange</div>
-              <div class="project-pill">NIL marketplace</div>
-            </div>
-            <p class="project-desc">
-              A compliant marketplace where fans buy &amp; trade fractional "shares" of college athletes, with instant
-              payouts, royalties, and a rules-first architecture that plays nicely with NCAA/NAIA.
-            </p>
-            <div class="project-meta">
-              <span>Smart contracts · Compliance engine</span>
-              <span>Real-time pricing &amp; liquidity pools</span>
-              <span>VIP experience unlocks</span>
-            </div>
-          </article>
+          <a href="https://playerxchange-website.onrender.com/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+            <article class="project-card">
+              <div class="project-title-row">
+                <div class="project-title">PlayerXChange</div>
+                <div class="project-pill">NIL marketplace</div>
+              </div>
+              <p class="project-desc">
+                A compliant marketplace where fans buy &amp; trade fractional "shares" of college athletes, with instant
+                payouts, royalties, and a rules-first architecture that plays nicely with NCAA/NAIA.
+              </p>
+              <div class="project-meta">
+                <span>Smart contracts · Compliance engine</span>
+                <span>Real-time pricing &amp; liquidity pools</span>
+                <span>VIP experience unlocks</span>
+              </div>
+            </article>
+          </a>
+
+          <a href="https://gpt-codex-hotel.onrender.com/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+            <article class="project-card">
+              <div class="project-title-row">
+                <div class="project-title">Aurora Nexus Skyhaven</div>
+                <div class="project-pill">Enterprise · Hotel</div>
+              </div>
+              <p class="project-desc">
+                A massive enterprise-grade hotel and restaurant reservation system with real-time guest chat, job applications, VR lounge bookings, and comprehensive concierge services.
+              </p>
+              <div class="project-meta">
+                <span>Real-time chat · Booking system</span>
+                <span>Job applications · VR integrations</span>
+                <span>Enterprise architecture</span>
+              </div>
+            </article>
+          </a>
+
+          <a href="https://hgarg1.github.io/GPT-Codex-Apartment/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+            <article class="project-card">
+              <div class="project-title-row">
+                <div class="project-title">Codex Residences</div>
+                <div class="project-pill">Leasing platform</div>
+              </div>
+              <p class="project-desc">
+                An apartment leasing platform featuring luxury boutique residences with floor plans, availability tracking, resident portal, and comprehensive leasing marketplace.
+              </p>
+              <div class="project-meta">
+                <span>Lease management · Resident portal</span>
+                <span>Floor plan visualization</span>
+                <span>Booking &amp; application system</span>
+              </div>
+            </article>
+          </a>
+
+          <a href="https://hgarg1.github.io/pta-portal/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+            <article class="project-card">
+              <div class="project-title-row">
+                <div class="project-title">PTA Portal</div>
+                <div class="project-pill">Edtech · UI/UX</div>
+              </div>
+              <p class="project-desc">
+                A comprehensive UI/UX platform for Parent Teacher Associations where students, principals, and local PTA boards can access and update school information.
+              </p>
+              <div class="project-meta">
+                <span>Multi-user roles · School management</span>
+                <span>Information dashboard</span>
+                <span>Access control system</span>
+              </div>
+            </article>
+          </a>
 
           <article class="project-card">
             <div class="project-title-row">
@@ -2247,7 +2305,7 @@
             <form action="https://send.pageclip.co/scdn4w54uwVxMXvxndre9VtZoBMhPwUp" class="pageclip-form" method="post">
               <div class="field-group">
                 <label for="name">Name</label>
-                <input id="name" name="name" placeholder="Who&apos;s reaching out?" required />
+                <input id="name" name="name" type="text" placeholder="Who&apos;s reaching out?" required />
               </div>
               <div class="field-group">
                 <label for="email">Email</label>
