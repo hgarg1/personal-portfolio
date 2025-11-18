@@ -976,6 +976,129 @@
       margin-top: 0.5rem;
     }
 
+    /* Accolades */
+    .accolades-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .accolade-card {
+      border-radius: 20px;
+      padding: 1.1rem 1.1rem 1.2rem;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, background 200ms ease;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .accolade-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #f97316, #ec4899, #6366f1, #22d3ee);
+      opacity: 0;
+      transition: opacity 200ms ease;
+    }
+
+    .accolade-card:hover {
+      transform: translateY(-4px) translateX(1px);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.95);
+      border-color: rgba(248, 250, 252, 0.9);
+      background: radial-gradient(circle at top left, rgba(236, 72, 153, 0.16), rgba(15, 23, 42, 0.96));
+    }
+
+    .accolade-card:hover::before {
+      opacity: 1;
+    }
+
+    .accolade-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+    }
+
+    .accolade-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(56, 189, 248, 0.2));
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.2rem;
+    }
+
+    .accolade-title-group {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .accolade-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #e5e7eb;
+      margin-bottom: 0.2rem;
+      line-height: 1.3;
+    }
+
+    .accolade-org {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .accolade-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 0.3rem;
+    }
+
+    .accolade-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.3rem;
+    }
+
+    .accolade-meta span {
+      font-size: 0.7rem;
+      padding: 0.18rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.86);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--muted);
+    }
+
+    .accolade-link {
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-top: 0.3rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .accolade-card:hover .accolade-link {
+      color: var(--accent-2);
+    }
+
     .achievements-stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1619,6 +1742,10 @@
         grid-template-columns: minmax(0, 1fr);
       }
 
+      .accolades-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
       .achievements-stats {
         grid-template-columns: minmax(0, 1fr);
       }
@@ -1777,6 +1904,18 @@
       }
 
       .achievement-desc {
+        font-size: 0.78rem;
+      }
+
+      .accolade-card {
+        padding: 1rem 1rem 1.1rem;
+      }
+
+      .accolade-title {
+        font-size: 0.88rem;
+      }
+
+      .accolade-desc {
         font-size: 0.78rem;
       }
 
@@ -2083,6 +2222,32 @@
         padding: 0.18rem 0.55rem;
       }
 
+      .accolade-card {
+        padding: 0.9rem 0.9rem 1rem;
+      }
+
+      .accolade-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+      }
+
+      .accolade-title {
+        font-size: 0.85rem;
+      }
+
+      .accolade-org {
+        font-size: 0.72rem;
+      }
+
+      .accolade-desc {
+        font-size: 0.75rem;
+      }
+
+      .accolade-link {
+        font-size: 0.72rem;
+      }
+
       form {
         gap: 0.6rem;
       }
@@ -2202,6 +2367,7 @@
         <a href="#experience">Experience</a>
         <a href="#education">Education</a>
         <a href="#achievements">Achievements</a>
+        <a href="#accolades">Accolades</a>
         <a href="#contact">Contact</a>
         <a href="#contact" class="nav-cta">Let&apos;s build something</a>
       </nav>
@@ -2523,6 +2689,23 @@
               <span>Human-in-the-loop guardrails</span>
             </div>
           </article>
+
+          <a href="https://DreamX-Website.onrender.com" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+            <article class="project-card">
+              <div class="project-title-row">
+                <div class="project-title">DreamX</div>
+                <div class="project-pill">Education · Platform</div>
+              </div>
+              <p class="project-desc">
+                A platform connecting students with a passion to students with a curious mind, fostering mentorship and knowledge sharing in educational communities.
+              </p>
+              <div class="project-meta">
+                <span>Student mentorship</span>
+                <span>Knowledge sharing</span>
+                <span>Community building</span>
+              </div>
+            </article>
+          </a>
         </div>
       </section>
 
@@ -2906,6 +3089,57 @@
             </div>
             <span class="achievement-badge">Academic Excellence</span>
           </article>
+        </div>
+      </section>
+
+      <!-- Accolades & Recognition -->
+      <section id="accolades">
+        <div class="section-header">
+          <div>
+            <div class="section-title">accolades</div>
+            <div class="section-kicker">Recognition and features in academic and professional communities.</div>
+          </div>
+          <div class="section-caption">
+            Highlighted for academic excellence, innovative thinking, and contributions to the field.
+          </div>
+        </div>
+
+        <div class="accolades-grid">
+          <a href="https://cmns.umd.edu/news-events/news/cracking-cryptography-classroom" target="_blank" rel="noopener noreferrer" class="accolade-card">
+            <div class="accolade-header">
+              <div class="accolade-icon">🔐</div>
+              <div class="accolade-title-group">
+                <div class="accolade-title">Featured in CMNS News</div>
+                <div class="accolade-org">University of Maryland</div>
+              </div>
+            </div>
+            <div class="accolade-desc">
+              Recognized for excellence in cryptography coursework and understanding of encryption protocols. Featured in university news for demonstrating how fundamental math concepts create robust security systems.
+            </div>
+            <div class="accolade-meta">
+              <span>Cryptography · Security</span>
+              <span>Fall 2023</span>
+            </div>
+            <div class="accolade-link">Read article →</div>
+          </a>
+
+          <a href="https://www-math.umd.edu/about-us/math-news.html?id=139&start=30" target="_blank" rel="noopener noreferrer" class="accolade-card">
+            <div class="accolade-header">
+              <div class="accolade-icon">📚</div>
+              <div class="accolade-title-group">
+                <div class="accolade-title">Mathematics Department Feature</div>
+                <div class="accolade-org">UMD Mathematics</div>
+              </div>
+            </div>
+            <div class="accolade-desc">
+              Highlighted in the Mathematics Department news for academic achievement and contributions to interdisciplinary learning in cryptography and computer science.
+            </div>
+            <div class="accolade-meta">
+              <span>Academic Excellence</span>
+              <span>Mathematics & CS</span>
+            </div>
+            <div class="accolade-link">Read article →</div>
+          </a>
         </div>
       </section>
 
