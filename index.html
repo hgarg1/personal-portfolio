@@ -626,6 +626,13 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.65rem;
       font-size: 0.8rem;
+      align-items: stretch;
+    }
+
+    .skills-grid > div {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
 
     .skill-pill {
@@ -637,15 +644,17 @@
       justify-content: space-between;
       align-items: center;
       gap: 0.6rem;
+      min-height: 70px;
+      height: 100%;
     }
 
-    .skill-label {
-      color: #e5e7eb;
+    .skill-pill > div {
+      flex: 1;
+      min-width: 0;
     }
 
     .skill-level {
-      font-size: 0.7rem;
-      color: var(--muted);
+      line-height: 1.4;
     }
 
     .skill-bar-track {
@@ -655,6 +664,15 @@
       border-radius: 999px;
       background: rgba(30, 64, 175, 0.5);
       overflow: hidden;
+    }
+
+    .skill-label {
+      color: #e5e7eb;
+    }
+
+    .skill-level {
+      font-size: 0.7rem;
+      color: var(--muted);
     }
 
     .skill-bar-fill {
@@ -2791,6 +2809,19 @@
                 Worked on the development, defect fixes, and testing of an Azure cloud-based Union Management application using .NET MVC architecture with HTML, JavaScript, and CSS. Learned concepts like blockchain, quantum computing, Python ML/AI libraries, and database (SQL/NoSQL) pros and cons.
               </div>
             </div>
+
+            <div class="timeline-item">
+              <div class="timeline-heading">
+                <div>
+                  <div class="timeline-role">Founder &amp; CEO</div>
+                  <div class="timeline-org">Data and Cloud Computing Society (DCCS) · University of Maryland</div>
+                </div>
+                <div class="timeline-date">Founded &amp; Led</div>
+              </div>
+              <div class="timeline-body">
+                Built DCCS from scratch as both a technical organization and honors society. Structured it as a professional consultancy with unique leadership hierarchy (CEO, President, Executive Director) rather than a traditional student club. Created operational pipelines for client intake, problem scoping, cloud solutions, and data workflows. Members worked on real external company problems using industry-grade tools (AWS, GCP, Azure, Docker, Kubernetes, CI/CD), gaining deliverables similar to AWS or Palantir internships. The organization became a technical ecosystem that helped students build career pathways in cloud, DevOps, and big-data fields. Recognized by multiple UMD departments for problem-solving capabilities and publicly acknowledged by the Dean.
+              </div>
+            </div>
           </div>
 
           <div class="metrics-grid">
@@ -2925,6 +2956,24 @@
         </div>
 
         <div class="achievements-grid">
+          <article class="achievement-card" style="border-color: rgba(236, 72, 153, 0.6);">
+            <div class="achievement-header">
+              <div class="achievement-icon">☁️</div>
+              <div class="achievement-title-group">
+                <div class="achievement-title">Founder &amp; CEO</div>
+                <div class="achievement-role">Data and Cloud Computing Society (DCCS) · UMD</div>
+              </div>
+            </div>
+            <div class="achievement-desc">
+              Built DCCS from scratch as both a technical organization and honors society. Structured it like a professional consultancy with unique leadership (CEO, President, Executive Director) rather than a traditional student club. Created pipelines for client intake, problem scoping, cloud solutions, and data workflows. Members gained hands-on experience with AWS, GCP, Azure, Docker, Kubernetes, and CI/CD while working on real external company problems. The organization became a technical ecosystem that helped students build career pathways in cloud, DevOps, and big-data fields. Recognized by multiple UMD departments for problem-solving capabilities and publicly acknowledged by the Dean.
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem;">
+              <span class="achievement-badge">Technical Leadership</span>
+              <span class="achievement-badge">Cloud Computing</span>
+              <span class="achievement-badge">Organization Building</span>
+            </div>
+          </article>
+
           <article class="achievement-card">
             <div class="achievement-header">
               <div class="achievement-icon">🚀</div>
@@ -2934,7 +2983,7 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Helps connect students with a passion to students with a curious mind.
+              Dream X elevates users through purposeful creation — a social ecosystem where projects, skills, and passions become the foundation for real connection. The platform blends social media with structured learning, using a reverse recommendation algorithm, semantic interest mapping, and behavioral signal analysis to shift users away from passive consumption and toward active, measurable growth. Dream X intelligently expands each user&apos;s learning pathways, surfaces creators who deepen their craft, and powers a discovery experience driven by skill development, not dopamine loops, making social interaction productive, intentional, and technically guided.
             </div>
             <span class="achievement-badge">Entrepreneurship</span>
           </article>
@@ -3091,6 +3140,62 @@
               Top performing student in both Micro and Macro Economics classes.
             </div>
             <span class="achievement-badge">Academic Excellence</span>
+          </article>
+
+          <article class="achievement-card">
+            <div class="achievement-header">
+              <div class="achievement-icon">🏅</div>
+              <div class="achievement-title-group">
+                <div class="achievement-title">Synergy in Data and AI Award</div>
+                <div class="achievement-role">University of Maryland</div>
+              </div>
+            </div>
+            <div class="achievement-desc">
+              Winner of the only AI and Data-related award at UMD, recognized for significant contributions to the Data and Cloud Computing Society (DCCS) and excellence in data science and artificial intelligence.
+            </div>
+            <span class="achievement-badge">Award · AI/Data</span>
+          </article>
+
+          <article class="achievement-card">
+            <div class="achievement-header">
+              <div class="achievement-icon">📸</div>
+              <div class="achievement-title-group">
+                <div class="achievement-title">Featured on UMD CS Instagram</div>
+                <div class="achievement-role">3x Recognition</div>
+              </div>
+            </div>
+            <div class="achievement-desc">
+              Highlighted three times on the University of Maryland Computer Science Department&apos;s official Instagram for achievements and contributions to the CS community.
+            </div>
+            <span class="achievement-badge">Recognition</span>
+          </article>
+
+          <article class="achievement-card">
+            <div class="achievement-header">
+              <div class="achievement-icon">🏛️</div>
+              <div class="achievement-title-group">
+                <div class="achievement-title">Maryland State Citation Recipient</div>
+                <div class="achievement-role">State of Maryland</div>
+              </div>
+            </div>
+            <div class="achievement-desc">
+              Received official citation from the State of Maryland recognizing outstanding contributions and achievements.
+            </div>
+            <span class="achievement-badge">State Recognition</span>
+          </article>
+
+          <article class="achievement-card">
+            <div class="achievement-header">
+              <div class="achievement-icon">🏆</div>
+              <div class="achievement-title-group">
+                <div class="achievement-title">Eris S. Lifetime Wall</div>
+                <div class="achievement-role">University of Maryland</div>
+              </div>
+            </div>
+            <div class="achievement-desc">
+              Engraved on the Eris S. Lifetime Wall at University of Maryland, recognizing lasting impact and contributions to the university community.
+            </div>
+            <span class="achievement-badge">Legacy Recognition</span>
           </article>
         </div>
       </section>
