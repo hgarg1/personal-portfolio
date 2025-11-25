@@ -48,7 +48,7 @@
       content: "";
       position: fixed;
       inset: 0;
-      background: 
+      background:
         radial-gradient(circle at 20% 30%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
         radial-gradient(circle at 80% 70%, rgba(56, 189, 248, 0.15) 0%, transparent 50%),
         radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
@@ -60,9 +60,12 @@
     }
 
     @keyframes gradient-shift {
-      0%, 100% {
+
+      0%,
+      100% {
         background-position: 0% 50%, 100% 50%, 50% 50%, 0% 0%;
       }
+
       50% {
         background-position: 100% 50%, 0% 50%, 50% 50%, 0% 0%;
       }
@@ -408,7 +411,7 @@
       z-index: 1;
     }
 
-    .hero-avatar-ring img ~ .hero-avatar-initials {
+    .hero-avatar-ring img~.hero-avatar-initials {
       display: none;
     }
 
@@ -579,6 +582,53 @@
       margin-top: 0.2rem;
     }
 
+    .inspirational-quote {
+      margin-top: 1.5rem;
+      padding: 1.2rem 1.4rem;
+      border-radius: 18px;
+      background: radial-gradient(circle at top left, rgba(139, 92, 246, 0.12), rgba(15, 23, 42, 0.92));
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      border-left: 3px solid;
+      border-left-color: #a855f7;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .inspirational-quote::before {
+      content: '"';
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      font-size: 5rem;
+      color: rgba(168, 85, 247, 0.15);
+      font-family: Georgia, serif;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .quote-text {
+      font-size: 0.95rem;
+      font-style: italic;
+      color: rgba(249, 250, 251, 0.95);
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .quote-author {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: right;
+      font-style: normal;
+      position: relative;
+      z-index: 1;
+    }
+
+    .quote-author::before {
+      content: '—  ';
+    }
+
     /* Photo Gallery */
     .photo-gallery {
       display: grid;
@@ -629,7 +679,7 @@
       align-items: stretch;
     }
 
-    .skills-grid > div {
+    .skills-grid>div {
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -648,7 +698,7 @@
       height: 100%;
     }
 
-    .skill-pill > div {
+    .skill-pill>div {
       flex: 1;
       min-width: 0;
     }
@@ -1331,18 +1381,23 @@
     }
 
     @keyframes orb-float {
-      0%, 100% {
+
+      0%,
+      100% {
         transform: translate(0, 0) scale(1);
         opacity: 0.4;
       }
+
       25% {
         transform: translate(30px, -30px) scale(1.1);
         opacity: 0.5;
       }
+
       50% {
         transform: translate(-20px, 20px) scale(0.9);
         opacity: 0.35;
       }
+
       75% {
         transform: translate(20px, 30px) scale(1.05);
         opacity: 0.45;
@@ -1353,7 +1408,7 @@
     .grid-overlay {
       position: fixed;
       inset: 0;
-      background-image: 
+      background-image:
         linear-gradient(rgba(148, 163, 184, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
       background-size: 50px 50px;
@@ -1426,18 +1481,23 @@
     }
 
     @keyframes particle-float {
-      0%, 100% {
+
+      0%,
+      100% {
         transform: translate(0, 0);
         opacity: 0.6;
       }
+
       25% {
         transform: translate(50px, -50px);
         opacity: 0.8;
       }
+
       50% {
         transform: translate(-30px, 40px);
         opacity: 0.4;
       }
+
       75% {
         transform: translate(40px, 30px);
         opacity: 0.7;
@@ -1448,7 +1508,7 @@
     .mesh-gradient {
       position: fixed;
       inset: 0;
-      background: 
+      background:
         radial-gradient(at 0% 0%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
         radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
         radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
@@ -1460,10 +1520,13 @@
     }
 
     @keyframes mesh-pulse {
-      0%, 100% {
+
+      0%,
+      100% {
         opacity: 0.4;
         transform: scale(1);
       }
+
       50% {
         opacity: 0.7;
         transform: scale(1.05);
@@ -1475,12 +1538,10 @@
       position: fixed;
       width: 1px;
       height: 100vh;
-      background: linear-gradient(
-        to bottom,
-        transparent,
-        rgba(236, 72, 153, 0.3),
-        transparent
-      );
+      background: linear-gradient(to bottom,
+          transparent,
+          rgba(236, 72, 153, 0.3),
+          transparent);
       pointer-events: none;
       z-index: 0;
       opacity: 0.4;
@@ -1496,24 +1557,20 @@
     .light-beam-2 {
       left: 45%;
       animation-delay: -8s;
-      background: linear-gradient(
-        to bottom,
-        transparent,
-        rgba(56, 189, 248, 0.3),
-        transparent
-      );
+      background: linear-gradient(to bottom,
+          transparent,
+          rgba(56, 189, 248, 0.3),
+          transparent);
       filter: blur(1px);
     }
 
     .light-beam-3 {
       left: 75%;
       animation-delay: -16s;
-      background: linear-gradient(
-        to bottom,
-        transparent,
-        rgba(139, 92, 246, 0.3),
-        transparent
-      );
+      background: linear-gradient(to bottom,
+          transparent,
+          rgba(139, 92, 246, 0.3),
+          transparent);
       filter: blur(1px);
     }
 
@@ -1522,12 +1579,15 @@
         transform: translateY(-100vh);
         opacity: 0;
       }
+
       10% {
         opacity: 0.4;
       }
+
       90% {
         opacity: 0.4;
       }
+
       100% {
         transform: translateY(100vh);
         opacity: 0;
@@ -1587,10 +1647,13 @@
     }
 
     @keyframes dot-pulse {
-      0%, 100% {
+
+      0%,
+      100% {
         transform: scale(1);
         opacity: 0.3;
       }
+
       50% {
         transform: scale(2);
         opacity: 0.8;
@@ -2429,64 +2492,64 @@
         </div>
 
         <div class="hero-right">
-  <div class="hero-card">
-    <div class="hero-card-header">
-      <span class="hero-card-tag">live dashboard · v1.0</span>
-      <span class="hero-card-badge">
-        <span style="width: 7px; height: 7px; border-radius: 999px; background: #22c55e;"></span>
-        Open to full-time SWE roles
-      </span>
-    </div>
+          <div class="hero-card">
+            <div class="hero-card-header">
+              <span class="hero-card-tag">live dashboard · v1.0</span>
+              <span class="hero-card-badge">
+                <span style="width: 7px; height: 7px; border-radius: 999px; background: #22c55e;"></span>
+                Open to full-time SWE roles
+              </span>
+            </div>
 
-    <div class="hero-grid">
-      <div>
-        <div class="hero-avatar-ring">
-          <img src="images/photo1.jpeg" alt="Harshit Garg" class="hero-avatar-image" />
-          <div class="hero-avatar-initials">HG</div>
+            <div class="hero-grid">
+              <div>
+                <div class="hero-avatar-ring">
+                  <img src="images/photo1.jpeg" alt="Harshit Garg" class="hero-avatar-image" />
+                  <div class="hero-avatar-initials">HG</div>
+                </div>
+                <div class="hero-roles">
+                  <div>Full-Stack Engineer · Product Architect</div>
+                  <div>Founder, PlayerXChange &amp; more</div>
+                </div>
+              </div>
+
+              <div>
+                <div class="hero-metrics hero-metrics--stacked">
+                  <div class="hero-metric-card">
+                    <div class="hero-metric-label">Primary stack</div>
+                    <div class="hero-metric-value">TypeScript · Kotlin · Python</div>
+                  </div>
+
+                  <div class="hero-metric-card">
+                    <div class="hero-metric-label">Favorite problems</div>
+                    <div class="hero-metric-value">Complex systems · Elegant UX</div>
+                  </div>
+
+                  <div class="hero-metric-card">
+                    <div class="hero-metric-label">Based in</div>
+                    <div class="hero-metric-value">Gaithersburg, MD · Remote-friendly</div>
+                  </div>
+
+                  <div class="hero-metric-card">
+                    <div class="hero-metric-label">Seeking</div>
+                    <div class="hero-metric-value">Full-time SWE · Product roles</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-floating-tag">
+              <span style="width: 8px; height: 8px; border-radius: 999px; background: #22d3ee;"></span>
+              System-level thinker · details-obsessed
+            </div>
+
+            <!-- orbit lives INSIDE the card so it’s visible -->
+            <div class="hero-orbit"></div>
+          </div>
         </div>
-        <div class="hero-roles">
-          <div>Full-Stack Engineer · Product Architect</div>
-          <div>Founder, PlayerXChange &amp; more</div>
-        </div>
-      </div>
-
-      <div>
-        <div class="hero-metrics hero-metrics--stacked">
-          <div class="hero-metric-card">
-            <div class="hero-metric-label">Primary stack</div>
-            <div class="hero-metric-value">TypeScript · Kotlin · Python</div>
-          </div>
-
-          <div class="hero-metric-card">
-            <div class="hero-metric-label">Favorite problems</div>
-            <div class="hero-metric-value">Complex systems · Elegant UX</div>
-          </div>
-
-          <div class="hero-metric-card">
-            <div class="hero-metric-label">Based in</div>
-            <div class="hero-metric-value">Gaithersburg, MD · Remote-friendly</div>
-          </div>
-
-          <div class="hero-metric-card">
-            <div class="hero-metric-label">Seeking</div>
-            <div class="hero-metric-value">Full-time SWE · Product roles</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="hero-floating-tag">
-      <span style="width: 8px; height: 8px; border-radius: 999px; background: #22d3ee;"></span>
-      System-level thinker · details-obsessed
-    </div>
-
-    <!-- orbit lives INSIDE the card so it’s visible -->
-    <div class="hero-orbit"></div>
-  </div>
-</div>
       </section>
-    <!-- About & Skills -->
-    <section id="about">
+      <!-- About & Skills -->
+      <section id="about">
         <div class="section-header">
           <div>
             <div class="section-title">about</div>
@@ -2521,7 +2584,8 @@
               <span class="tag-chip">Education &amp; career mobility</span>
             </div>
             <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted);">
-              <strong style="color: #e5e7eb;">Currently seeking:</strong> Full-time Software Engineer positions where I can apply my full-stack expertise, product thinking, and passion for building systems that scale.
+              <strong style="color: #e5e7eb;">Currently seeking:</strong> Full-time Software Engineer positions where I
+              can apply my full-stack expertise, product thinking, and passion for building systems that scale.
             </p>
           </div>
 
@@ -2594,6 +2658,13 @@
             <img src="images/photo3.jpeg" alt="Harshit Garg - University of Maryland" loading="lazy" />
           </div>
         </div>
+
+        <div class="inspirational-quote">
+          <div class="quote-text">
+            Live in the sunshine, swim the sea, drink the wild air's salubrity.
+          </div>
+          <div class="quote-author">Ralph Waldo Emerson</div>
+        </div>
       </section>
 
       <!-- Projects -->
@@ -2610,7 +2681,8 @@
         </div>
 
         <div class="projects-grid">
-          <a href="https://playerxchange-website.onrender.com/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+          <a href="https://playerxchange-website.onrender.com/" target="_blank" rel="noopener noreferrer"
+            style="text-decoration: none; color: inherit;">
             <article class="project-card">
               <div class="project-title-row">
                 <div class="project-title">PlayerXChange</div>
@@ -2628,14 +2700,16 @@
             </article>
           </a>
 
-          <a href="https://gpt-codex-hotel.onrender.com/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+          <a href="https://gpt-codex-hotel.onrender.com/" target="_blank" rel="noopener noreferrer"
+            style="text-decoration: none; color: inherit;">
             <article class="project-card">
               <div class="project-title-row">
                 <div class="project-title">Aurora Nexus Skyhaven</div>
                 <div class="project-pill">Enterprise · Hotel</div>
               </div>
               <p class="project-desc">
-                A massive enterprise-grade hotel and restaurant reservation system with real-time guest chat, job applications, VR lounge bookings, and comprehensive concierge services.
+                A massive enterprise-grade hotel and restaurant reservation system with real-time guest chat, job
+                applications, VR lounge bookings, and comprehensive concierge services.
               </p>
               <div class="project-meta">
                 <span>Real-time chat · Booking system</span>
@@ -2645,14 +2719,16 @@
             </article>
           </a>
 
-          <a href="https://hgarg1.github.io/GPT-Codex-Apartment/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+          <a href="https://hgarg1.github.io/GPT-Codex-Apartment/" target="_blank" rel="noopener noreferrer"
+            style="text-decoration: none; color: inherit;">
             <article class="project-card">
               <div class="project-title-row">
                 <div class="project-title">Codex Residences</div>
                 <div class="project-pill">Leasing platform</div>
               </div>
               <p class="project-desc">
-                An apartment leasing platform featuring luxury boutique residences with floor plans, availability tracking, resident portal, and comprehensive leasing marketplace.
+                An apartment leasing platform featuring luxury boutique residences with floor plans, availability
+                tracking, resident portal, and comprehensive leasing marketplace.
               </p>
               <div class="project-meta">
                 <span>Lease management · Resident portal</span>
@@ -2662,14 +2738,16 @@
             </article>
           </a>
 
-          <a href="https://hgarg1.github.io/pta-portal/" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+          <a href="https://hgarg1.github.io/pta-portal/" target="_blank" rel="noopener noreferrer"
+            style="text-decoration: none; color: inherit;">
             <article class="project-card">
               <div class="project-title-row">
                 <div class="project-title">PTA Portal</div>
                 <div class="project-pill">Edtech · UI/UX</div>
               </div>
               <p class="project-desc">
-                A comprehensive UI/UX platform for Parent Teacher Associations where students, principals, and local PTA boards can access and update school information.
+                A comprehensive UI/UX platform for Parent Teacher Associations where students, principals, and local PTA
+                boards can access and update school information.
               </p>
               <div class="project-meta">
                 <span>Multi-user roles · School management</span>
@@ -2711,19 +2789,42 @@
             </div>
           </article>
 
-          <a href="https://DreamX-Website.onrender.com" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+          <a href="https://DreamX-Website.onrender.com" target="_blank" rel="noopener noreferrer"
+            style="text-decoration: none; color: inherit;">
             <article class="project-card">
               <div class="project-title-row">
                 <div class="project-title">DreamX</div>
                 <div class="project-pill">Education · Platform</div>
               </div>
               <p class="project-desc">
-                A platform connecting students with a passion to students with a curious mind, fostering mentorship and knowledge sharing in educational communities.
+                A platform connecting students with a passion to students with a curious mind, fostering mentorship and
+                knowledge sharing in educational communities.
               </p>
               <div class="project-meta">
                 <span>Student mentorship</span>
                 <span>Knowledge sharing</span>
                 <span>Community building</span>
+              </div>
+            </article>
+          </a>
+
+          <a href="https://universal-ai-router.onrender.com/" target="_blank" rel="noopener noreferrer"
+            style="text-decoration: none; color: inherit;">
+            <article class="project-card">
+              <div class="project-title-row">
+                <div class="project-title">Universal AI Router</div>
+                <div class="project-pill">AI · Infrastructure</div>
+              </div>
+              <p class="project-desc">
+                An intelligent multi-model interface that unifies Gemini, OpenAI, Claude, and Grok into a single
+                conversational system with real-time model selection and automatic routing. Features a smart AI Auto
+                Router that dynamically chooses the optimal model based on task complexity, cost, modality, and latency.
+              </p>
+              <div class="project-meta">
+                <span>Cost-aware orchestration · Automatic failover · Production-grade UI/UX</span>
+                <span>Gemini · OpenAI · Claude · Grok</span>
+                <span>Serverless autoscaling</span>
+                <span>Smart routing engine · Multi-provider abstraction · Real-time model switching</span>
               </div>
             </article>
           </a>
@@ -2754,7 +2855,11 @@
                 <div class="timeline-date">February 2025 — Present</div>
               </div>
               <div class="timeline-body">
-                Designed, tested, and engineered one of the world&apos;s first self-healing software solutions using DataDog, Devin, and Slack/Teams integrations. Significantly improved developer productivity and added substantial value by reducing time-to-resolution for common errors and application exceptions. Worked closely with the CTO and Senior Director of Application Development to tailor solutions to existing business applications and infrastructure.
+                Designed, tested, and engineered one of the world&apos;s first self-healing software solutions using
+                DataDog, Devin, and Slack/Teams integrations. Significantly improved developer productivity and added
+                substantial value by reducing time-to-resolution for common errors and application exceptions. Worked
+                closely with the CTO and Senior Director of Application Development to tailor solutions to existing
+                business applications and infrastructure.
               </div>
             </div>
 
@@ -2767,7 +2872,11 @@
                 <div class="timeline-date">June 2023 — October 2024</div>
               </div>
               <div class="timeline-body">
-                Developed, architected, and maintained comprehensive business intelligence dashboards with a $750K budget for GCP. Dashboards were formulated in Google Looker and queried a multi-terabyte SQL server housed in BigQuery. Founded a UPS hackathon team that placed 3rd place nationwide in tackling carbon neutrality. Worked on HR Power BI dashboard and mobile application team on iOS and Android platforms, helping develop a Virtual Assistant AI chatbot in the official UPS app.
+                Developed, architected, and maintained comprehensive business intelligence dashboards with a $750K
+                budget for GCP. Dashboards were formulated in Google Looker and queried a multi-terabyte SQL server
+                housed in BigQuery. Founded a UPS hackathon team that placed 3rd place nationwide in tackling carbon
+                neutrality. Worked on HR Power BI dashboard and mobile application team on iOS and Android platforms,
+                helping develop a Virtual Assistant AI chatbot in the official UPS app.
               </div>
             </div>
 
@@ -2775,12 +2884,16 @@
               <div class="timeline-heading">
                 <div>
                   <div class="timeline-role">Student Web Assistant</div>
-                  <div class="timeline-org">UMD Computer, Mathematical, and Natural Science (CMNS) Dean&apos;s Office</div>
+                  <div class="timeline-org">UMD Computer, Mathematical, and Natural Science (CMNS) Dean&apos;s Office
+                  </div>
                 </div>
                 <div class="timeline-date">September 2022 — May 2024</div>
               </div>
               <div class="timeline-body">
-                Only student developer, working to maintain and enhance the current functionality of UMD CMNS websites. Used Drupal for content authoring, Google Maps API for data visualization, and RESTful APIs to gather and display data. Streamlined mailing lists using Google Colab notebooks, reducing costs by $1,000s of dollars and improving Excel spreadsheet compression.
+                Only student developer, working to maintain and enhance the current functionality of UMD CMNS websites.
+                Used Drupal for content authoring, Google Maps API for data visualization, and RESTful APIs to gather
+                and display data. Streamlined mailing lists using Google Colab notebooks, reducing costs by $1,000s of
+                dollars and improving Excel spreadsheet compression.
               </div>
             </div>
 
@@ -2793,7 +2906,10 @@
                 <div class="timeline-date">November 2021 — August 2022</div>
               </div>
               <div class="timeline-body">
-                As the only student developer, worked in the IT department and developed full-stack ASP.NET web API applications to support the entire James A. Clark School of Engineering. Rearchitected legacy applications using the latest POCOs libraries. Used LINQ and advanced SQL concepts to ensure code modularity. Project management done through Azure DevOps.
+                As the only student developer, worked in the IT department and developed full-stack ASP.NET web API
+                applications to support the entire James A. Clark School of Engineering. Rearchitected legacy
+                applications using the latest POCOs libraries. Used LINQ and advanced SQL concepts to ensure code
+                modularity. Project management done through Azure DevOps.
               </div>
             </div>
 
@@ -2806,7 +2922,9 @@
                 <div class="timeline-date">October 2019 — August 2021</div>
               </div>
               <div class="timeline-body">
-                Worked on the development, defect fixes, and testing of an Azure cloud-based Union Management application using .NET MVC architecture with HTML, JavaScript, and CSS. Learned concepts like blockchain, quantum computing, Python ML/AI libraries, and database (SQL/NoSQL) pros and cons.
+                Worked on the development, defect fixes, and testing of an Azure cloud-based Union Management
+                application using .NET MVC architecture with HTML, JavaScript, and CSS. Learned concepts like
+                blockchain, quantum computing, Python ML/AI libraries, and database (SQL/NoSQL) pros and cons.
               </div>
             </div>
 
@@ -2819,7 +2937,14 @@
                 <div class="timeline-date">Founded &amp; Led</div>
               </div>
               <div class="timeline-body">
-                Built DCCS from scratch as both a technical organization and honors society. Structured it as a professional consultancy with unique leadership hierarchy (CEO, President, Executive Director) rather than a traditional student club. Created operational pipelines for client intake, problem scoping, cloud solutions, and data workflows. Members worked on real external company problems using industry-grade tools (AWS, GCP, Azure, Docker, Kubernetes, CI/CD), gaining deliverables similar to AWS or Palantir internships. The organization became a technical ecosystem that helped students build career pathways in cloud, DevOps, and big-data fields. Recognized by multiple UMD departments for problem-solving capabilities and publicly acknowledged by the Dean.
+                Built DCCS from scratch as both a technical organization and honors society. Structured it as a
+                professional consultancy with unique leadership hierarchy (CEO, President, Executive Director) rather
+                than a traditional student club. Created operational pipelines for client intake, problem scoping, cloud
+                solutions, and data workflows. Members worked on real external company problems using industry-grade
+                tools (AWS, GCP, Azure, Docker, Kubernetes, CI/CD), gaining deliverables similar to AWS or Palantir
+                internships. The organization became a technical ecosystem that helped students build career pathways in
+                cloud, DevOps, and big-data fields. Recognized by multiple UMD departments for problem-solving
+                capabilities and publicly acknowledged by the Dean.
               </div>
             </div>
           </div>
@@ -2897,12 +3022,16 @@
               <div class="timeline-heading">
                 <div>
                   <div class="timeline-role">Bachelor of Science, Computer Science</div>
-                  <div class="timeline-org">Machine Learning Track · Minor in Technology Entrepreneurship &amp; Business Analytics</div>
+                  <div class="timeline-org">Machine Learning Track · Minor in Technology Entrepreneurship &amp; Business
+                    Analytics</div>
                 </div>
                 <div class="timeline-date">May 2025</div>
               </div>
               <div class="timeline-body">
-                University of Maryland, College Park, MD. Dean&apos;s List 2021-2022, Hinman CEO Program, 3.25 GPA. Took 400-level classes since freshman year and have taken the initiative to take summer and winter classes every session on topics like Ethics in Technology, advanced data analysis in Excel, and advanced Artificial Intelligence.
+                University of Maryland, College Park, MD. Dean&apos;s List 2021-2022, Hinman CEO Program, 3.25 GPA. Took
+                400-level classes since freshman year and have taken the initiative to take summer and winter classes
+                every session on topics like Ethics in Technology, advanced data analysis in Excel, and advanced
+                Artificial Intelligence.
               </div>
             </div>
           </div>
@@ -2965,7 +3094,13 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Built DCCS from scratch as both a technical organization and honors society. Structured it like a professional consultancy with unique leadership (CEO, President, Executive Director) rather than a traditional student club. Created pipelines for client intake, problem scoping, cloud solutions, and data workflows. Members gained hands-on experience with AWS, GCP, Azure, Docker, Kubernetes, and CI/CD while working on real external company problems. The organization became a technical ecosystem that helped students build career pathways in cloud, DevOps, and big-data fields. Recognized by multiple UMD departments for problem-solving capabilities and publicly acknowledged by the Dean.
+              Built DCCS from scratch as both a technical organization and honors society. Structured it like a
+              professional consultancy with unique leadership (CEO, President, Executive Director) rather than a
+              traditional student club. Created pipelines for client intake, problem scoping, cloud solutions, and data
+              workflows. Members gained hands-on experience with AWS, GCP, Azure, Docker, Kubernetes, and CI/CD while
+              working on real external company problems. The organization became a technical ecosystem that helped
+              students build career pathways in cloud, DevOps, and big-data fields. Recognized by multiple UMD
+              departments for problem-solving capabilities and publicly acknowledged by the Dean.
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem;">
               <span class="achievement-badge">Technical Leadership</span>
@@ -2983,7 +3118,13 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Dream X elevates users through purposeful creation — a social ecosystem where projects, skills, and passions become the foundation for real connection. The platform blends social media with structured learning, using a reverse recommendation algorithm, semantic interest mapping, and behavioral signal analysis to shift users away from passive consumption and toward active, measurable growth. Dream X intelligently expands each user&apos;s learning pathways, surfaces creators who deepen their craft, and powers a discovery experience driven by skill development, not dopamine loops, making social interaction productive, intentional, and technically guided.
+              Dream X elevates users through purposeful creation — a social ecosystem where projects, skills, and
+              passions become the foundation for real connection. The platform blends social media with structured
+              learning, using a reverse recommendation algorithm, semantic interest mapping, and behavioral signal
+              analysis to shift users away from passive consumption and toward active, measurable growth. Dream X
+              intelligently expands each user&apos;s learning pathways, surfaces creators who deepen their craft, and
+              powers a discovery experience driven by skill development, not dopamine loops, making social interaction
+              productive, intentional, and technically guided.
             </div>
             <span class="achievement-badge">Entrepreneurship</span>
           </article>
@@ -2997,7 +3138,8 @@
               </div>
             </div>
             <div class="achievement-desc">
-              International Association instilling business acumen in ethics, entrepreneurship, and finance. Planning initiatives to support programs statewide.
+              International Association instilling business acumen in ethics, entrepreneurship, and finance. Planning
+              initiatives to support programs statewide.
             </div>
             <span class="achievement-badge">Leadership</span>
           </article>
@@ -3025,7 +3167,8 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Served as Senator in University of Maryland Senate and Chief Judge with the Montgomery County Board of Elections.
+              Served as Senator in University of Maryland Senate and Chief Judge with the Montgomery County Board of
+              Elections.
             </div>
             <span class="achievement-badge">Public Service</span>
           </article>
@@ -3053,7 +3196,8 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Nonprofit utilizing cutting-edge algorithms to analyze poverty. Honored among presidents at Harvard, Caltech, and MIT, featured in global news publication.
+              Nonprofit utilizing cutting-edge algorithms to analyze poverty. Honored among presidents at Harvard,
+              Caltech, and MIT, featured in global news publication.
             </div>
             <span class="achievement-badge">Social Impact</span>
           </article>
@@ -3151,7 +3295,8 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Winner of the only AI and Data-related award at UMD, recognized for significant contributions to the Data and Cloud Computing Society (DCCS) and excellence in data science and artificial intelligence.
+              Winner of the only AI and Data-related award at UMD, recognized for significant contributions to the Data
+              and Cloud Computing Society (DCCS) and excellence in data science and artificial intelligence.
             </div>
             <span class="achievement-badge">Award · AI/Data</span>
           </article>
@@ -3165,7 +3310,8 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Highlighted three times on the University of Maryland Computer Science Department&apos;s official Instagram for achievements and contributions to the CS community.
+              Highlighted three times on the University of Maryland Computer Science Department&apos;s official
+              Instagram for achievements and contributions to the CS community.
             </div>
             <span class="achievement-badge">Recognition</span>
           </article>
@@ -3179,7 +3325,8 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Received official citation from the State of Maryland recognizing outstanding contributions and achievements.
+              Received official citation from the State of Maryland recognizing outstanding contributions and
+              achievements.
             </div>
             <span class="achievement-badge">State Recognition</span>
           </article>
@@ -3193,7 +3340,8 @@
               </div>
             </div>
             <div class="achievement-desc">
-              Engraved on the Eris S. Lifetime Wall at University of Maryland, recognizing lasting impact and contributions to the university community.
+              Engraved on the Eris S. Lifetime Wall at University of Maryland, recognizing lasting impact and
+              contributions to the university community.
             </div>
             <span class="achievement-badge">Legacy Recognition</span>
           </article>
@@ -3213,7 +3361,8 @@
         </div>
 
         <div class="accolades-grid">
-          <a href="https://cmns.umd.edu/news-events/news/cracking-cryptography-classroom" target="_blank" rel="noopener noreferrer" class="accolade-card">
+          <a href="https://cmns.umd.edu/news-events/news/cracking-cryptography-classroom" target="_blank"
+            rel="noopener noreferrer" class="accolade-card">
             <div class="accolade-header">
               <div class="accolade-icon">🔐</div>
               <div class="accolade-title-group">
@@ -3222,7 +3371,8 @@
               </div>
             </div>
             <div class="accolade-desc">
-              Recognized for excellence in cryptography coursework and understanding of encryption protocols. Featured in university news for demonstrating how fundamental math concepts create robust security systems.
+              Recognized for excellence in cryptography coursework and understanding of encryption protocols. Featured
+              in university news for demonstrating how fundamental math concepts create robust security systems.
             </div>
             <div class="accolade-meta">
               <span>Cryptography · Security</span>
@@ -3231,7 +3381,8 @@
             <div class="accolade-link">Read article →</div>
           </a>
 
-          <a href="https://www-math.umd.edu/about-us/math-news.html?id=139&start=30" target="_blank" rel="noopener noreferrer" class="accolade-card">
+          <a href="https://www-math.umd.edu/about-us/math-news.html?id=139&start=30" target="_blank"
+            rel="noopener noreferrer" class="accolade-card">
             <div class="accolade-header">
               <div class="accolade-icon">📚</div>
               <div class="accolade-title-group">
@@ -3240,7 +3391,8 @@
               </div>
             </div>
             <div class="accolade-desc">
-              Highlighted in the Mathematics Department news for academic achievement and contributions to interdisciplinary learning in cryptography and computer science.
+              Highlighted in the Mathematics Department news for academic achievement and contributions to
+              interdisciplinary learning in cryptography and computer science.
             </div>
             <div class="accolade-meta">
               <span>Academic Excellence</span>
@@ -3259,7 +3411,8 @@
             <div class="section-kicker">How I like to work with teams.</div>
           </div>
           <div class="section-caption">
-            I&apos;m not a feature factory. I&apos;m a pattern-matcher who sweats details, names things clearly, and leaves a
+            I&apos;m not a feature factory. I&apos;m a pattern-matcher who sweats details, names things clearly, and
+            leaves a
             system behind that other people actually enjoy maintaining.
           </div>
         </div>
@@ -3290,10 +3443,14 @@
               A few principles that show up i
             </div>
             <ul class="testimonial-tagline" style="display: grid; gap: 0.4rem; padding-left: 1.1rem;">
-              <li><strong style="color:#e5e7eb;">Opinionated &gt; generic.</strong> Good products say "this is the way" and then hold your hand through it.</li>
-              <li><strong style="color:#e5e7eb;">Latent complexity, obvious surfaces.</strong> Advanced systems should feel simple until you need the power.</li>
-              <li><strong style="color:#e5e7eb;">Everything is documentation.</strong> Naming, layout, commit messages—they all teach the next person how to extend the system.</li>
-              <li><strong style="color:#e5e7eb;">No orphan features.</strong> If we can&apos;t explain what a feature is for, we either cut it or redesign it.</li>
+              <li><strong style="color:#e5e7eb;">Opinionated &gt; generic.</strong> Good products say "this is the way"
+                and then hold your hand through it.</li>
+              <li><strong style="color:#e5e7eb;">Latent complexity, obvious surfaces.</strong> Advanced systems should
+                feel simple until you need the power.</li>
+              <li><strong style="color:#e5e7eb;">Everything is documentation.</strong> Naming, layout, commit
+                messages—they all teach the next person how to extend the system.</li>
+              <li><strong style="color:#e5e7eb;">No orphan features.</strong> If we can&apos;t explain what a feature is
+                for, we either cut it or redesign it.</li>
             </ul>
           </div>
         </div>
@@ -3305,12 +3462,14 @@
             <div class="section-kicker">Open to full-time Software Engineer opportunities.</div>
           </div>
           <div class="section-caption">
-            Seeking roles where I can build impactful products, solve complex technical challenges, and contribute to teams that value both engineering excellence and product thinking.
+            Seeking roles where I can build impactful products, solve complex technical challenges, and contribute to
+            teams that value both engineering excellence and product thinking.
           </div>
         </div>
         <div class="contact-layout">
           <div>
-            <form action="https://send.pageclip.co/scdn4w54uwVxMXvxndre9VtZoBMhPwUp" class="pageclip-form" method="post">
+            <form action="https://send.pageclip.co/scdn4w54uwVxMXvxndre9VtZoBMhPwUp" class="pageclip-form"
+              method="post">
               <div class="field-group">
                 <label for="name">Name</label>
                 <input id="name" name="name" type="text" placeholder="Who&apos;s reaching out?" required />
@@ -3321,9 +3480,12 @@
               </div>
               <div class="field-group">
                 <label for="project">Opportunity details</label>
-                <textarea id="project" name="project" placeholder="Tell me about the role, team, or opportunity. I&apos;d love to learn more!" required></textarea>
+                <textarea id="project" name="project"
+                  placeholder="Tell me about the role, team, or opportunity. I&apos;d love to learn more!"
+                  required></textarea>
               </div>
-              <button type="submit" class="pageclip-form_submit btn-primary" style="margin-top: 0.45rem; width: fit-content;">
+              <button type="submit" class="pageclip-form_submit btn-primary"
+                style="margin-top: 0.45rem; width: fit-content;">
                 <span>Send message (no spam, ever)</span>
               </button>
             </form>
@@ -3331,7 +3493,8 @@
           <div class="contact-meta">
             <div>
               <div class="contact-label">Direct lines</div>
-              <div class="contact-value">Open to discussing full-time opportunities. Feel free to reach out via email or schedule a call.</div>
+              <div class="contact-value">Open to discussing full-time opportunities. Feel free to reach out via email or
+                schedule a call.</div>
               <div class="contact-pill-list" style="margin-top: 0.4rem;">
                 <span class="contact-pill">Email: garg.archie@gmail.com</span>
                 <span class="contact-pill">Alt: hgarg1@umd.edu</span>
@@ -3369,4 +3532,5 @@
   </script>
   <script src="https://s.pageclip.co/v1/pageclip.js" charset="utf-8"></script>
 </body>
+
 </html>
