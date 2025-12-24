@@ -744,6 +744,16 @@
       z-index: 1;
     }
 
+    /* Make last item expand if it's alone in a row (first column of new row) */
+    .projects-grid > *:last-child:nth-child(3n+1) {
+      grid-column: span 2;
+    }
+
+    /* Make last item expand if there are only 2 items in the last row (second column) */
+    .projects-grid > *:last-child:nth-child(3n+2) {
+      grid-column: span 2;
+    }
+
     .project-card {
       border-radius: 20px;
       padding: 0.9rem 0.9rem 1rem;
@@ -808,6 +818,254 @@
       background: rgba(15, 23, 42, 0.86);
       border: 1px solid rgba(148, 163, 184, 0.6);
       color: var(--muted);
+    }
+
+    .project-actions {
+      margin-top: 0.6rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .project-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+      min-height: 36px;
+      font-weight: 500;
+    }
+
+    .project-btn-primary {
+      background: radial-gradient(circle at top left, #f97316 0, #ec4899 30%, #8b5cf6 75%, #22d3ee 100%);
+      color: #020617;
+      box-shadow: 0 8px 20px rgba(236, 72, 153, 0.5);
+    }
+
+    .project-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(236, 72, 153, 0.7);
+    }
+
+    .project-status-badge {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      background: rgba(34, 197, 94, 0.1);
+      color: #86efac;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-left: 0.4rem;
+    }
+
+    /* GPTs Section */
+    .gpts-intro {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+
+    .builder-profile-card {
+      border-radius: 20px;
+      padding: 1rem 1.1rem;
+      background: radial-gradient(circle at top left, rgba(139, 92, 246, 0.12), rgba(15, 23, 42, 0.96));
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      margin-bottom: 1.2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .builder-profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .builder-profile-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .builder-profile-website {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .builder-profile-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+    }
+
+    .builder-profile-link {
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.6);
+      transition: all var(--transition-fast);
+    }
+
+    .builder-profile-link:hover {
+      color: var(--text);
+      border-color: rgba(168, 85, 247, 0.6);
+      background: rgba(168, 85, 247, 0.1);
+    }
+
+    .gpts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+      font-size: 0.82rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .gpt-card {
+      border-radius: 20px;
+      padding: 0.9rem 0.9rem 1rem;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, background 200ms ease;
+      cursor: default;
+    }
+
+    .gpt-card:hover {
+      transform: translateY(-4px) translateX(1px);
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.95);
+      border-color: rgba(248, 250, 252, 0.9);
+      background: radial-gradient(circle at top left, rgba(236, 72, 153, 0.16), rgba(15, 23, 42, 0.96));
+    }
+
+    .gpt-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.4rem;
+    }
+
+    .gpt-title {
+      font-size: 0.94rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .gpt-status-badge {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .gpt-status-badge.private {
+      border-color: rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .gpt-status-badge.link-only {
+      border-color: rgba(56, 189, 248, 0.6);
+      background: rgba(56, 189, 248, 0.1);
+      color: #7dd3fc;
+    }
+
+    .gpt-status-badge.public {
+      border-color: rgba(34, 197, 94, 0.6);
+      background: rgba(34, 197, 94, 0.1);
+      color: #86efac;
+    }
+
+    .gpt-tagline {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      margin-top: 0.2rem;
+    }
+
+    .gpt-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .gpt-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.8rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+      min-height: 36px;
+    }
+
+    .gpt-btn-primary {
+      background: radial-gradient(circle at top left, #f97316 0, #ec4899 30%, #8b5cf6 75%, #22d3ee 100%);
+      color: #020617;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(236, 72, 153, 0.5);
+    }
+
+    .gpt-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(236, 72, 153, 0.7);
+    }
+
+    .gpt-btn-secondary {
+      background: rgba(15, 23, 42, 0.86);
+      border-color: rgba(148, 163, 184, 0.6);
+      color: var(--muted);
+      padding: 0.5rem 0.7rem;
+    }
+
+    .gpt-btn-secondary:hover {
+      color: var(--text);
+      border-color: rgba(248, 250, 252, 0.9);
+      background: radial-gradient(circle at top, rgba(148, 163, 184, 0.18), rgba(15, 23, 42, 0.95));
+    }
+
+    .gpt-btn-icon {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .gpt-btn-secondary svg {
+      color: var(--muted);
+      transition: color var(--transition-fast);
+    }
+
+    .gpt-btn-secondary:hover svg {
+      color: var(--text);
     }
 
     /* Experience & Highlights */
@@ -1715,7 +1973,9 @@
     .project-card,
     .metric-card,
     .testimonial-card,
-    .achievement-card {
+    .achievement-card,
+    .gpt-card,
+    .builder-profile-card {
       animation: float-soft 8s ease-in-out infinite;
       animation-delay: 0.4s;
     }
@@ -1850,6 +2110,10 @@
       .metrics-grid {
         grid-template-columns: minmax(0, 1fr);
       }
+
+      .gpts-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 720px) {
@@ -1898,7 +2162,16 @@
         gap: 0.8rem;
       }
 
+      .gpts-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.8rem;
+      }
+
       .project-card {
+        padding: 0.85rem 0.85rem 0.95rem;
+      }
+
+      .gpt-card {
         padding: 0.85rem 0.85rem 0.95rem;
       }
 
@@ -2445,6 +2718,7 @@
       <nav>
         <a href="#about">About</a>
         <a href="#projects">Work</a>
+        <a href="#gpts">My GPTs</a>
         <a href="#experience">Experience</a>
         <a href="#education">Education</a>
         <a href="#achievements">Achievements</a>
@@ -2860,6 +3134,155 @@
               </div>
             </article>
           </a>
+
+          <article class="project-card">
+            <div class="project-title-row">
+              <div class="project-title">Email Agent Tracking System</div>
+              <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                <div class="project-pill">SaaS · Multi-Tenant</div>
+                <span class="project-status-badge">Live</span>
+              </div>
+            </div>
+            <p class="project-desc">
+              A multi-tenant email orchestration platform with shared inboxes, AI-assisted triage, branded template building, and full admin governance. Built for teams that need enterprise-grade email management without the enterprise complexity.
+            </p>
+            <div class="project-meta">
+              <span>Shared inbox with agent assignment, SLA tracking, and audit logs</span>
+              <span>Block-based email template builder with brand tokens &amp; accessibility contrast checks</span>
+              <span>Multi-tenant admin portal (agents, tenants, routing rules, compliance)</span>
+              <span>AI-assisted triage, draft, and review (human-in-the-loop, policy gated)</span>
+              <span>Mobile &amp; desktop preview, autosave, and version-safe editing</span>
+            </div>
+            <div class="project-actions">
+              <a href="https://github.com/hgarg1/email-agent-tracking-system" target="_blank" rel="noopener noreferrer"
+                class="project-btn project-btn-primary">View on GitHub →</a>
+            </div>
+          </article>
+
+          <a href="https://terminalai-jg27.onrender.com/" target="_blank" rel="noopener noreferrer"
+            style="text-decoration: none; color: inherit;">
+            <article class="project-card">
+              <div class="project-title-row">
+                <div>
+                  <div class="project-title">Command Deck</div>
+                  <div style="font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; font-weight: 400;">
+                    AI-powered terminal and workspace environment
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                  <div class="project-pill">AI · Terminal · Workspace</div>
+                  <span class="project-status-badge">Live</span>
+                </div>
+              </div>
+              <p class="project-desc">
+                Web-based terminal that pairs conversational AI with a real execution environment. The assistant reasons about code, edits files, renders diffs, and executes commands (javac, java, etc.) within persistent workspaces. Built with auth, RBAC, file management, and an integrated editor. Production-grade safety constraints.
+              </p>
+              <div class="project-meta">
+                <span>AI terminal with deterministic command execution</span>
+                <span>Persistent workspaces with file tree, editor, and diff rendering</span>
+                <span>Real code execution with output capture</span>
+                <span>Admin portal with user management and AI-assisted actions</span>
+                <span>Auth flows, email verification, and RBAC</span>
+                <span>Terminal-grade UI/UX</span>
+              </div>
+            </article>
+          </a>
+        </div>
+      </section>
+
+      <!-- My GPTs -->
+      <section id="gpts">
+        <div class="section-header">
+          <div>
+            <div class="section-title">my gpts</div>
+            <div class="section-kicker">Custom AI assistants built for identity, doctrine, and strategy.</div>
+          </div>
+          <div class="section-caption">
+            These GPTs represent different facets of my work: personal voice, doctrinal study, and strategic analysis.
+          </div>
+        </div>
+
+        <div class="gpts-intro">
+          <p>
+            I build custom GPTs that serve distinct purposes—from capturing my personal voice and values, to providing
+            doctrinally faithful resources for spiritual study, to offering strategic frameworks for understanding human
+            behavior and emotional dynamics. Each GPT is crafted with specific intent and audience in mind.
+          </p>
+        </div>
+
+        <!-- Builder Profile Card -->
+        <div class="builder-profile-card">
+          <div class="builder-profile-header">
+            <div>
+              <div class="builder-profile-name">Harshit Garg</div>
+              <div class="builder-profile-website">archiegarg.me</div>
+            </div>
+          </div>
+          <div class="builder-profile-links">
+            <a href="https://www.linkedin.com/in/harshit-garg" target="_blank" rel="noopener noreferrer"
+              class="builder-profile-link">LinkedIn</a>
+            <a href="https://github.com/hgarg1" target="_blank" rel="noopener noreferrer"
+              class="builder-profile-link">GitHub</a>
+            <a href="mailto:hgarg1@terpmail.umd.edu" class="builder-profile-link">Email</a>
+          </div>
+        </div>
+
+        <!-- GPT Cards -->
+        <div class="gpts-grid">
+          <!-- HarshitGPT (Private) -->
+          <article class="gpt-card">
+            <div class="gpt-card-header">
+              <div class="gpt-title">HarshitGPT</div>
+              <div class="gpt-status-badge private">Only me</div>
+            </div>
+            <p class="gpt-tagline">
+              My voice as Harshit — practical, just, and restorative.
+            </p>
+          </article>
+
+          <!-- ZionGPT (Link-Only) -->
+          <article class="gpt-card">
+            <div class="gpt-card-header">
+              <div class="gpt-title">ZionGPT</div>
+              <div class="gpt-status-badge link-only">Anyone with a link</div>
+            </div>
+            <p class="gpt-tagline">
+              A doctrinally faithful LDS assistant for study, teaching, defense, and spiritual growth.
+            </p>
+            <div class="gpt-actions">
+              <a href="#" onclick="event.preventDefault(); window.open(GPT_URLS.zionGPT === '#' ? '#' : GPT_URLS.zionGPT, '_blank'); return false;"
+                class="gpt-btn gpt-btn-primary">Open GPT</a>
+              <button onclick="copyGPTLink(GPT_URLS.zionGPT, this)" class="gpt-btn gpt-btn-secondary"
+                title="Copy link">
+                <svg class="gpt-btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </article>
+
+          <!-- Velvet Cipher (Public) -->
+          <article class="gpt-card">
+            <div class="gpt-card-header">
+              <div class="gpt-title">Velvet Cipher</div>
+              <div class="gpt-status-badge public">Everyone</div>
+            </div>
+            <p class="gpt-tagline">
+              Harshit Garg's cold, seductive strategist for decoding human behavior and emotional dynamics.
+            </p>
+            <div class="gpt-actions">
+              <a href="#" onclick="event.preventDefault(); window.open(GPT_URLS.velvetCipher === '#' ? '#' : GPT_URLS.velvetCipher, '_blank'); return false;"
+                class="gpt-btn gpt-btn-primary">Open GPT</a>
+              <button onclick="copyGPTLink(GPT_URLS.velvetCipher, this)" class="gpt-btn gpt-btn-secondary"
+                title="Copy link">
+                <svg class="gpt-btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -3561,6 +3984,41 @@
   </footer>
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
+
+    // GPT URLs Configuration
+    // TODO: Replace placeholder URLs with actual GPT links when available
+    const GPT_URLS = {
+      harshitGPT: "#", // Private GPT - no public link
+      zionGPT: "https://chatgpt.com/g/g-688575bffc3c8191b1c8ff5e0bb3006e-ziongpt", // TODO: Add ZionGPT link here
+      velvetCipher: "https://chatgpt.com/g/g-688342823c188191ad447d665e7f8a87-velvet-cipher" // TODO: Add Velvet Cipher link here
+    };
+
+    // Copy GPT link to clipboard
+    function copyGPTLink(url, button) {
+      if (url === "#") {
+        return; // Don't copy placeholder links
+      }
+      const originalHTML = button.innerHTML;
+      const checkmarkSVG = '<svg class="gpt-btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      navigator.clipboard.writeText(url).then(() => {
+        button.innerHTML = checkmarkSVG + ' Copied';
+        setTimeout(() => {
+          button.innerHTML = originalHTML;
+        }, 2000);
+      }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        button.innerHTML = checkmarkSVG + ' Copied';
+        setTimeout(() => {
+          button.innerHTML = originalHTML;
+        }, 2000);
+      });
+    }
   </script>
   <script src="https://s.pageclip.co/v1/pageclip.js" charset="utf-8"></script>
 </body>
