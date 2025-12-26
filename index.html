@@ -735,6 +735,33 @@
     }
 
     /* Projects */
+    #projects {
+      position: relative;
+    }
+
+    #projects .section-header {
+      position: sticky;
+      top: 1rem;
+      z-index: 10;
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      padding: 0 0 1rem 0;
+      margin: 0 0 1.5rem 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0;
+    }
+
+    #projects .section-header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.13), transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: -1;
+    }
+
     .projects-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -742,6 +769,28 @@
       font-size: 0.82rem;
       position: relative;
       z-index: 1;
+    }
+
+    /* Initial hidden state for reveal animation */
+    .projects-grid > * {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Revealed state */
+    .projects-grid > *.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .projects-grid > * {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
     }
 
     /* Make last item expand if it's alone in a row (first column of new row) */
@@ -2103,6 +2152,11 @@
         gap: 0.8rem;
       }
 
+      #projects .section-header {
+        top: 0.5rem;
+        padding-bottom: 0.8rem;
+      }
+
       .section-kicker {
         font-size: 1.05rem;
       }
@@ -3213,6 +3267,35 @@
               </div>
             </article>
           </a>
+
+          <a href="https://aegis.archiegarg.me/" target="_blank" rel="noopener noreferrer"
+            style="text-decoration: none; color: inherit;">
+            <article class="project-card">
+              <div class="project-title-row">
+                <div>
+                  <div class="project-title">Aegis</div>
+                  <div style="font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; font-weight: 400;">
+                    Zero Trust Command System
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                  <div class="project-pill">Security · Zero Trust · UX</div>
+                  <span class="project-status-badge">Live</span>
+                </div>
+              </div>
+              <p class="project-desc">
+                DOD/MIL-inspired zero trust security command system with interactive threat matrix, operations console, and mission-aligned access controls. Implements verify-explicitly, least-privilege, and assume-breach principles across multi-domain security visualization (Air, Land, Sea, Cyber). Features real-time telemetry, corridor authorization, perimeter lockdown, and encrypted brief distribution workflows.
+              </p>
+              <div class="project-meta">
+                <span>Zero Trust architecture with multi-domain threat matrix</span>
+                <span>Operations console with read-only, incident response, and lockdown modes</span>
+                <span>Mission-aligned authentication and access control flows</span>
+                <span>Real-time telemetry and encrypted brief distribution</span>
+                <span>Corridor authorization and perimeter lockdown workflows</span>
+                <span>DOD/MIL-inspired UX with classified prototype aesthetic</span>
+              </div>
+            </article>
+          </a>
         </div>
       </section>
 
@@ -4016,6 +4099,64 @@
       zionGPT: "https://chatgpt.com/g/g-688575bffc3c8191b1c8ff5e0bb3006e-ziongpt", // TODO: Add ZionGPT link here
       velvetCipher: "https://chatgpt.com/g/g-688342823c188191ad447d665e7f8a87-velvet-cipher" // TODO: Add Velvet Cipher link here
     };
+
+    // Projects Scroll Reveal with Intersection Observer
+    (function() {
+      // Wait for DOM to be ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScrollReveal);
+      } else {
+        initScrollReveal();
+      }
+
+      function initScrollReveal() {
+        // Check for reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        const projectsGrid = document.querySelector('.projects-grid');
+        if (!projectsGrid) return;
+
+        const projectCards = Array.from(projectsGrid.children);
+        if (projectCards.length === 0) return;
+
+        if (prefersReducedMotion) {
+          // If reduced motion, reveal all projects immediately
+          projectCards.forEach(card => card.classList.add('revealed'));
+          return;
+        }
+
+        // Intersection Observer options
+        const observerOptions = {
+          root: null, // viewport
+          rootMargin: '0px 0px -80px 0px', // trigger slightly before entering viewport
+          threshold: 0.15 // trigger when 15% visible
+        };
+
+        // Track which cards have been revealed to maintain proper delay
+        let revealedCount = 0;
+
+        // Create observer
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !entry.target.classList.contains('revealed')) {
+              // Add staggered delay based on order of reveal
+              const delay = Math.min(revealedCount * 80, 400); // Max 400ms delay, 80ms per card
+              setTimeout(() => {
+                entry.target.classList.add('revealed');
+                revealedCount++;
+              }, delay);
+              // Stop observing once revealed
+              observer.unobserve(entry.target);
+            }
+          });
+        }, observerOptions);
+
+        // Observe all project cards
+        projectCards.forEach(card => {
+          observer.observe(card);
+        });
+      }
+    })();
 
     // Copy GPT link to clipboard
     function copyGPTLink(url, button) {
