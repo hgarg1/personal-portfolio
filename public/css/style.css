@@ -58,6 +58,20 @@ body {
   line-height: 1.7;
   overflow-x: hidden;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+main:not(:has(.hero)) {
+  padding-top: 80px; /* clears the 64px fixed navbar for subpages */
+}
+
+.footer {
+  flex-shrink: 0;
 }
 
 img { max-width: 100%; display: block; }
