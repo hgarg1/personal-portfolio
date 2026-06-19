@@ -1,0 +1,43 @@
+<section id="projects" class="section">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-label">04 / Projects</span>
+      <h2 class="section-title">What I've <span class="gradient-text">Built</span></h2>
+      <p class="section-subtitle">Production systems, not demos — every project is live.</p>
+    </div>
+
+    <div class="projects-grid">
+      <% projects.forEach(function(project) { %>
+      <div class="project-card animate-on-scroll <%= project.featured ? 'project-featured' : '' %>"
+           style="--card-color: <%= project.color %>; --card-glow: <%= project.glow %>;">
+        <div class="project-card-bar"></div>
+        <div class="project-card-body">
+          <div class="project-card-header">
+            <div>
+              <h3 class="project-title"><%= project.title %></h3>
+              <p class="project-role"><%= project.role %></p>
+            </div>
+            <a href="<%= project.url %>" target="_blank" rel="noopener" class="project-external" aria-label="Open <%= project.title %>">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+          </div>
+
+          <p class="project-desc"><%= project.description %></p>
+
+          <ul class="project-highlights">
+            <% project.highlights.forEach(function(h) { %>
+            <li><%= h %></li>
+            <% }); %>
+          </ul>
+
+          <div class="project-tags">
+            <% project.tags.forEach(function(tag) { %>
+            <span class="project-tag"><%= tag %></span>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+</section>

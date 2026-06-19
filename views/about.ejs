@@ -1,0 +1,43 @@
+<%- include('./partials/head') %>
+
+<section class="page-hero section">
+  <div class="container text-center">
+    <div class="hero-badge">Our Story</div>
+    <h1 class="page-title">About <span class="gradient-text">Us</span></h1>
+    <p class="page-subtitle">
+      We are passionate developers building tools that make the web faster,
+      more beautiful, and easier to maintain.
+    </p>
+  </div>
+</section>
+
+<section class="team-section section">
+  <div class="container">
+    <h2 class="section-title">Meet the Team</h2>
+    <div class="team-grid">
+      <% team.forEach(function(member) { %>
+      <div class="team-card">
+        <div class="team-avatar"><%= member.avatar %></div>
+        <h3 class="team-name"><%= member.name %></h3>
+        <p class="team-role"><%= member.role %></p>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+</section>
+
+<section class="mission-section section">
+  <div class="container">
+    <div class="mission-card">
+      <div class="mission-icon">🎯</div>
+      <h2 class="mission-title">Our Mission</h2>
+      <p class="mission-text">
+        We believe great software starts with great tooling. This project
+        exists to give developers a head start — a clean, structured, and
+        visually stunning foundation to build from.
+      </p>
+    </div>
+  </div>
+</section>
+
+<%- include('./partials/foot') %>

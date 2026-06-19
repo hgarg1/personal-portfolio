@@ -1,0 +1,132 @@
+<section id="about" class="section section-alt">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-label">01 / About</span>
+      <h2 class="section-title">Who <span class="gradient-text">I Am</span></h2>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-bio animate-on-scroll">
+        <p class="bio-text"><%= bio %></p>
+
+        <div class="about-links">
+          <a href="<%= github %>" target="_blank" rel="noopener" class="about-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            github.com/hgarg1
+          </a>
+          <a href="<%= website %>" target="_blank" rel="noopener" class="about-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            harshit-garg.com
+          </a>
+          <a href="mailto:<%= email %>" class="about-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <%= email %>
+          </a>
+        </div>
+
+        <div class="publications">
+          <h3 class="sub-heading">Selected Publications</h3>
+          <ul class="pub-list">
+            <% publications.forEach(function(pub) { %>
+            <li class="pub-item">
+              <a href="<%= pub.url %>" target="_blank" rel="noopener" class="pub-link">
+                <span class="pub-title"><%= pub.title %></span>
+                <span class="pub-source"><%= pub.publisher %></span>
+              </a>
+            </li>
+            <% }); %>
+          </ul>
+        </div>
+      </div>
+
+      <div class="about-right animate-on-scroll">
+        <h3 class="sub-heading">Certifications</h3>
+        <div class="cert-stack">
+          <% certifications.forEach(function(cert) { %>
+          <div class="cert-card">
+            <span class="cert-badge"><%= cert.badge %></span>
+            <div>
+              <p class="cert-name"><%= cert.name %></p>
+              <p class="cert-code"><%= cert.code %></p>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+
+        <h3 class="sub-heading" style="margin-top:2rem;">Key Achievements</h3>
+        <div class="achievements-stack">
+          <% achievements.forEach(function(a) { %>
+          <div class="achievement-item" style="--ach-color: <%= a.color %>;">
+            <span class="ach-icon"><%= a.icon %></span>
+            <div>
+              <p class="ach-title"><%= a.title %></p>
+              <p class="ach-desc"><%= a.description %></p>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      </div><!-- /about-right -->
+    </div><!-- /about-grid -->
+
+    <!-- Photo Gallery Strip -->
+    <div class="photo-strip animate-on-scroll">
+      <p class="photo-strip-label">// photos</p>
+      <div class="photo-thumbs" id="photoStrip">
+        <button class="photo-thumb" data-index="0" aria-label="Open photo 1">
+          <img src="/images/photo-1.jpg" alt="Harshit at UMD CS Department — arms spread wide" loading="lazy" />
+          <span class="photo-thumb-overlay"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span>
+        </button>
+        <button class="photo-thumb" data-index="1" aria-label="Open photo 2">
+          <img src="/images/photo-2.jpg" alt="Harshit at UMD CS Department — pointing" loading="lazy" />
+          <span class="photo-thumb-overlay"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span>
+        </button>
+        <button class="photo-thumb" data-index="2" aria-label="Open photo 3">
+          <img src="/images/photo-3.jpg" alt="Harshit at UMD CS Department — formal portrait" loading="lazy" />
+          <span class="photo-thumb-overlay"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span>
+        </button>
+        <button class="photo-thumb" data-index="3" aria-label="Open photo 4">
+          <img src="/images/photo-4.jpg" alt="Harshit on the Smith Business Magazine cover" loading="lazy" />
+          <span class="photo-thumb-overlay"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ CAROUSEL MODAL ═══════════════════════════════════════════ -->
+<div class="carousel-modal" id="carouselModal" role="dialog" aria-modal="true" aria-label="Photo gallery" hidden>
+  <div class="carousel-backdrop" id="carouselBackdrop"></div>
+
+  <div class="carousel-shell">
+    <!-- Close -->
+    <button class="carousel-close" id="carouselClose" aria-label="Close gallery">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <!-- Counter -->
+    <div class="carousel-counter" aria-live="polite">
+      <span id="carouselCurrent">1</span>&thinsp;/&thinsp;<span id="carouselTotal">4</span>
+    </div>
+
+    <!-- Image stage -->
+    <div class="carousel-stage" id="carouselStage">
+      <img class="carousel-img" id="carouselImg" src="" alt="" draggable="false" />
+      <div class="carousel-img-glow" id="carouselGlow" aria-hidden="true"></div>
+    </div>
+
+    <!-- Caption -->
+    <p class="carousel-caption" id="carouselCaption"></p>
+
+    <!-- Prev / Next -->
+    <button class="carousel-arrow carousel-prev" id="carouselPrev" aria-label="Previous photo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="carousel-arrow carousel-next" id="carouselNext" aria-label="Next photo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+
+    <!-- Dot nav -->
+    <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Photo thumbnails"></div>
+  </div>
+</div>

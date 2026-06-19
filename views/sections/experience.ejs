@@ -1,0 +1,95 @@
+<section id="experience" class="section-exp">
+  <div class="exp-scroll-container" id="expScrollContainer">
+    <div class="exp-sticky-panel" id="expStickyPanel">
+
+      <!-- ─── LEFT SIDEBAR ─────────────────────────────── -->
+      <aside class="exp-sidebar">
+        <div class="exp-sidebar-top">
+          <span class="section-label">03 / Experience</span>
+          <h2 class="section-title">Work <span class="gradient-text">History</span></h2>
+        </div>
+
+        <nav class="exp-nav" aria-label="Experience navigation">
+          <div class="exp-nav-track">
+            <div class="exp-nav-track-fill" id="expNavFill"></div>
+          </div>
+          <% experience.forEach(function(job, i) { %>
+          <button class="exp-nav-btn <%= i === 0 ? 'active' : '' %>"
+                  data-index="<%= i %>"
+                  style="--job-color: <%= job.color %>;"
+                  aria-label="View <%= job.company %>">
+            <span class="exp-nav-dot"></span>
+            <div class="exp-nav-text">
+              <span class="exp-nav-co"><%= job.company %></span>
+              <span class="exp-nav-yr"><%= job.period %></span>
+            </div>
+          </button>
+          <% }); %>
+        </nav>
+
+        <div class="exp-counter" aria-live="polite">
+          <span class="exp-counter-n" id="expCurrent">01</span>
+          <span class="exp-counter-denom">/ <%= experience.length < 10 ? '0' + experience.length : experience.length %></span>
+        </div>
+      </aside>
+
+      <!-- ─── RIGHT CONTENT PANEL ──────────────────────── -->
+      <div class="exp-content">
+
+        <!-- Scroll progress bar -->
+        <div class="exp-progress-bar" aria-hidden="true">
+          <div class="exp-progress-fill" id="expProgressFill"></div>
+        </div>
+
+        <!-- Job cards (absolutely stacked, one visible at a time) -->
+        <div class="exp-cards-wrapper">
+          <% experience.forEach(function(job, i) { %>
+          <article class="exp-card <%= i === 0 ? 'active' : '' %>"
+                   data-index="<%= i %>"
+                   style="--job-color: <%= job.color %>; --job-glow: <%= job.glow %>;">
+
+            <!-- Decorative large index number -->
+            <span class="exp-bg-num" aria-hidden="true">0<%= i + 1 %></span>
+
+            <div class="exp-card-inner">
+              <!-- Company -->
+              <div class="exp-company-block">
+                <h3 class="exp-company-name"><%= job.company %></h3>
+                <% if (job.companyDetail) { %>
+                <span class="exp-company-detail"><%= job.companyDetail %></span>
+                <% } %>
+              </div>
+
+              <!-- Role row -->
+              <div class="exp-role-row">
+                <span class="exp-role"><%= job.role %></span>
+                <span class="exp-type-badge"><%= job.type %></span>
+              </div>
+
+              <!-- Period -->
+              <div class="exp-period">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <%= job.period %>
+              </div>
+
+              <!-- Accent divider -->
+              <div class="exp-accent-line"></div>
+
+              <!-- Highlights -->
+              <ul class="exp-highlights">
+                <% job.highlights.forEach(function(h, hi) { %>
+                <li class="exp-hi" style="--d: <%= hi * 0.07 %>s;">
+                  <span class="exp-hi-dot" aria-hidden="true"></span>
+                  <span class="exp-hi-text"><%= h %></span>
+                </li>
+                <% }); %>
+              </ul>
+            </div>
+          </article>
+          <% }); %>
+        </div>
+
+      </div><!-- /exp-content -->
+    </div><!-- /exp-sticky-panel -->
+  </div><!-- /exp-scroll-container -->
+</section>

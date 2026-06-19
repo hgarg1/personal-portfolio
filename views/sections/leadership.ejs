@@ -1,0 +1,20 @@
+<section id="leadership" class="section">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-label">06 / Leadership</span>
+      <h2 class="section-title">Impact &amp; <span class="gradient-text">Service</span></h2>
+    </div>
+
+    <div class="leadership-grid">
+      <% leadership.forEach(function(item) { %>
+      <div class="leadership-card animate-on-scroll">
+        <span class="leadership-icon"><%= item.icon %></span>
+        <div class="leadership-info">
+          <p class="leadership-role"><%= item.role %></p>
+          <p class="leadership-org"><%= item.org %></p>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+</section>

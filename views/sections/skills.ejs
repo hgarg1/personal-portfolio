@@ -1,0 +1,25 @@
+<section id="skills" class="section">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-label">02 / Skills</span>
+      <h2 class="section-title">Technical <span class="gradient-text">Proficiencies</span></h2>
+      <p class="section-subtitle">A broad stack built through production systems, not side projects.</p>
+    </div>
+
+    <div class="skills-grid">
+      <% skills.forEach(function(group) { %>
+      <div class="skill-group animate-on-scroll" style="--grp-color: <%= group.color %>;">
+        <div class="skill-group-header">
+          <span class="skill-group-icon"><%= group.icon %></span>
+          <span class="skill-group-name"><%= group.category %></span>
+        </div>
+        <div class="skill-tags">
+          <% group.items.forEach(function(item) { %>
+          <span class="skill-tag"><%= item %></span>
+          <% }); %>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+  </div>
+</section>

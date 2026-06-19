@@ -1,0 +1,15 @@
+<%- include('./partials/head') %>
+
+<section class="error-page section">
+  <div class="container text-center">
+    <div class="error-code">500</div>
+    <h1 class="error-title">Server Error</h1>
+    <p class="error-subtitle">Something went wrong on our end. Please try again later.</p>
+    <% if (process.env.NODE_ENV === 'development' && error) { %>
+    <pre class="error-stack"><%= error.stack %></pre>
+    <% } %>
+    <a href="/" class="btn btn-primary">&larr; Back to Home</a>
+  </div>
+</section>
+
+<%- include('./partials/foot') %>
