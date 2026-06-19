@@ -9,28 +9,55 @@
         <p class="auth-subtitle">Provide your credentials to access the system dashboard.</p>
       </div>
 
+      <div id="authAlert" class="auth-error-alert" style="display: none; margin-bottom: 1.5rem;">
+        <span class="error-icon">⚠️</span>
+        <span id="authAlertMsg" class="error-message"></span>
+      </div>
+
       <% if (error) { %>
-      <div class="auth-error-alert">
+      <div class="auth-error-alert" style="margin-bottom: 1.5rem;">
         <span class="error-icon">⚠️</span>
         <span class="error-message"><%= error %></span>
       </div>
       <% } %>
 
-      <form action="/auth/login" method="POST" class="auth-form">
+      <form id="loginForm" action="/auth/login" method="POST" class="auth-form">
         <div class="form-group">
           <label for="email" class="form-label">Email Address</label>
           <input type="email" id="email" name="email" class="form-input" placeholder="garg.archie@gmail.com" required autofocus />
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="passwordGroup">
           <label for="password" class="form-label">Password</label>
           <input type="password" id="password" name="password" class="form-input" placeholder="••••••••••••" required />
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full">
+        <!-- Passkey info banner -->
+        <div id="passkeyBanner" class="passkey-banner" style="display: none;">
+          <div class="passkey-banner-icon">🔐</div>
+          <div class="passkey-banner-text">
+            <strong>Passkey Registered</strong><br>
+            Biometrics (Face ID, Windows Hello, etc.) is active for this account.
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submitBtn" class="btn btn-primary btn-full">
           Authenticate &nbsp;&#10022;
         </button>
+
+        <!-- Passkey trigger button (hidden by default) -->
+        <button type="button" id="passkeyBtn" class="btn btn-primary btn-full" style="display: none; margin-top: 1rem; background: linear-gradient(135deg, var(--purple), var(--pink));">
+          Sign In with Passkey &nbsp;🔑
+        </button>
       </form>
+
+      <!-- Fallback link container -->
+      <div id="fallbackContainer" style="display: none; margin-top: 1.25rem; text-align: center;">
+        <a href="#" id="fallbackLink" style="color: var(--text-muted); text-decoration: none; font-size: 0.8rem; font-family: var(--font-mono); transition: color var(--ease);">
+          // use password instead
+        </a>
+      </div>
 
       <div style="margin-top: 1.5rem; text-align: center; font-size: 0.82rem; color: var(--text-muted);">
         Don't have an account? <a href="/auth/signup" style="color: var(--purple); text-decoration: none; font-weight: 500; transition: color var(--ease);">Sign Up</a>
@@ -38,5 +65,263 @@
     </div>
   </div>
 </section>
+
+<style>
+  .passkey-banner {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    padding: 1rem;
+    border-radius: var(--r-md);
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.4s var(--ease);
+  }
+  .passkey-banner-icon {
+    font-size: 1.5rem;
+  }
+  .passkey-banner-text {
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .passkey-banner-text strong {
+    color: var(--purple-light);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const passwordGroup = document.getElementById('passwordGroup');
+  const submitBtn = document.getElementById('submitBtn');
+  const passkeyBtn = document.getElementById('passkeyBtn');
+  const passkeyBanner = document.getElementById('passkeyBanner');
+  const fallbackContainer = document.getElementById('fallbackContainer');
+  const fallbackLink = document.getElementById('fallbackLink');
+  const authAlert = document.getElementById('authAlert');
+  const authAlertMsg = document.getElementById('authAlertMsg');
+
+  let hasPasskey = false;
+  let passkeyFailedAttempts = 0;
+  let checkingEmail = '';
+
+  function showAlert(msg) {
+    authAlertMsg.textContent = msg;
+    authAlert.style.display = 'flex';
+  }
+
+  function hideAlert() {
+    authAlert.style.display = 'none';
+  }
+
+  // Base64Url helper functions
+  function base64urlToUint8Array(base64url) {
+    const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
+    const base64 = (base64url + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  function uint8ArrayToBase64url(buffer) {
+    const base64 = window.btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
+  // Check email for passkeys
+  async function checkPasskeyStatus() {
+    const email = emailInput.value.trim();
+    if (!email || email === checkingEmail) return;
+    checkingEmail = email;
+
+    try {
+      const res = await fetch('/auth/check-passkey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      hasPasskey = data.hasPasskey;
+      passkeyFailedAttempts = data.failedAttempts || 0;
+
+      updateUIState();
+
+      // Auto-trigger passkey authentication if passkey is registered and attempts < 3
+      if (hasPasskey && passkeyFailedAttempts < 3) {
+        triggerPasskeyLogin();
+      }
+    } catch (err) {
+      console.error('Error checking passkey:', err);
+    }
+  }
+
+  emailInput.addEventListener('blur', checkPasskeyStatus);
+  emailInput.addEventListener('change', checkPasskeyStatus);
+
+  function updateUIState() {
+    if (hasPasskey) {
+      passkeyBanner.style.display = 'flex';
+      fallbackContainer.style.display = 'block';
+
+      if (passkeyFailedAttempts < 3) {
+        // Disable password input
+        passwordInput.disabled = true;
+        passwordInput.removeAttribute('required');
+        passwordGroup.style.opacity = '0.5';
+        passwordInput.placeholder = 'Locked (Passkey Enabled)';
+
+        // Show passkey trigger button and hide submit button
+        submitBtn.style.display = 'none';
+        passkeyBtn.style.display = 'block';
+      } else {
+        // Enable password input (unlocked after 3 failures)
+        passwordInput.disabled = false;
+        passwordInput.setAttribute('required', 'required');
+        passwordGroup.style.opacity = '1';
+        passwordInput.placeholder = '••••••••••••';
+
+        // Show submit button and hide passkey button
+        submitBtn.style.display = 'block';
+        passkeyBtn.style.display = 'none';
+
+        showAlert('⚠️ Biometric login failed 3 times. Please log in using your password.');
+      }
+    } else {
+      // Normal password flow
+      passkeyBanner.style.display = 'none';
+      fallbackContainer.style.display = 'none';
+
+      passwordInput.disabled = false;
+      passwordInput.setAttribute('required', 'required');
+      passwordGroup.style.opacity = '1';
+      passwordInput.placeholder = '••••••••••••';
+
+      submitBtn.style.display = 'block';
+      passkeyBtn.style.display = 'none';
+    }
+  }
+
+  // Record a biometric failure and update state
+  async function recordBiometricFailure(force = false) {
+    const email = emailInput.value.trim();
+    try {
+      const res = await fetch('/auth/passkey/record-failure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, force }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        passkeyFailedAttempts = data.failedAttempts;
+        updateUIState();
+      }
+    } catch (err) {
+      console.error('Error recording passkey failure:', err);
+    }
+  }
+
+  // Trigger passkey authentication process
+  async function triggerPasskeyLogin() {
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    hideAlert();
+
+    try {
+      // 1. Fetch authentication options
+      const optionsRes = await fetch('/auth/passkey/login-options', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!optionsRes.ok) {
+        const errData = await optionsRes.json();
+        throw new Error(errData.error || 'Failed to fetch login options.');
+      }
+
+      const options = await optionsRes.json();
+
+      // Transform options challenge and allowCredentials id to Uint8Array
+      options.challenge = base64urlToUint8Array(options.challenge);
+      if (options.allowCredentials) {
+        options.allowCredentials.forEach(cred => {
+          cred.id = base64urlToUint8Array(cred.id);
+        });
+      }
+
+      // 2. Prompt browser biometrics
+      const assertion = await navigator.credentials.get({
+        publicKey: options,
+      });
+
+      if (!assertion) {
+        throw new Error('Failed to obtain biometric assertion.');
+      }
+
+      // Format response for verification
+      const assertionForServer = {
+        id: assertion.id,
+        rawId: uint8ArrayToBase64url(assertion.rawId),
+        type: assertion.type,
+        response: {
+          clientDataJSON: uint8ArrayToBase64url(assertion.response.clientDataJSON),
+          authenticatorData: uint8ArrayToBase64url(assertion.response.authenticatorData),
+          signature: uint8ArrayToBase64url(assertion.response.signature),
+          userHandle: assertion.response.userHandle ? uint8ArrayToBase64url(assertion.response.userHandle) : null,
+        },
+      };
+
+      // 3. Post assertion to server for verification
+      const loginRes = await fetch('/auth/passkey/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assertionForServer),
+      });
+
+      const loginData = await loginRes.json();
+
+      if (loginData.verified) {
+        // Successful login, redirect to dashboard
+        window.location.href = '/auth/dashboard';
+      } else {
+        // Increment attempts on backend
+        await recordBiometricFailure();
+        showAlert(loginData.error || 'Passkey verification failed.');
+      }
+    } catch (err) {
+      console.error(err);
+      if (err.name === 'NotAllowedError') {
+        // User canceled or prompt timed out, record as failure
+        await recordBiometricFailure();
+      } else {
+        showAlert(err.message || 'An error occurred during passkey authentication.');
+      }
+    }
+  }
+
+  passkeyBtn.addEventListener('click', triggerPasskeyLogin);
+
+  // Manual fallback link handler
+  fallbackLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (confirm('Are you sure you want to bypass biometric login? (This counts as 3 failed biometric attempts to unlock password input).')) {
+      await recordBiometricFailure(true);
+    }
+  });
+});
+</script>
 
 <%- include('../partials/foot') %>

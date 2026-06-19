@@ -14,7 +14,20 @@ model PortfolioUser {
   emailVerified       Boolean   @default(false)
   verificationCode    String?
   verificationExpires DateTime?
+  passkeyFailedAttempts Int     @default(0)
   createdAt           DateTime  @default(now())
+  passkeys            Passkey[]
+}
+
+model Passkey {
+  id           String        @id @default(uuid())
+  credentialID String        @unique
+  publicKey    String        // Stored as base64-url
+  counter      BigInt
+  transports   String?       // Comma-separated list of transport options
+  userId       Int
+  user         PortfolioUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
 }
 
 model ContactSubmission {
