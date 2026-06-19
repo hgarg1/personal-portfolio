@@ -390,18 +390,122 @@
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
       
-      // Formatting
+      // 1. Extract block code blocks and replace with placeholders
+      const codeBlocks = [];
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
+        codeBlocks.push(`<pre style="background: rgba(0,0,0,0.4); padding: 0.75rem; border-radius: 6px; overflow-x: auto; border: 1px solid rgba(130, 155, 200, 0.15); margin: 0.5rem 0; font-family: monospace; font-size: 0.85em; color: var(--cyan);"><code class="language-${lang}">${code.trim()}</code></pre>`);
+        return placeholder;
+      });
+
+      // 2. Inline code: `code`
+      html = html.replace(/`([^`]+)`/g, '<code style="background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: var(--cyan);">$1</code>');
+
+      // 3. Bold: **text**
       html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      // 4. Italic: *text*
       html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-      html = html.replace(/`(.*?)`/g, '<code style="background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: var(--cyan);">$1</code>');
-      
-      // Formatting lists
-      html = html.replace(/^\s*[-*]\s+(.*?)$/gm, '<li>$1</li>');
-      html = html.replace(/(<li>.*?<\/li>)/g, '<ul>$1</ul>');
-      html = html.replace(/<\/ul>\s*<ul>/g, '');
-      
-      html = html.replace(/\n/g, '<br>');
-      return html;
+
+      // 5. Links: [text](url)
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, href) => {
+        const isExternal = href.startsWith('http') || href.startsWith('mailto');
+        return `<a href="${href}" ${isExternal ? 'target="_blank" rel="noopener"' : ''} style="color: var(--cyan); text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--cyan)'">${label}</a>`;
+      });
+
+      // 6. Line by line parsing for headers and lists
+      const lines = html.split('\n');
+      let inUl = false;
+      let inOl = false;
+      const parsedLines = [];
+
+      for (let line of lines) {
+        // Headers
+        if (line.startsWith('#### ')) {
+          line = `<h6 style="margin: 0.75rem 0 0.35rem 0; color: #fff; font-size: 0.9rem; font-weight: 600;">${line.substring(5)}</h6>`;
+        } else if (line.startsWith('### ')) {
+          line = `<h5 style="margin: 0.75rem 0 0.35rem 0; color: #fff; font-size: 0.95rem; font-weight: 600;">${line.substring(4)}</h5>`;
+        } else if (line.startsWith('## ')) {
+          line = `<h4 style="margin: 0.85rem 0 0.4rem 0; color: #fff; font-size: 1.05rem; font-weight: 600; border-bottom: 1px solid rgba(130,155,200,0.1); padding-bottom: 0.2rem;">${line.substring(3)}</h4>`;
+        } else if (line.startsWith('# ')) {
+          line = `<h3 style="margin: 0.95rem 0 0.45rem 0; color: #fff; font-size: 1.15rem; font-weight: 600;">${line.substring(2)}</h3>`;
+        }
+        
+        // Unordered lists
+        const ulMatch = line.match(/^\s*[-*]\s+(.*)$/);
+        if (ulMatch) {
+          if (inOl) {
+            parsedLines.push('</ol>');
+            inOl = false;
+          }
+          if (!inUl) {
+            parsedLines.push('<ul style="margin: 0.5rem 0; padding-left: 1.25rem; list-style-type: disc;">');
+            inUl = true;
+          }
+          line = `<li style="margin: 0.25rem 0;">${ulMatch[1]}</li>`;
+        }
+        // Ordered lists
+        else {
+          const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+          if (olMatch) {
+            if (inUl) {
+              parsedLines.push('</ul>');
+              inUl = false;
+            }
+            if (!inOl) {
+              parsedLines.push('<ol style="margin: 0.5rem 0; padding-left: 1.25rem; list-style-type: decimal;">');
+              inOl = true;
+            }
+            line = `<li style="margin: 0.25rem 0;">${olMatch[1]}</li>`;
+          } else {
+            // Close open lists if this line is not a list item
+            if (inUl) {
+              parsedLines.push('</ul>');
+              inUl = false;
+            }
+            if (inOl) {
+              parsedLines.push('</ol>');
+              inOl = false;
+            }
+          }
+        }
+
+        parsedLines.push(line);
+      }
+
+      // Close any remaining open lists
+      if (inUl) parsedLines.push('</ul>');
+      if (inOl) parsedLines.push('</ol>');
+
+      // Rejoin lines
+      let finalHtml = '';
+      for (let i = 0; i < parsedLines.length; i++) {
+        const line = parsedLines[i];
+        finalHtml += line;
+        if (i < parsedLines.length - 1) {
+          const nextLine = parsedLines[i+1];
+          const isPlaceholder = line.startsWith('__CODE_BLOCK_PLACEHOLDER_');
+          const isNextPlaceholder = nextLine.startsWith('__CODE_BLOCK_PLACEHOLDER_');
+          
+          const skipBr = line.endsWith('</ul>') || line.endsWith('</ol>') ||
+                         line.endsWith('</h3>') || line.endsWith('</h4>') || line.endsWith('</h5>') || line.endsWith('</h6>') ||
+                         line.startsWith('<ul') || line.startsWith('<ol') || line.startsWith('</ul') || line.startsWith('</ol') ||
+                         nextLine.startsWith('<ul') || nextLine.startsWith('<ol') ||
+                         nextLine.startsWith('</ul') || nextLine.startsWith('</ol') ||
+                         line.endsWith('</li>') || nextLine.startsWith('<li') ||
+                         isPlaceholder || isNextPlaceholder || line.trim() === '';
+          if (!skipBr) {
+            finalHtml += '<br>';
+          }
+        }
+      }
+
+      // 7. Restore block code blocks
+      for (let i = 0; i < codeBlocks.length; i++) {
+        finalHtml = finalHtml.replace(`__CODE_BLOCK_PLACEHOLDER_${i}__`, codeBlocks[i]);
+      }
+
+      return finalHtml;
     }
 
     async function submitAIChat(e) {
