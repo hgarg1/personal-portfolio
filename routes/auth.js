@@ -560,7 +560,7 @@ router.get('/passkey/register-options', isAuthenticated, async (req, res) => {
       userDisplayName: user.name || user.email,
       attestationType: 'none',
       excludeCredentials: user.passkeys.map(pk => ({
-        id: Buffer.from(pk.credentialID, 'base64url'),
+        id: pk.credentialID,
         type: 'public-key',
         transports: pk.transports ? pk.transports.split(',') : undefined,
       })),
@@ -653,7 +653,7 @@ router.post('/passkey/login-options', async (req, res) => {
     const options = await generateAuthenticationOptions({
       rpID,
       allowCredentials: user.passkeys.map(pk => ({
-        id: Buffer.from(pk.credentialID, 'base64url'),
+        id: pk.credentialID,
         type: 'public-key',
         transports: pk.transports ? pk.transports.split(',') : undefined,
       })),
