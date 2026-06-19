@@ -1915,23 +1915,26 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .exec-card::after {
   content: '';
   position: absolute;
-  right: -5%;
-  bottom: -15%;
-  width: 320px;
-  height: 320px;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 50%;
   background-image: url('/images/hbs-bg.png');
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: right bottom;
-  opacity: 0.12; /* increased visibility */
+  background-position: center;
+  opacity: 0.12;
   filter: grayscale(100%) contrast(110%) brightness(75%);
   pointer-events: none;
   z-index: 0;
   transition: transform 0.6s ease, opacity 0.6s ease;
+  mask-image: linear-gradient(to left, rgba(0,0,0,1) 30%, rgba(0,0,0,0));
+  -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 30%, rgba(0,0,0,0));
 }
 
 .exec-card:hover::after {
-  transform: scale(1.06) translate(-5px, -5px);
+  transform: scale(1.05);
   opacity: 0.18;
 }
 
