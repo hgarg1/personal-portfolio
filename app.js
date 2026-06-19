@@ -40,8 +40,10 @@ app.use((err, req, res, next) => {
 });
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🚀  Server running → http://localhost:${PORT}\n`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀  Server running → http://localhost:${PORT}\n`);
+  });
+}
 
 module.exports = app;
