@@ -177,7 +177,7 @@
 // ─── 4. Active Nav on Scroll ─────────────────────────────────────
 (function initActiveNav() {
   var sections  = document.querySelectorAll('section[id]');
-  var navLinks  = document.querySelectorAll('.nav-link[href^="#"]');
+  var navLinks  = document.querySelectorAll('.nav-link[href*="#"]');
   if (!sections.length || !navLinks.length) return;
 
   function update() {
@@ -191,7 +191,9 @@
     });
 
     navLinks.forEach(function (link) {
-      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+      var href = link.getAttribute('href');
+      var hash = href.substring(href.indexOf('#'));
+      link.classList.toggle('active', hash === '#' + current);
     });
   }
 
@@ -383,12 +385,22 @@
 
 
 // ─── 10. Smooth Scroll for Anchor Links ──────────────────────────
-document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+document.querySelectorAll('a[href*="#"]').forEach(function (anchor) {
   anchor.addEventListener('click', function (e) {
-    var target = document.querySelector(this.getAttribute('href'));
-    if (target) {
-      e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var href = this.getAttribute('href');
+    var hashIndex = href.indexOf('#');
+    if (hashIndex === -1) return;
+
+    var hash = href.substring(hashIndex);
+    var path = href.substring(0, hashIndex);
+
+    // Perform smooth scroll only on the main page (if path matches / or is empty)
+    if (path === '' || path === '/' || path === window.location.pathname) {
+      var target = document.querySelector(hash);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   });
 });
