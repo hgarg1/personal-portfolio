@@ -7,11 +7,14 @@ datasource db {
 }
 
 model PortfolioUser {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
+  id                  Int       @id @default(autoincrement())
+  email               String    @unique
+  password            String
+  name                String?
+  emailVerified       Boolean   @default(false)
+  verificationCode    String?
+  verificationExpires DateTime?
+  createdAt           DateTime  @default(now())
 }
 
 model ContactSubmission {

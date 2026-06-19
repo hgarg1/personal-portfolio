@@ -1,0 +1,291 @@
+<%- include('../partials/head') %>
+
+<style>
+  .otp-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-block: 1.5rem;
+  }
+  .otp-input {
+    width: 3.5rem;
+    height: 4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--text);
+    font-family: var(--font-head);
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
+  }
+  .otp-input:focus {
+    outline: none;
+    border-color: var(--purple);
+    background: rgba(109, 40, 217, 0.05);
+    box-shadow: 0 0 15px rgba(109, 40, 217, 0.3);
+  }
+  .auth-success-alert {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #a7f3d0;
+    border-radius: var(--r-md);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .resend-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .resend-text {
+    color: var(--text-muted);
+  }
+  .resend-btn {
+    background: none;
+    border: none;
+    color: var(--purple);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.85rem;
+    transition: color var(--ease);
+  }
+  .resend-btn:hover {
+    color: #a78bfa;
+  }
+  .resend-btn:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  .resend-timer {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .dev-banner {
+    margin-top: 2rem;
+    background: rgba(167, 139, 250, 0.05);
+    border: 1px dashed rgba(167, 139, 250, 0.3);
+    border-radius: var(--r-md);
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .dev-banner-badge {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--purple);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.25rem;
+  }
+  .dev-banner-text {
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .dev-code-val {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--purple);
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+  }
+</style>
+
+<section class="section auth-section">
+  <div class="container">
+    <div class="auth-box animate-on-scroll">
+      <div class="auth-header">
+        <span class="auth-label">// email verification</span>
+        <h1 class="auth-title">Verify <span class="gradient-text">Identity</span></h1>
+        <p class="auth-subtitle">We sent a 6-digit code to <strong style="color: var(--text);"><%= email %></strong>. Enter it below to verify.</p>
+      </div>
+
+      <% if (error) { %>
+      <div class="auth-error-alert" id="authErrorAlert">
+        <span class="error-icon">⚠️</span>
+        <span class="error-message"><%= error %></span>
+      </div>
+      <% } %>
+
+      <% if (success) { %>
+      <div class="auth-success-alert" id="authSuccessAlert">
+        <span class="success-icon">✓</span>
+        <span class="success-message"><%= success %></span>
+      </div>
+      <% } %>
+
+      <form action="/auth/verify" method="POST" class="auth-form" id="otpForm">
+        <input type="hidden" name="email" value="<%= email %>" />
+        <input type="hidden" id="fullOtpCode" name="code" value="" />
+
+        <div class="otp-container">
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
+          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="verifyBtn">
+          Verify &nbsp;&#10022;
+        </button>
+      </form>
+
+      <div class="resend-container">
+        <span class="resend-text">Didn't receive the email?</span>
+        <button type="button" class="resend-btn" id="resendBtn">Resend Code</button>
+        <span class="resend-timer" id="resendTimer">(60s)</span>
+      </div>
+
+      <% if (devCode) { %>
+      <div class="dev-banner">
+        <div class="dev-banner-badge">// DEV MODE ACTIVE</div>
+        <div class="dev-banner-text">Verification Code: <span class="dev-code-val"><%= devCode %></span></div>
+      </div>
+      <% } %>
+      
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <a href="/auth" style="color: var(--text-muted); text-decoration: none; font-size: 0.8rem; opacity: 0.7;">&larr; Back to Login</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const inputs = document.querySelectorAll('.otp-input');
+    const form = document.getElementById('otpForm');
+    const fullOtpInput = document.getElementById('fullOtpCode');
+    const resendBtn = document.getElementById('resendBtn');
+    const resendTimer = document.getElementById('resendTimer');
+    const email = '<%= email %>';
+
+    // Auto-focus first input
+    if (inputs[0]) inputs[0].focus();
+
+    inputs.forEach((input, index) => {
+      // Move to next input on keyup
+      input.addEventListener('keyup', (e) => {
+        const value = input.value;
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+          return;
+        }
+
+        if (value.length === 1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      });
+
+      // Move to previous input on backspace
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace') {
+          if (input.value.length === 0 && index > 0) {
+            inputs[index - 1].focus();
+          }
+        }
+      });
+
+      // Paste handler
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const clipboardData = e.clipboardData || window.clipboardData;
+        const pastedData = clipboardData.getData('Text').trim();
+
+        if (pastedData.length === 6 && /^\d+$/.test(pastedData)) {
+          for (let i = 0; i < inputs.length; i++) {
+            inputs[i].value = pastedData[i];
+          }
+          inputs[inputs.length - 1].focus();
+        }
+      });
+    });
+
+    // Form submission helper
+    form.addEventListener('submit', (e) => {
+      let code = '';
+      inputs.forEach(input => {
+        code += input.value;
+      });
+      fullOtpInput.value = code;
+
+      if (code.length !== 6) {
+        e.preventDefault();
+        alert('Please enter a 6-digit code.');
+      }
+    });
+
+    // Resend Code Cooldown Timer
+    let cooldown = 60;
+    let timerInterval;
+
+    function startTimer() {
+      resendBtn.disabled = true;
+      resendTimer.style.display = 'inline';
+      resendTimer.textContent = `(${cooldown}s)`;
+
+      timerInterval = setInterval(() => {
+        cooldown--;
+        resendTimer.textContent = `(${cooldown}s)`;
+
+        if (cooldown <= 0) {
+          clearInterval(timerInterval);
+          resendBtn.disabled = false;
+          resendTimer.style.display = 'none';
+          cooldown = 60;
+        }
+      }, 1000);
+    }
+
+    startTimer();
+
+    resendBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/auth/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // If in dev mode, reload page to refresh the dev banner code
+          const isDev = <%= devCode !== null %>;
+          if (isDev) {
+            window.location.href = `/auth/verify?email=${encodeURIComponent(email)}&success=${encodeURIComponent('A new code has been generated.')}`;
+          } else {
+            // Show custom success message
+            const successAlert = document.getElementById('authSuccessAlert') || document.createElement('div');
+            successAlert.className = 'auth-success-alert';
+            successAlert.id = 'authSuccessAlert';
+            successAlert.innerHTML = `<span class="success-icon">✓</span><span class="success-message">${data.message}</span>`;
+            
+            const errorAlert = document.getElementById('authErrorAlert');
+            if (errorAlert) errorAlert.remove();
+
+            form.parentNode.insertBefore(successAlert, form);
+            startTimer();
+          }
+        } else {
+          alert(data.error || 'Failed to resend verification code.');
+        }
+      } catch (err) {
+        console.error('Resend error:', err);
+        alert('Failed to resend verification code. Please try again.');
+      }
+    });
+  });
+</script>
+
+<%- include('../partials/foot') %>

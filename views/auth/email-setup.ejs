@@ -1,0 +1,47 @@
+<%- include('../partials/head') %>
+
+<section class="section auth-section">
+  <div class="container">
+    <div class="auth-box animate-on-scroll">
+      <div class="auth-header">
+        <span class="auth-label">// system setup</span>
+        <h1 class="auth-title">Email <span class="gradient-text">Config</span></h1>
+        <p class="auth-subtitle">Configure Gmail OAuth2 credentials to send real verification emails.</p>
+      </div>
+
+      <% if (error) { %>
+      <div class="auth-error-alert">
+        <span class="error-icon">⚠️</span>
+        <span class="error-message"><%= error %></span>
+      </div>
+      <% } %>
+
+      <form action="/auth/email-setup" method="POST" class="auth-form">
+        <div class="form-group">
+          <label for="email" class="form-label">Gmail User Address</label>
+          <input type="email" id="email" name="email" class="form-input" placeholder="garg.archie@gmail.com" required autofocus />
+        </div>
+
+        <div class="form-group">
+          <label for="clientId" class="form-label">Google Client ID</label>
+          <input type="text" id="clientId" name="clientId" class="form-input" placeholder="client_id.apps.googleusercontent.com" required />
+        </div>
+
+        <div class="form-group">
+          <label for="clientSecret" class="form-label">Google Client Secret</label>
+          <input type="password" id="clientSecret" name="clientSecret" class="form-input" placeholder="••••••••••••••••••••" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          Authorize with Google &nbsp;&#10022;
+        </button>
+      </form>
+
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <a href="/auth" class="footer-link" style="font-size: 0.8rem; text-decoration: none; opacity: 0.7;">&larr; Back to Login</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/foot') %>

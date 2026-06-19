@@ -4,9 +4,9 @@
   <div class="container">
     <div class="auth-box animate-on-scroll">
       <div class="auth-header">
-        <span class="auth-label">// command center</span>
-        <h1 class="auth-title">Admin <span class="gradient-text">Portal</span></h1>
-        <p class="auth-subtitle">Provide your credentials to access the system dashboard.</p>
+        <span class="auth-label">// registration</span>
+        <h1 class="auth-title">Sign <span class="gradient-text">Up</span></h1>
+        <p class="auth-subtitle">Create a new admin credential to access the dashboard.</p>
       </div>
 
       <% if (error) { %>
@@ -16,10 +16,15 @@
       </div>
       <% } %>
 
-      <form action="/auth/login" method="POST" class="auth-form">
+      <form action="/auth/signup" method="POST" class="auth-form">
+        <div class="form-group">
+          <label for="name" class="form-label">Full Name</label>
+          <input type="text" id="name" name="name" class="form-input" placeholder="Harshit Garg" required autofocus />
+        </div>
+
         <div class="form-group">
           <label for="email" class="form-label">Email Address</label>
-          <input type="email" id="email" name="email" class="form-input" placeholder="garg.archie@gmail.com" required autofocus />
+          <input type="email" id="email" name="email" class="form-input" placeholder="garg.archie@gmail.com" required />
         </div>
 
         <div class="form-group">
@@ -28,12 +33,12 @@
         </div>
 
         <button type="submit" class="btn btn-primary btn-full">
-          Authenticate &nbsp;&#10022;
+          Register &nbsp;&#10022;
         </button>
       </form>
 
       <div style="margin-top: 1.5rem; text-align: center; font-size: 0.82rem; color: var(--text-muted);">
-        Don't have an account? <a href="/auth/signup" style="color: var(--purple); text-decoration: none; font-weight: 500; transition: color var(--ease);">Sign Up</a>
+        Already have an account? <a href="/auth" style="color: var(--purple); text-decoration: none; font-weight: 500; transition: color var(--ease);">Log In</a>
       </div>
     </div>
   </div>
