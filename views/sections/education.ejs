@@ -1,56 +1,104 @@
 <section id="education" class="section section-alt">
   <div class="container">
     <div class="section-header animate-on-scroll">
-      <span class="section-label">05 / Education</span>
-      <h2 class="section-title">Academic <span class="gradient-text">Background</span></h2>
+      <span class="section-label">05 / Education &amp; Executive Programs</span>
+      <h2 class="section-title">Education &amp; <span class="gradient-text">Executive Development</span></h2>
     </div>
 
-    <div class="edu-card animate-on-scroll">
-      <div class="edu-card-left">
-        <div class="edu-school-badge">UMD</div>
-        <div class="edu-school-info">
-          <h3 class="edu-school"><%= education.school %></h3>
-          <p class="edu-period"><%= education.period %></p>
+    <div class="edu-layout">
+      <!-- 1. Harvard Business School Foundry Bootcamp (Featured Executive Development) -->
+      <div class="exec-card animate-on-scroll">
+        <div class="exec-card-header">
+          <div class="exec-badge-wrapper">
+            <span class="exec-badge">HBS Foundry 2026</span>
+            <span class="exec-label">// Founder Development &amp; Venture Building</span>
+          </div>
+          <div class="exec-institution-wrapper">
+            <h3 class="exec-title">Harvard Business School Foundry Bootcamp</h3>
+            <p class="exec-period">2026</p>
+          </div>
+          <p class="exec-role">Selected Founder Participant</p>
+        </div>
+        
+        <div class="exec-card-body">
+          <p class="exec-description">
+            Selected to participate in the Harvard Business School Foundry Bootcamp, a founder-focused venture development program supporting the creation and growth of innovative technology companies. Participated while developing <strong>Preon Systems</strong>, engaging with entrepreneurs, investors, advisors, and startup ecosystem leaders. Focus areas included venture formation, business strategy, leadership, innovation, product development, and scaling emerging technologies.
+          </p>
+          
+          <div class="exec-highlights">
+            <div class="exec-highlight-item">
+              <span class="exec-highlight-icon">🚀</span>
+              <div>
+                <strong class="exec-highlight-title">Venture Formation</strong>
+                <p class="exec-highlight-desc">Focused on business strategy, venture modeling, and product development during Preon Systems' growth.</p>
+              </div>
+            </div>
+            <div class="exec-highlight-item">
+              <span class="exec-highlight-icon">🤝</span>
+              <div>
+                <strong class="exec-highlight-title">Ecosystem Networks</strong>
+                <p class="exec-highlight-desc">Engaged directly with seasoned entrepreneurs, angel investors, startup advisors, and innovation ecosystem leaders.</p>
+              </div>
+            </div>
+            <div class="exec-highlight-item">
+              <span class="exec-highlight-icon">⚡</span>
+              <div>
+                <strong class="exec-highlight-title">Technology Scaling</strong>
+                <p class="exec-highlight-desc">Advanced focus on business leadership, innovation strategy, and commercializing/scaling emerging technologies.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="edu-card-right">
-        <p class="edu-degree">
-          <%= education.degree %>
-          <span class="edu-track">— <%= education.track %></span>
-        </p>
-        <p class="edu-minors">
-          <strong>Minors:</strong> <%= education.minors.join(' &amp; ') %>
-        </p>
-
-        <div class="edu-section">
-          <h4 class="edu-sub-heading">Honors &amp; Awards</h4>
-          <ul class="edu-list edu-list-awards">
-            <% education.awards.forEach(function(award) { %>
-            <li><span class="edu-check">&#10022;</span> <%= award %></li>
-            <% }); %>
-          </ul>
+      <!-- 2. Academic Background (UMD) -->
+      <div class="edu-card animate-on-scroll">
+        <div class="edu-card-left">
+          <div class="edu-school-badge">UMD</div>
+          <div class="edu-school-info">
+            <h3 class="edu-school"><%= education.school %></h3>
+            <p class="edu-period"><%= education.period %></p>
+          </div>
         </div>
 
-        <div class="edu-two-col">
+        <div class="edu-card-right">
+          <p class="edu-degree">
+            <%= education.degree %>
+            <span class="edu-track">— <%= education.track %></span>
+          </p>
+          <p class="edu-minors">
+            <strong>Minors:</strong> <%= education.minors.join(' &amp; ') %>
+          </p>
+
           <div class="edu-section">
-            <h4 class="edu-sub-heading">Programs</h4>
-            <ul class="edu-list">
-              <% education.programs.forEach(function(p) { %>
-              <li><%= p %></li>
-              <% }); %>
-              <% education.activities.forEach(function(a) { %>
-              <li><%= a %></li>
+            <h4 class="edu-sub-heading">Honors &amp; Awards</h4>
+            <ul class="edu-list edu-list-awards">
+              <% education.awards.forEach(function(award) { %>
+              <li><span class="edu-check">&#10022;</span> <%= award %></li>
               <% }); %>
             </ul>
           </div>
-          <div class="edu-section">
-            <h4 class="edu-sub-heading">Selected Coursework</h4>
-            <ul class="edu-list">
-              <% education.courses.forEach(function(c) { %>
-              <li><%= c %></li>
-              <% }); %>
-            </ul>
+
+          <div class="edu-two-col">
+            <div class="edu-section">
+              <h4 class="edu-sub-heading">Programs</h4>
+              <ul class="edu-list">
+                <% education.programs.forEach(function(p) { %>
+                <li><%= p %></li>
+                <% }); %>
+                <% education.activities.forEach(function(a) { %>
+                <li><%= a %></li>
+                <% }); %>
+              </ul>
+            </div>
+            <div class="edu-section">
+              <h4 class="edu-sub-heading">Selected Coursework</h4>
+              <ul class="edu-list">
+                <% education.courses.forEach(function(c) { %>
+                <li><%= c %></li>
+                <% }); %>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
