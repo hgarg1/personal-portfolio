@@ -1,86 +1,578 @@
 <%- include('../partials/head') %>
 
-<section class="section section-alt" style="min-height: 80vh;">
-  <div class="container">
+<section class="section section-alt" style="min-height: 80vh; padding-top: 80px; padding-bottom: 3rem;">
+  <div class="container" style="max-width: 96% !important; width: 96% !important;">
+    
+    <!-- Admin Header -->
     <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
       <div>
         <div class="section-label">Administration</div>
         <h1 class="section-title">User <span class="gradient-text">Management</span></h1>
-        <p class="section-subtitle">Configure user roles and manage site privileges.</p>
+        <p class="section-subtitle">Configure system privileges, reset credentials, and audit administrative actions.</p>
       </div>
-      <div>
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
         <a href="/admin/cms" class="btn btn-ghost">
           <span>CMS Control Panel</span>
-          <span style="font-size: 1.1em;">📊</span>
+          <span>📊</span>
         </a>
+        <button onclick="openAddUserModal()" class="btn btn-primary">
+          <span>Add New User</span>
+          <span style="font-size: 1.1em;">+</span>
+        </button>
       </div>
     </div>
 
-    <!-- Alert / Toast Notification -->
-    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
+    <!-- Alert / Toast Notification (initially hidden) -->
+    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
       <span id="toast-icon">ℹ️</span>
       <span id="toast-message"></span>
     </div>
 
-    <div class="users-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 2rem; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body);">
-          <thead>
-            <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.15); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; text-transform: uppercase;">
-              <th style="padding: 1rem 0.5rem;">User</th>
-              <th style="padding: 1rem 0.5rem;">Email</th>
-              <th style="padding: 1rem 0.5rem; text-align: center;">Verified</th>
-              <th style="padding: 1rem 0.5rem; text-align: center;">Passkeys</th>
-              <th style="padding: 1rem 0.5rem;">Joined</th>
-              <th style="padding: 1rem 0.5rem; text-align: right; width: 180px;">Role</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% users.forEach(function(u) { %>
-              <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(157, 92, 255, 0.03)'" onmouseout="this.style.background='transparent'">
-                <td style="padding: 1.25rem 0.5rem; font-weight: 600; color: var(--text);">
-                  <%= u.name || 'Anonymous User' %>
-                  <% if (u.email === 'garg.archie@gmail.com') { %>
-                    <span style="font-size: 0.7rem; font-family: var(--font-mono); background: var(--purple-dim); color: var(--purple); border: 1px solid var(--border-hover); border-radius: 4px; padding: 2px 6px; margin-left: 6px; font-weight: normal; vertical-align: middle;">GLOBAL ADMIN</span>
-                  <% } %>
-                </td>
-                <td style="padding: 1.25rem 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);"><%= u.email %></td>
-                <td style="padding: 1.25rem 0.5rem; text-align: center;">
-                  <% if (u.emailVerified) { %>
-                    <span style="color: #10b981; font-size: 1.1rem; title='Email Verified'">✅</span>
-                  <% } else { %>
-                    <span style="color: #ef4444; font-size: 1.1rem; title='Pending Verification'">❌</span>
-                  <% } %>
-                </td>
-                <td style="padding: 1.25rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-muted);">
-                  <%= u.passkeys.length %>
-                </td>
-                <td style="padding: 1.25rem 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
-                  <%= new Date(u.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
-                </td>
-                <td style="padding: 1.25rem 0.5rem; text-align: right;">
-                  <select 
-                    onchange="updateUserRole(<%= u.id %>, this.value)" 
-                    style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); padding: 0.4rem 0.8rem; font-family: var(--font-body); font-size: 0.88rem; cursor: pointer; outline: none; transition: border-color 0.2s;"
-                    onfocus="this.style.borderColor='var(--purple)'"
-                    onblur="this.style.borderColor='var(--border)'"
-                    <%= u.email === 'garg.archie@gmail.com' ? 'disabled' : '' %>
-                  >
-                    <option value="VIEWER" <%= u.role === 'VIEWER' ? 'selected' : '' %>>Viewer</option>
-                    <option value="EDITOR" <%= u.role === 'EDITOR' ? 'selected' : '' %>>Editor</option>
-                    <option value="ADMIN" <%= u.role === 'ADMIN' ? 'selected' : '' %>>Admin</option>
-                  </select>
-                </td>
+    <!-- Tab Navigation -->
+    <div style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem;">
+      <button onclick="switchTab('users')" id="tab-btn-users" class="tab-button <%= activeTab === 'users' ? 'active-tab' : '' %>" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border: none; border-bottom: 2px solid transparent; background: none; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
+        Users (<%= users.length %>)
+      </button>
+      <button onclick="switchTab('logs')" id="tab-btn-logs" class="tab-button <%= activeTab === 'logs' ? 'active-tab' : '' %>" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border: none; border-bottom: 2px solid transparent; background: none; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
+        System Audit Logs (<%= auditLogs.length %>)
+      </button>
+    </div>
+
+    <!-- Users Tab Panel -->
+    <div id="tab-content-users" class="tab-panel" style="<%= activeTab === 'users' ? 'display: block;' : 'display: none;' %>">
+      <div class="users-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 2rem; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body); table-layout: fixed;">
+            <thead>
+              <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.15); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; text-transform: uppercase;">
+                <th style="padding: 1rem 0.75rem; width: 22%;">User</th>
+                <th style="padding: 1rem 0.75rem; width: 25%;">Email</th>
+                <th style="padding: 1rem 0.75rem; width: 10%; text-align: center;">Verified</th>
+                <th style="padding: 1rem 0.75rem; width: 10%; text-align: center;">Passkeys</th>
+                <th style="padding: 1rem 0.75rem; width: 13%;">Joined</th>
+                <th style="padding: 1rem 0.75rem; width: 10%; text-align: center;">Role</th>
+                <th style="padding: 1rem 0.75rem; width: 10%; text-align: right;">Actions</th>
               </tr>
-            <% }); %>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <% users.forEach(function(u) { %>
+                <tr id="user-row-<%= u.id %>" style="border-bottom: 1px solid rgba(130, 155, 200, 0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(157, 92, 255, 0.02)'" onmouseout="this.style.background='transparent'">
+                  <td style="padding: 1.25rem 0.75rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= u.name || 'Anonymous User' %>">
+                    <%= u.name || 'Anonymous User' %>
+                    <% if (u.email === 'garg.archie@gmail.com') { %>
+                      <span style="font-size: 0.65rem; font-family: var(--font-mono); background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(157, 92, 255, 0.2); border-radius: 4px; padding: 2px 6px; margin-left: 6px; font-weight: normal; vertical-align: middle;">GLOBAL ADMIN</span>
+                    <% } %>
+                  </td>
+                  <td style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= u.email %>"><%= u.email %></td>
+                  <td style="padding: 1.25rem 0.75rem; text-align: center;">
+                    <% if (u.emailVerified) { %>
+                      <span style="color: #10b981; font-size: 1.1rem;" title="Email Verified">✅</span>
+                    <% } else { %>
+                      <span style="color: #ef4444; font-size: 1.1rem;" title="Pending Verification">❌</span>
+                    <% } %>
+                  </td>
+                  <td style="padding: 1.25rem 0.75rem; text-align: center; font-family: var(--font-mono); color: var(--text-muted);">
+                    <%= u.passkeys.length %>
+                  </td>
+                  <td style="padding: 1.25rem 0.75rem; color: var(--text-muted); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <%= new Date(u.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                  </td>
+                  <td style="padding: 1.25rem 0.75rem; text-align: center;">
+                    <span style="font-size: 0.72rem; font-family: var(--font-mono); font-weight: 600; padding: 3px 8px; border-radius: 4px; border: 1px solid; <%= u.role === 'ADMIN' ? 'background: rgba(157, 92, 255, 0.1); color: #c084fc; border-color: rgba(157,92,255,0.3);' : u.role === 'EDITOR' ? 'background: rgba(0, 212, 255, 0.1); color: #22d3ee; border-color: rgba(0,212,255,0.3);' : 'background: rgba(138, 155, 184, 0.1); color: #9ca3af; border-color: rgba(138,155,184,0.3);' %>">
+                      <%= u.role %>
+                    </span>
+                  </td>
+                  <td style="padding: 1.25rem 0.75rem; text-align: right;">
+                    <% if (u.email !== 'garg.archie@gmail.com') { %>
+                      <div style="display: inline-flex; gap: 0.4rem;">
+                        <button onclick="openEditUserModal(<%= u.id %>, '<%= (u.name || '').replace(/'/g, '\\\'') %>', '<%= u.email %>', '<%= u.role %>', <%= u.emailVerified %>)" class="btn btn-ghost" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Edit Account Details">📝</button>
+                        <button onclick="openResetPasswordModal(<%= u.id %>, '<%= (u.name || '').replace(/'/g, '\\\'') %>', '<%= u.email %>')" class="btn btn-ghost" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Reset Password">🔑</button>
+                        <% if (u.id !== user.id) { %>
+                          <button onclick="confirmDeleteUser(<%= u.id %>, '<%= (u.name || '').replace(/'/g, '\\\'') || u.email %>')" class="btn btn-ghost" style="padding: 0.35rem 0.6rem; font-size: 0.78rem; border-color: rgba(239, 68, 68, 0.2); color: #ef4444;" title="Delete User">🗑️</button>
+                        <% } %>
+                      </div>
+                    <% } else { %>
+                      <span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding-right: 0.5rem;">System Owner</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+
+    <!-- Audit Logs Tab Panel -->
+    <div id="tab-content-logs" class="tab-panel" style="<%= activeTab === 'logs' ? 'display: block;' : 'display: none;' %>">
+      <div class="users-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 2rem; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.35); margin-bottom: 2rem;">
+        
+        <!-- Audit Logs Advanced Filters -->
+        <form method="GET" action="/admin/users" style="margin-bottom: 2.5rem; background: rgba(255, 255, 255, 0.015); border: 1px solid rgba(130, 155, 200, 0.1); border-radius: var(--r-md); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; backdrop-filter: blur(10px);">
+          <!-- Hidden parameter to retain active tab -->
+          <input type="hidden" name="tab" value="logs">
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            <!-- General Keyword Search -->
+            <div>
+              <label class="form-label" style="margin-bottom: 0.35rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Keyword Search</label>
+              <input type="text" name="search" class="form-input" placeholder="e.g. details, actors, etc." value="<%= filters.search || '' %>" style="font-size: 0.85rem; height: 38px;">
+            </div>
+
+            <!-- Source / Category -->
+            <div>
+              <label class="form-label" style="margin-bottom: 0.35rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Source Category</label>
+              <select name="category" class="form-input" style="font-size: 0.85rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-sm); height: 38px; cursor: pointer;">
+                <option value="">All Categories</option>
+                <option value="user" <%= filters.category === 'user' ? 'selected' : '' %>>User Management (user.*)</option>
+                <option value="ai_chat" <%= filters.category === 'ai_chat' ? 'selected' : '' %>>AI Chatbot (ai_chat.*)</option>
+                <option value="other" <%= filters.category === 'other' ? 'selected' : '' %>>System / Other</option>
+              </select>
+            </div>
+
+            <!-- Action -->
+            <div>
+              <label class="form-label" style="margin-bottom: 0.35rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Action Type</label>
+              <input type="text" name="action" class="form-input" placeholder="e.g. user.create" value="<%= filters.action || '' %>" style="font-size: 0.85rem; height: 38px;">
+            </div>
+
+            <!-- Actor Email -->
+            <div>
+              <label class="form-label" style="margin-bottom: 0.35rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Actor Email</label>
+              <input type="text" name="actorEmail" class="form-input" placeholder="e.g. admin@site.com" value="<%= filters.actorEmail || '' %>" style="font-size: 0.85rem; height: 38px;">
+            </div>
+
+            <!-- Target Email -->
+            <div>
+              <label class="form-label" style="margin-bottom: 0.35rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Target Email</label>
+              <input type="text" name="targetEmail" class="form-input" placeholder="e.g. user@site.com" value="<%= filters.targetEmail || '' %>" style="font-size: 0.85rem; height: 38px;">
+            </div>
+
+            <!-- Page Type -->
+            <div>
+              <label class="form-label" style="margin-bottom: 0.35rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">AI Chat Page Type</label>
+              <select name="pageType" class="form-input" style="font-size: 0.85rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: var(--r-sm); height: 38px; cursor: pointer;">
+                <option value="">All Pages</option>
+                <option value="public" <%= filters.pageType === 'public' ? 'selected' : '' %>>Public Pages</option>
+                <option value="protected" <%= filters.pageType === 'protected' ? 'selected' : '' %>>Protected Pages</option>
+              </select>
+            </div>
+
+            <!-- Start Date -->
+            <div>
+              <label class="form-label" style="margin-bottom: 0.35rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">Start Date</label>
+              <input type="date" name="startDate" class="form-input" value="<%= filters.startDate || '' %>" style="font-size: 0.85rem; height: 38px;">
+            </div>
+
+            <!-- End Date -->
+            <div>
+              <label class="form-label" style="margin-bottom: 0.35rem; font-size: 0.8rem; color: var(--text-muted); font-family: var(--font-mono);">End Date</label>
+              <input type="date" name="endDate" class="form-input" value="<%= filters.endDate || '' %>" style="font-size: 0.85rem; height: 38px;">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center;">
+            <% if (Object.values(filters).some(Boolean)) { %>
+              <div style="font-size: 0.82rem; color: var(--cyan); font-family: var(--font-mono); margin-right: auto; display: flex; align-items: center; gap: 4px;">
+                <span>⚡ Active filters applied</span>
+              </div>
+            <% } %>
+            <a href="/admin/users?tab=logs" class="btn btn-ghost" style="padding: 0.45rem 1rem; font-size: 0.82rem; height: auto;">Clear Filters</a>
+            <button type="submit" class="btn btn-primary" style="padding: 0.45rem 1.25rem; font-size: 0.82rem; height: auto;">Apply Filters</button>
+          </div>
+        </form>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body); table-layout: fixed;">
+            <thead>
+              <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.15); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; text-transform: uppercase;">
+                <th style="padding: 1rem 0.75rem; width: 22%;">Timestamp</th>
+                <th style="padding: 1rem 0.75rem; width: 15%;">Action</th>
+                <th style="padding: 1rem 0.75rem; width: 22%;">Actor (Admin)</th>
+                <th style="padding: 1rem 0.75rem; width: 22%;">Target (User)</th>
+                <th style="padding: 1rem 0.75rem; width: 19%;">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (auditLogs.length === 0) { %>
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📜</div>
+                    <h3>No audit logs available.</h3>
+                  </td>
+                </tr>
+              <% } else { %>
+                <% auditLogs.forEach(function(log) { %>
+                  <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(157, 92, 255, 0.02)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 1.25rem 0.75rem; color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= new Date(log.createdAt).toLocaleString() %>">
+                      <%= new Date(log.createdAt).toLocaleString() %>
+                    </td>
+                    <td style="padding: 1.25rem 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <span style="font-size: 0.72rem; font-family: var(--font-mono); font-weight: 600; padding: 2px 6px; border-radius: 4px; border: 1px solid; <%= log.action.startsWith('user.create') ? 'background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16,185,129,0.2);' : log.action.startsWith('user.delete') ? 'background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239,68,68,0.2);' : log.action.startsWith('user.password') ? 'background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245,158,11,0.2);' : 'background: rgba(0, 212, 255, 0.1); color: #22d3ee; border-color: rgba(0,212,255,0.2);' %>">
+                        <%= log.action %>
+                      </span>
+                    </td>
+                    <td style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.88rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= log.actorEmail || 'System' %>"><%= log.actorEmail || 'System' %></td>
+                    <td style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.88rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= log.targetEmail || 'N/A' %>"><%= log.targetEmail || 'N/A' %></td>
+                    <td style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= log.details %>">
+                      <%= log.details %>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
+<!-- ========================================== -->
+<!-- 1. ADD USER WIZARD MODAL                    -->
+<!-- ========================================== -->
+<div id="add-user-modal" class="vcs-modal-backdrop" style="display: none;">
+  <div class="vcs-modal-container" style="max-width: 550px; width: 95%;">
+    
+    <div class="vcs-modal-header">
+      <h3>Add New User Account</h3>
+      <button onclick="closeAddUserModal()">✕</button>
+    </div>
+
+    <!-- Wizard Steps Indicator -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: rgba(0,0,0,0.1); border-bottom: 1px solid var(--border);">
+      <div class="wizard-step-header active-wizard-step" id="w-step-h-1">1. Account</div>
+      <div style="flex: 1; height: 1px; background: var(--border); margin-inline: 0.5rem;" id="w-line-1"></div>
+      <div class="wizard-step-header" id="w-step-h-2">2. Password</div>
+      <div style="flex: 1; height: 1px; background: var(--border); margin-inline: 0.5rem;" id="w-line-2"></div>
+      <div class="wizard-step-header" id="w-step-h-3">3. Email</div>
+      <div style="flex: 1; height: 1px; background: var(--border); margin-inline: 0.5rem;" id="w-line-3"></div>
+      <div class="wizard-step-header" id="w-step-h-4">4. Review</div>
+    </div>
+
+    <div class="vcs-modal-body" style="padding: 1.5rem; min-height: 250px;">
+      
+      <!-- STEP 1: ACCOUNT DETAILS -->
+      <div class="wizard-step-content" id="w-step-c-1">
+        <div style="margin-bottom: 1.25rem;">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="add-user-name" placeholder="e.g. John Doe" class="form-input">
+        </div>
+        <div style="margin-bottom: 1.25rem;">
+          <label class="form-label">Email Address *</label>
+          <input type="email" id="add-user-email" placeholder="e.g. john@company.com" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Privilege Role *</label>
+          <select id="add-user-role" class="form-input" style="cursor: pointer; background: var(--bg); color: var(--text);">
+            <option value="VIEWER" selected>Viewer (Read-only)</option>
+            <option value="EDITOR">Editor (Can edit pages/assets)</option>
+            <option value="ADMIN">Admin (Full privileges)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- STEP 2: PASSWORD SETTING -->
+      <div class="wizard-step-content" id="w-step-c-2" style="display: none;">
+        <div style="margin-bottom: 1.25rem;">
+          <label class="form-label">Password Setup Mode</label>
+          <div style="display: flex; gap: 1rem;">
+            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem;">
+              <input type="radio" name="pwd-mode" value="auto" checked onchange="togglePwdMode(this.value)"> Auto-Generate Strong Password
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem;">
+              <input type="radio" name="pwd-mode" value="custom" onchange="togglePwdMode(this.value)"> Custom Password
+            </label>
+          </div>
+        </div>
+
+        <!-- Auto-generate layout -->
+        <div id="pwd-auto-block" style="background: rgba(0, 212, 255, 0.03); border: 1px dashed rgba(0, 212, 255, 0.2); border-radius: var(--r-md); padding: 1.25rem; text-align: center; margin-bottom: 1rem;">
+          <div style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; color: var(--cyan);" id="generated-pwd-text">Generating...</div>
+          <button onclick="regenGeneratedPassword()" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; margin-top: 0.75rem; border-color: rgba(0,212,255,0.1); color: var(--cyan);">Regenerate</button>
+        </div>
+
+        <!-- Custom layout -->
+        <div id="pwd-custom-block" style="display: none; margin-bottom: 1.25rem;">
+          <label class="form-label">Custom Password *</label>
+          <div style="position: relative;">
+            <input type="password" id="add-user-pwd" placeholder="Enter strong password (min 6 chars)" class="form-input">
+            <button onclick="togglePasswordVisibility('add-user-pwd', this)" type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem;">👁️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: EMAIL NOTIFICATION -->
+      <div class="wizard-step-content" id="w-step-c-3" style="display: none;">
+        <div style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+          <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem; font-weight: 600;">
+            <input type="checkbox" id="add-user-send-email" checked onchange="toggleEmailInputs(this.checked)"> Send Email Status Notification to User
+          </label>
+        </div>
+
+        <div id="email-inputs-block">
+          <div style="margin-bottom: 1.25rem;">
+            <label class="form-label">Email Subject</label>
+            <input type="text" id="add-user-email-sub" value="Your Harshit Garg Portal Account Details" class="form-input">
+          </div>
+          <div>
+            <label class="form-label">Email Body (Custom Message)</label>
+            <textarea id="add-user-email-body" class="form-input" style="height: 120px; font-family: var(--font-body); font-size: 0.88rem; line-height: 1.5; resize: none;"></textarea>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; display: block;">Macros like [NAME], [EMAIL], [ROLE], and [PASSWORD] will be auto-replaced. You can preview the finalized message on the next step (Review).</span>
+        </div>
+      </div>
+
+      <!-- STEP 4: REVIEW & CONFIRM -->
+      <div class="wizard-step-content" id="w-step-c-4" style="display: none;">
+        <div style="border: 1px solid var(--border); border-radius: var(--r-md); background: rgba(0,0,0,0.1); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: grid; grid-template-columns: 1fr 2fr;"><span style="color: var(--text-muted); font-size: 0.88rem;">Name:</span><strong id="rev-name" style="color: #fff;"></strong></div>
+          <div style="display: grid; grid-template-columns: 1fr 2fr;"><span style="color: var(--text-muted); font-size: 0.88rem;">Email:</span><strong id="rev-email" style="color: #fff; font-family: var(--font-mono);"></strong></div>
+          <div style="display: grid; grid-template-columns: 1fr 2fr;"><span style="color: var(--text-muted); font-size: 0.88rem;">Role:</span><strong id="rev-role" style="color: var(--cyan);"></strong></div>
+          <div style="display: grid; grid-template-columns: 1fr 2fr;"><span style="color: var(--text-muted); font-size: 0.88rem;">Password:</span><strong id="rev-password" style="font-family: var(--font-mono); color: #fff;"></strong></div>
+          <div style="display: grid; grid-template-columns: 1fr 2fr; border-top: 1px solid var(--border); padding-top: 0.5rem;"><span style="color: var(--text-muted); font-size: 0.88rem;">Email Alert:</span><strong id="rev-email-status"></strong></div>
+          <div id="rev-email-preview-block" style="display: none; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+            <span style="color: var(--text-muted); font-size: 0.88rem; display: block; margin-bottom: 0.5rem;">Final Email Preview:</span>
+            <pre id="rev-email-body-text" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0.75rem; font-family: var(--font-body); font-size: 0.82rem; white-space: pre-wrap; color: var(--text-muted); max-height: 150px; overflow-y: auto; margin: 0;"></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="vcs-modal-footer">
+      <button onclick="wizardBack()" id="w-btn-back" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.85rem; display: none;">Back</button>
+      <button onclick="wizardNext()" id="w-btn-next" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;">Next</button>
+      <button onclick="submitAddUser()" id="w-btn-submit" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none; display: none;">Create User</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 2. EDIT USER MODAL                         -->
+<!-- ========================================== -->
+<div id="edit-user-modal" class="vcs-modal-backdrop" style="display: none;">
+  <div class="vcs-modal-container" style="max-width: 480px; width: 95%;">
+    <div class="vcs-modal-header">
+      <h3>Edit User privileges</h3>
+      <button onclick="closeEditUserModal()">✕</button>
+    </div>
+    <div class="vcs-modal-body" style="padding: 1.5rem;">
+      <input type="hidden" id="edit-user-id">
+      <div style="margin-bottom: 1.25rem;">
+        <label class="form-label">Full Name</label>
+        <input type="text" id="edit-user-name" class="form-input">
+      </div>
+      <div style="margin-bottom: 1.25rem;">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="edit-user-email" class="form-input">
+      </div>
+      <div style="margin-bottom: 1.25rem;">
+        <label class="form-label">Privilege Role</label>
+        <select id="edit-user-role" class="form-input" style="background: var(--bg); color: var(--text);">
+          <option value="VIEWER">Viewer</option>
+          <option value="EDITOR">Editor</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
+      <div>
+        <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem;">
+          <input type="checkbox" id="edit-user-verified"> Account Email Verified
+        </label>
+      </div>
+    </div>
+    <div class="vcs-modal-footer">
+      <button onclick="closeEditUserModal()" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.85rem;">Cancel</button>
+      <button onclick="submitEditUser()" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 3. RESET PASSWORD MODAL                    -->
+<!-- ========================================== -->
+<div id="reset-modal" class="vcs-modal-backdrop" style="display: none;">
+  <div class="vcs-modal-container" style="max-width: 500px; width: 95%;">
+    <div class="vcs-modal-header">
+      <h3 id="reset-modal-title">Reset User Password</h3>
+      <button onclick="closeResetPasswordModal()">✕</button>
+    </div>
+    <div class="vcs-modal-body" style="padding: 1.5rem;">
+      <input type="hidden" id="reset-user-id">
+      
+      <div style="margin-bottom: 1.25rem;">
+        <label class="form-label">Password Mode</label>
+        <div style="display: flex; gap: 1rem;">
+          <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem;">
+            <input type="radio" name="reset-pwd-mode" value="auto" checked onchange="toggleResetPwdMode(this.value)"> Auto-Generate Strong Password
+          </label>
+          <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem;">
+            <input type="radio" name="reset-pwd-mode" value="custom" onchange="toggleResetPwdMode(this.value)"> Custom Password
+          </label>
+        </div>
+      </div>
+
+      <!-- Auto-generate layout -->
+      <div id="reset-pwd-auto-block" style="background: rgba(245, 158, 11, 0.03); border: 1px dashed rgba(245, 158, 11, 0.2); border-radius: var(--r-md); padding: 1.25rem; text-align: center; margin-bottom: 1.25rem;">
+        <div style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; color: #fbbf24;" id="reset-generated-pwd-text">Generating...</div>
+        <button onclick="regenResetPassword()" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; margin-top: 0.75rem; border-color: rgba(245,158,11,0.1); color: #fbbf24;">Regenerate</button>
+      </div>
+
+      <!-- Custom layout -->
+      <div id="reset-pwd-custom-block" style="display: none; margin-bottom: 1.25rem;">
+        <label class="form-label">New Custom Password *</label>
+        <div style="position: relative;">
+          <input type="password" id="reset-user-pwd" placeholder="Enter new password (min 6 chars)" class="form-input">
+          <button onclick="togglePasswordVisibility('reset-user-pwd', this)" type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem;">👁️</button>
+        </div>
+      </div>
+
+      <!-- Notification Option -->
+      <div style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-top: 1.5rem;">
+        <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem; font-weight: 600;">
+          <input type="checkbox" id="reset-send-email" checked onchange="toggleResetEmailInputs(this.checked)"> Email New Password to User
+        </label>
+      </div>
+
+      <div id="reset-email-inputs-block">
+        <div style="margin-bottom: 1.25rem;">
+          <label class="form-label">Email Subject</label>
+          <input type="text" id="reset-email-sub" value="Your Account Password Has Been Reset" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Email Body (Custom Message)</label>
+          <textarea id="reset-email-body" class="form-input" style="height: 100px; font-family: var(--font-body); font-size: 0.88rem; line-height: 1.5; resize: none;"></textarea>
+        </div>
+        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; display: block;">Macros [NAME], [EMAIL], and [PASSWORD] will be auto-replaced with actual details before delivery.</span>
+      </div>
+
+    </div>
+    <div class="vcs-modal-footer">
+      <button onclick="closeResetPasswordModal()" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.85rem;">Cancel</button>
+      <button onclick="submitResetPassword()" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tab-button {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-button.active-tab {
+    color: var(--cyan) !important;
+    border-bottom-color: var(--cyan) !important;
+  }
+  .tab-button:hover {
+    color: var(--text) !important;
+  }
+  
+  /* Wizard components styling */
+  .wizard-step-header {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .wizard-step-header.active-wizard-step {
+    color: var(--cyan);
+  }
+  .wizard-step-header.completed-wizard-step {
+    color: var(--purple);
+  }
+
+  /* Modals css */
+  .vcs-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(4, 6, 15, 0.85);
+    backdrop-filter: blur(6px);
+    z-index: 100005;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vcs-modal-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    overflow: hidden;
+    animation: zoomIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  @keyframes zoomIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .vcs-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,13,26,0.4);
+  }
+  .vcs-modal-header h3 {
+    font-family: var(--font-head);
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  .vcs-modal-header button {
+    font-size: 1.2rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .vcs-modal-header button:hover {
+    color: var(--purple);
+  }
+  .vcs-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: rgba(8,13,26,0.4);
+  }
+  .form-label {
+    display: block;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    padding: 0.5rem 0.8rem;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .form-input:focus {
+    border-color: var(--purple);
+  }
+</style>
+
 <script>
+  // Tab Switching Logic
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active-tab'));
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.style.display = 'none');
+
+    document.getElementById(`tab-btn-${tab}`).classList.add('active-tab');
+    document.getElementById(`tab-content-${tab}`).style.display = 'block';
+  }
+
+  // Toast System
   function showToast(message, isSuccess = true) {
     const toast = document.getElementById('toast');
     const toastIcon = document.getElementById('toast-icon');
@@ -101,28 +593,559 @@
     }, 4000);
   }
 
-  async function updateUserRole(userId, newRole) {
+  // Helper: Toggle Password Visibility
+  function togglePasswordVisibility(fieldId, btn) {
+    const input = document.getElementById(fieldId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      btn.textContent = '👁️';
+    }
+  }
+
+  // Helper: Generate a strong random password
+  function generateStrongPassword() {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~}{[]:;?';
+    let pwd = '';
+    for (let i = 0; i < 14; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pwd;
+  }
+
+  // ==========================================
+  // WIZARD WIDGET CONTROLLER (ADD USER)
+  // ==========================================
+  let currentStep = 1;
+  let addPwdMode = 'auto';
+  let generatedPwd = '';
+
+  function openAddUserModal() {
+    currentStep = 1;
+    addPwdMode = 'auto';
+    document.getElementById('add-user-modal').style.display = 'flex';
+    document.getElementById('add-user-name').value = '';
+    document.getElementById('add-user-email').value = '';
+    document.getElementById('add-user-role').value = 'VIEWER';
+    
+    // Reset radio buttons
+    document.querySelectorAll('input[name="pwd-mode"]').forEach(r => {
+      r.checked = r.value === 'auto';
+    });
+    document.getElementById('add-user-pwd').value = '';
+    
+    // Reset checkboxes
+    document.getElementById('add-user-send-email').checked = true;
+    document.getElementById('add-user-email-sub').value = 'Your Harshit Garg Portal Account Details';
+    
+    regenGeneratedPassword();
+    togglePwdMode('auto');
+    toggleEmailInputs(true);
+    showStep(1);
+
+    // Reset validation border styles
+    resetLiveStyle(document.getElementById('add-user-email'));
+    resetLiveStyle(document.getElementById('add-user-pwd'));
+    resetLiveStyle(document.getElementById('add-user-email-sub'));
+    resetLiveStyle(document.getElementById('add-user-email-body'));
+  }
+
+  function closeAddUserModal() {
+    document.getElementById('add-user-modal').style.display = 'none';
+  }
+
+  function togglePwdMode(mode) {
+    addPwdMode = mode;
+    const pwdInput = document.getElementById('add-user-pwd');
+    if (mode === 'auto') {
+      document.getElementById('pwd-auto-block').style.display = 'block';
+      document.getElementById('pwd-custom-block').style.display = 'none';
+      resetLiveStyle(pwdInput);
+    } else {
+      document.getElementById('pwd-auto-block').style.display = 'none';
+      document.getElementById('pwd-custom-block').style.display = 'block';
+      pwdInput.focus();
+      if (pwdInput.value) {
+        applyLiveStyle(pwdInput, pwdInput.value.length >= 6);
+      }
+    }
+  }
+
+  function regenGeneratedPassword() {
+    generatedPwd = generateStrongPassword();
+    document.getElementById('generated-pwd-text').textContent = generatedPwd;
+    updateDefaultEmailTemplates();
+  }
+
+  function toggleEmailInputs(checked) {
+    document.getElementById('email-inputs-block').style.display = checked ? 'block' : 'none';
+    const subInput = document.getElementById('add-user-email-sub');
+    const bodyInput = document.getElementById('add-user-email-body');
+    if (!checked) {
+      resetLiveStyle(subInput);
+      resetLiveStyle(bodyInput);
+    } else {
+      applyLiveStyle(subInput, subInput.value.trim().length > 0);
+      applyLiveStyle(bodyInput, bodyInput.value.trim().length > 0);
+    }
+  }
+
+  function updateDefaultEmailTemplates() {
+    const name = document.getElementById('add-user-name').value || 'User';
+    const email = document.getElementById('add-user-email').value || 'your-email@domain.com';
+    const role = document.getElementById('add-user-role').value;
+    const pwd = addPwdMode === 'auto' ? generatedPwd : document.getElementById('add-user-pwd').value || '[Custom Password]';
+
+    const body = `Hello [NAME],
+
+An administrative user has created a new account for you on the Harshit Garg Portal.
+
+Account Credentials:
+- Email: [EMAIL]
+- Role: [ROLE]
+- Temporary Password: [PASSWORD]
+
+Please log in and update your password immediately.
+URL: ${window.location.origin}/auth/login
+
+Best regards,
+Harshit Garg System Portal`;
+
+    document.getElementById('add-user-email-body').value = body;
+  }
+
+  function showStep(step) {
+    currentStep = step;
+    document.querySelectorAll('.wizard-step-content').forEach(c => c.style.display = 'none');
+    document.getElementById(`w-step-c-${step}`).style.display = 'block';
+
+    // Step Indicator classes
+    for (let i = 1; i <= 4; i++) {
+      const header = document.getElementById(`w-step-h-${i}`);
+      const line = document.getElementById(`w-line-${i}`);
+      if (header) {
+        header.classList.remove('active-wizard-step', 'completed-wizard-step');
+        if (i === step) {
+          header.classList.add('active-wizard-step');
+        } else if (i < step) {
+          header.classList.add('completed-wizard-step');
+        }
+      }
+      if (line) {
+        line.style.background = i < step ? 'var(--purple)' : 'var(--border)';
+      }
+    }
+
+    // Button states
+    document.getElementById('w-btn-back').style.display = step === 1 ? 'none' : 'block';
+    document.getElementById('w-btn-next').style.display = step === 4 ? 'none' : 'block';
+    document.getElementById('w-btn-submit').style.display = step === 4 ? 'block' : 'none';
+
+    if (step === 4) {
+      compileSummaryStep();
+    }
+  }
+
+  function wizardNext() {
+    if (currentStep === 1) {
+      const emailInput = document.getElementById('add-user-email');
+      const email = emailInput.value.trim();
+      if (!email) {
+        applyLiveStyle(emailInput, false);
+        showToast('Email address is required.', false);
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        applyLiveStyle(emailInput, false);
+        showToast('Please enter a valid email address.', false);
+        return;
+      }
+      applyLiveStyle(emailInput, true);
+      showToast('Account details verified!', true);
+    } else if (currentStep === 2) {
+      if (addPwdMode === 'custom') {
+        const pwdInput = document.getElementById('add-user-pwd');
+        const pwd = pwdInput.value;
+        if (!pwd || pwd.length < 6) {
+          applyLiveStyle(pwdInput, false);
+          showToast('Custom password must be at least 6 characters.', false);
+          return;
+        }
+        applyLiveStyle(pwdInput, true);
+      }
+      showToast('Password configured successfully!', true);
+      updateDefaultEmailTemplates();
+    } else if (currentStep === 3) {
+      const sendEmail = document.getElementById('add-user-send-email').checked;
+      if (sendEmail) {
+        const subInput = document.getElementById('add-user-email-sub');
+        const bodyInput = document.getElementById('add-user-email-body');
+        const sub = subInput.value.trim();
+        const body = bodyInput.value.trim();
+
+        let hasError = false;
+        if (!sub) {
+          applyLiveStyle(subInput, false);
+          showToast('Email subject is required.', false);
+          hasError = true;
+        } else {
+          applyLiveStyle(subInput, true);
+        }
+
+        if (!body) {
+          applyLiveStyle(bodyInput, false);
+          showToast('Email body is required.', false);
+          hasError = true;
+        } else {
+          applyLiveStyle(bodyInput, true);
+        }
+
+        if (hasError) return;
+      }
+      showToast('Email status notification verified!', true);
+    }
+    showStep(currentStep + 1);
+  }
+
+  function wizardBack() {
+    showStep(currentStep - 1);
+  }
+
+  function compileSummaryStep() {
+    const name = document.getElementById('add-user-name').value || 'N/A';
+    const email = document.getElementById('add-user-email').value;
+    const role = document.getElementById('add-user-role').value;
+    const pwd = addPwdMode === 'auto' ? generatedPwd : document.getElementById('add-user-pwd').value;
+    const sendEmail = document.getElementById('add-user-send-email').checked;
+
+    document.getElementById('rev-name').textContent = name;
+    document.getElementById('rev-email').textContent = email;
+    document.getElementById('rev-role').textContent = role;
+    document.getElementById('rev-password').textContent = pwd;
+    document.getElementById('rev-email-status').textContent = sendEmail ? 'Enabled' : 'Disabled';
+
+    const previewBlock = document.getElementById('rev-email-preview-block');
+    if (sendEmail) {
+      previewBlock.style.display = 'block';
+      let emailBody = document.getElementById('add-user-email-body').value;
+      const finalBody = emailBody
+        .replace(/\[NAME\]/g, name || 'User')
+        .replace(/\[EMAIL\]/g, email)
+        .replace(/\[ROLE\]/g, role)
+        .replace(/\[PASSWORD\]/g, pwd);
+      document.getElementById('rev-email-body-text').textContent = finalBody;
+    } else {
+      previewBlock.style.display = 'none';
+    }
+  }
+
+  async function submitAddUser() {
+    const name = document.getElementById('add-user-name').value;
+    const email = document.getElementById('add-user-email').value;
+    const role = document.getElementById('add-user-role').value;
+    const password = addPwdMode === 'auto' ? generatedPwd : document.getElementById('add-user-pwd').value;
+    const sendEmail = document.getElementById('add-user-send-email').checked;
+    
+    let emailSubject = '';
+    let emailBody = '';
+    if (sendEmail) {
+      emailSubject = document.getElementById('add-user-email-sub').value;
+      emailBody = document.getElementById('add-user-email-body').value;
+
+      // Replace macros
+      emailBody = emailBody
+        .replace(/\[NAME\]/g, name || 'User')
+        .replace(/\[EMAIL\]/g, email)
+        .replace(/\[ROLE\]/g, role)
+        .replace(/\[PASSWORD\]/g, password);
+    }
+
+    const submitBtn = document.getElementById('w-btn-submit');
+    submitBtn.textContent = 'Saving...';
+    submitBtn.disabled = true;
+
     try {
-      const response = await fetch('/admin/users/role', {
+      const response = await fetch('/admin/users', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userId, role: newRole })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, role, password, sendEmail, emailSubject, emailBody })
       });
-      
       const result = await response.json();
-      
+
       if (response.ok && result.success) {
-        showToast(result.message, true);
+        showToast('User account created successfully!', true);
+        closeAddUserModal();
+        setTimeout(() => {
+          location.reload();
+        }, 1200);
       } else {
-        showToast(result.error || 'Failed to update role', false);
+        showToast(result.error || 'Failed to create user account.', false);
+        submitBtn.textContent = 'Create User';
+        submitBtn.disabled = false;
       }
     } catch (err) {
       console.error(err);
-      showToast('A network error occurred', false);
+      showToast('Network error occurred.', false);
+      submitBtn.textContent = 'Create User';
+      submitBtn.disabled = false;
     }
   }
+
+  // ==========================================
+  // EDIT USER ACTIONS
+  // ==========================================
+  function openEditUserModal(id, name, email, role, verified) {
+    document.getElementById('edit-user-id').value = id;
+    document.getElementById('edit-user-name').value = name;
+    document.getElementById('edit-user-email').value = email;
+    document.getElementById('edit-user-role').value = role;
+    document.getElementById('edit-user-verified').checked = !!verified;
+    document.getElementById('edit-user-modal').style.display = 'flex';
+  }
+
+  function closeEditUserModal() {
+    document.getElementById('edit-user-modal').style.display = 'none';
+  }
+
+  async function submitEditUser() {
+    const id = document.getElementById('edit-user-id').value;
+    const name = document.getElementById('edit-user-name').value;
+    const email = document.getElementById('edit-user-email').value;
+    const role = document.getElementById('edit-user-role').value;
+    const emailVerified = document.getElementById('edit-user-verified').checked;
+
+    try {
+      const response = await fetch(`/admin/users/edit/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, role, emailVerified })
+      });
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showToast('User account updated successfully!', true);
+        closeEditUserModal();
+        setTimeout(() => {
+          location.reload();
+        }, 1200);
+      } else {
+        showToast(result.error || 'Failed to update user account.', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error updating user.', false);
+    }
+  }
+
+  // ==========================================
+  // PASSWORD RESET ACTIONS
+  // ==========================================
+  let resetPwdMode = 'auto';
+  let resetGeneratedPwd = '';
+
+  function openResetPasswordModal(id, name, email) {
+    document.getElementById('reset-user-id').value = id;
+    document.getElementById('reset-modal-title').textContent = `Reset Password: ${name || email}`;
+    
+    // Reset inputs
+    document.querySelectorAll('input[name="reset-pwd-mode"]').forEach(r => {
+      r.checked = r.value === 'auto';
+    });
+    document.getElementById('reset-user-pwd').value = '';
+    document.getElementById('reset-send-email').checked = true;
+    document.getElementById('reset-email-sub').value = 'Your Account Password Has Been Reset';
+
+    regenResetPassword();
+    toggleResetPwdMode('auto');
+    toggleResetEmailInputs(true);
+    document.getElementById('reset-modal').style.display = 'flex';
+  }
+
+  function closeResetPasswordModal() {
+    document.getElementById('reset-modal').style.display = 'none';
+  }
+
+  function toggleResetPwdMode(mode) {
+    resetPwdMode = mode;
+    if (mode === 'auto') {
+      document.getElementById('reset-pwd-auto-block').style.display = 'block';
+      document.getElementById('reset-pwd-custom-block').style.display = 'none';
+    } else {
+      document.getElementById('reset-pwd-auto-block').style.display = 'none';
+      document.getElementById('reset-pwd-custom-block').style.display = 'block';
+      document.getElementById('reset-user-pwd').focus();
+    }
+    updateResetEmailBody();
+  }
+
+  function regenResetPassword() {
+    resetGeneratedPwd = generateStrongPassword();
+    document.getElementById('reset-generated-pwd-text').textContent = resetGeneratedPwd;
+    updateResetEmailBody();
+  }
+
+  function toggleResetEmailInputs(checked) {
+    document.getElementById('reset-email-inputs-block').style.display = checked ? 'block' : 'none';
+  }
+
+  function updateResetEmailBody() {
+    const pwd = resetPwdMode === 'auto' ? resetGeneratedPwd : document.getElementById('reset-user-pwd').value || '[Custom Password]';
+    const body = `Hello [NAME],
+
+Your portal account password has been reset by the administrator.
+
+Your new temporary password is:
+- Password: [PASSWORD]
+
+Please log in and update your password immediately.
+URL: ${window.location.origin}/auth/login
+
+Best regards,
+Harshit Garg System Portal`;
+
+    document.getElementById('reset-email-body').value = body;
+  }
+
+  // Bind change handler on custom reset input to update body
+  document.getElementById('reset-user-pwd').addEventListener('input', () => {
+    updateResetEmailBody();
+  });
+
+  async function submitResetPassword() {
+    const id = document.getElementById('reset-user-id').value;
+    const password = resetPwdMode === 'auto' ? resetGeneratedPwd : document.getElementById('reset-user-pwd').value;
+    const sendEmail = document.getElementById('reset-send-email').checked;
+
+    if (resetPwdMode === 'custom' && (!password || password.length < 6)) {
+      showToast('Custom password must be at least 6 characters.', false);
+      return;
+    }
+
+    let emailSubject = '';
+    let emailBody = '';
+    if (sendEmail) {
+      emailSubject = document.getElementById('reset-email-sub').value;
+      emailBody = document.getElementById('reset-email-body').value;
+
+      // Replace password macro
+      emailBody = emailBody.replace(/\[PASSWORD\]/g, password);
+    }
+
+    try {
+      const response = await fetch(`/admin/users/reset-password/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, sendEmail, emailSubject, emailBody })
+      });
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showToast('Password reset successfully!', true);
+        closeResetPasswordModal();
+        setTimeout(() => {
+          location.reload();
+        }, 1200);
+      } else {
+        showToast(result.error || 'Failed to reset password.', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error resetting password.', false);
+    }
+  }
+
+  // ==========================================
+  // DELETE USER ACTIONS
+  // ==========================================
+  async function confirmDeleteUser(id, label) {
+    if (!confirm(`⚠️ Are you sure you want to delete the user "${label}"?\nThis will remove their profile and all passkey credentials. This action is permanent!`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/users/delete/${id}`, {
+        method: 'POST'
+      });
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showToast('User account deleted.', true);
+        const row = document.getElementById(`user-row-${id}`);
+        if (row) {
+          row.style.opacity = '0';
+          setTimeout(() => {
+            row.remove();
+          }, 300);
+        }
+      } else {
+        showToast(result.error || 'Failed to delete user.', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error deleting user.', false);
+    }
+  }
+
+  // ==========================================
+  // LIVE INPUT VALIDATION WIDGET
+  // ==========================================
+  function applyLiveStyle(element, isValid) {
+    if (!element) return;
+    if (isValid) {
+      element.style.borderColor = 'var(--cyan)';
+      element.style.boxShadow = '0 0 5px rgba(0, 212, 255, 0.2)';
+    } else {
+      element.style.borderColor = '#ef4444';
+      element.style.boxShadow = '0 0 5px rgba(239, 68, 68, 0.2)';
+    }
+  }
+
+  function resetLiveStyle(element) {
+    if (!element) return;
+    element.style.borderColor = '';
+    element.style.boxShadow = '';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const emailInput = document.getElementById('add-user-email');
+    const pwdInput = document.getElementById('add-user-pwd');
+    const emailSubInput = document.getElementById('add-user-email-sub');
+    const emailBodyInput = document.getElementById('add-user-email-body');
+
+    if (emailInput) {
+      emailInput.addEventListener('input', () => {
+        const val = emailInput.value.trim();
+        const isValid = val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        applyLiveStyle(emailInput, isValid);
+      });
+    }
+
+    if (pwdInput) {
+      pwdInput.addEventListener('input', () => {
+        if (addPwdMode === 'custom') {
+          const val = pwdInput.value;
+          applyLiveStyle(pwdInput, val.length >= 6);
+        }
+      });
+    }
+
+    if (emailSubInput) {
+      emailSubInput.addEventListener('input', () => {
+        const val = emailSubInput.value.trim();
+        applyLiveStyle(emailSubInput, val.length > 0);
+      });
+    }
+
+    if (emailBodyInput) {
+      emailBodyInput.addEventListener('input', () => {
+        const val = emailBodyInput.value.trim();
+        applyLiveStyle(emailBodyInput, val.length > 0);
+      });
+    }
+  });
 </script>
 
 <%- include('../partials/foot') %>

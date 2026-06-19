@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
 const express = require('express');
 const morgan = require('morgan');
 const path = require('path');
@@ -47,6 +48,7 @@ const contactRouter = require('./routes/contact');
 const authRouter = require('./routes/auth');
 const cmsRouter = require('./routes/cms');
 const usersRouter = require('./routes/users');
+const aiRouter = require('./routes/ai');
 
 app.use('/', indexRouter);
 app.use('/about', aboutRouter);
@@ -54,37 +56,87 @@ app.use('/contact', contactRouter);
 app.use('/auth', authRouter);
 app.use('/admin/cms', cmsRouter);
 app.use('/admin/users', usersRouter);
+app.use('/api/ai', aiRouter);
 
 // ─── Dynamic CMS Pages Routing ────────────────────────────────
-app.get('/:slug', async (req, res, next) => {
+app.get('/*splat', async (req, res, next) => {
   try {
-    const slug = req.params.slug.toLowerCase();
-    
-    // Skip if matches static routes or favicon
-    const reservedSlugs = ['about', 'contact', 'auth', 'admin', 'favicon.ico'];
-    if (reservedSlugs.includes(slug)) {
+    // Extract path without the leading slash
+    let slug = req.path.substring(1).toLowerCase();
+
+    // If path is empty, pass to indexRouter
+    if (!slug) {
+      return next();
+    }
+
+    // Skip if path starts with static resource folders or static pages
+    const skipPrefixes = ['about', 'contact', 'auth', 'admin', 'css', 'js', 'uploads', 'favicon.ico'];
+    const topLevelDir = slug.split('/')[0];
+    if (skipPrefixes.includes(topLevelDir)) {
       return next();
     }
 
     const prisma = require('./lib/prisma');
+
+    // 1. Resolve redirects first (301 Permanent / 302 Temporary)
+    const redirect = await prisma.cMSRedirect.findUnique({
+      where: { fromPath: slug }
+    });
+
+    if (redirect) {
+      return res.redirect(redirect.statusCode, '/' + redirect.toPath);
+    }
+
+    // 2. Resolve Page from database with branches and head commits
     const page = await prisma.cMSPage.findUnique({
-      where: { slug }
+      where: { slug },
+      include: {
+        branches: {
+          include: {
+            headCommit: true
+          }
+        }
+      }
     });
 
     if (!page) {
       return next(); // Pass to 404
     }
 
+    // Check if user is logged in and authorized as ADMIN or EDITOR
+    const { ensureGlobalAdmin } = require('./lib/middleware');
+    ensureGlobalAdmin(req);
+    const isAdminOrEditor = req.session && req.session.user && ['ADMIN', 'EDITOR'].includes(req.session.user.role);
+
+    // Resolve branch
+    let activeBranchName = req.query.branch;
+    let activeBranch = null;
+
+    if (activeBranchName && isAdminOrEditor) {
+      activeBranch = page.branches.find(b => b.name === activeBranchName);
+    }
+
+    if (!activeBranch) {
+      activeBranch = page.branches.find(b => b.isDefault) || page.branches[0];
+    }
+
+    if (!activeBranch || !activeBranch.headCommit) {
+      return next(); // If no branch or commit exists, 404
+    }
+
+    const commit = activeBranch.headCommit;
+
     // Access control:
     // - PUBLISHED: available to everyone
     // - STAGED / DRAFT: require authentication and EDITOR or ADMIN role
-    if (page.status === 'PUBLISHED') {
-      return res.render('cms_page', { page, title: page.title });
+    if (commit.status === 'PUBLISHED') {
+      const title = activeBranchName ? `[Preview] ${commit.title} (${activeBranch.name})` : commit.title;
+      return res.render('cms_page', { commit, title });
     }
 
-    // Check if user is logged in and authorized
-    if (req.session && req.session.user && ['ADMIN', 'EDITOR'].includes(req.session.user.role)) {
-      return res.render('cms_page', { page, title: `[Preview] ${page.title}` });
+    if (isAdminOrEditor) {
+      const title = `[Preview] ${commit.title} (${activeBranch.name})`;
+      return res.render('cms_page', { commit, title });
     }
 
     next();

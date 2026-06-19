@@ -1,34 +1,151 @@
 <%- include('../partials/head') %>
 
+<!-- Load Quill Editor via CDN (Loaded before Monaco to prevent AMD define conflict) -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js"></script>
+
 <!-- Load Monaco Editor via CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/loader.min.js"></script>
 
 <section class="section section-alt" style="padding-top: 80px; padding-bottom: 2rem; min-height: calc(100vh - 80px); display: flex; flex-direction: column;">
-  <div class="container" style="max-width: 100%; padding-inline: 2rem; display: flex; flex-direction: column; flex: 1;">
+  <div class="container" style="max-width: 96% !important; width: 96% !important; padding-inline: 2rem; display: flex; flex-direction: column; flex: 1;">
     
     <!-- Editor Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-      <div>
-        <div class="section-label">CMS Workspace</div>
-        <h1 style="font-family: var(--font-head); font-size: 1.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem;">
-          <%= page ? 'Edit Page:' : 'Create New' %> <span class="gradient-text"><%= page ? page.title : 'Custom Page' %></span>
-        </h1>
+      <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+        <div>
+          <h1 style="font-family: var(--font-head); font-size: 1.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem; margin: 0;">
+            <%= page ? 'Edit Page:' : 'Create New' %> <span class="gradient-text"><%= page ? page.title : 'Custom Page' %></span>
+          </h1>
+        </div>
+
+        <% if (page) { %>
+          <!-- Branch Switcher & Actions -->
+          <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--r-md); padding: 0.35rem 0.75rem;">
+            <span style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);">branch:</span>
+            <select id="branch-select" onchange="switchBranch(this.value)" style="background: none; border: none; color: var(--text); font-family: var(--font-body); font-weight: 600; cursor: pointer; outline: none;">
+              <% branches.forEach(function(b) { %>
+                <option value="<%= b.name %>" <%= b.name === activeBranch ? 'selected' : '' %> style="background: var(--bg-card); color: var(--text);"><%= b.name %><%= b.isDefault ? ' (default)' : '' %></option>
+              <% }); %>
+            </select>
+            <button onclick="openBranchModal()" style="font-size: 0.85rem; padding: 2px 6px; color: var(--cyan); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 4px; background: rgba(0, 212, 255, 0.05); font-weight: 600; cursor: pointer;" title="Create Branch">+ New</button>
+            <button onclick="openMergeRequestModal()" style="font-size: 0.85rem; padding: 2px 6px; color: var(--purple); border: 1px solid rgba(157, 92, 255, 0.2); border-radius: 4px; background: rgba(157, 92, 255, 0.05); font-weight: 600; cursor: pointer;" title="Submit Merge Request">⇌ Merge</button>
+          </div>
+        <% } %>
       </div>
+      
       <div style="display: flex; gap: 1rem; align-items: center;">
         <a href="/admin/cms" class="btn btn-ghost" style="padding: 0.5rem 1.2rem; font-size: 0.88rem;">
           <span>Cancel</span>
         </a>
-        <button onclick="savePage()" class="btn btn-primary" style="padding: 0.5rem 1.8rem; font-size: 0.88rem;">
-          <span>Save Changes</span>
+        <button onclick="openCommitModal()" class="btn btn-primary" style="padding: 0.5rem 1.8rem; font-size: 0.88rem;">
+          <span>Commit &amp; Save</span>
           <span>💾</span>
         </button>
       </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); align-items: center; gap: 0.5rem;">
+    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 100000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); align-items: center; gap: 0.5rem;">
       <span id="toast-icon">ℹ️</span>
       <span id="toast-message"></span>
+    </div>
+
+    <!-- VCS Commit Message Modal -->
+    <div id="commit-modal" class="vcs-modal-backdrop" style="display: none;">
+      <div class="vcs-modal-container">
+        <div class="vcs-modal-header">
+          <h3>Commit Savepoint</h3>
+          <button onclick="closeCommitModal()">✕</button>
+        </div>
+        <div class="vcs-modal-body">
+          <label class="form-label">Commit Message</label>
+          <input type="text" id="commit-message" placeholder="e.g. Updated content layout and styled background" class="form-input" style="font-family: var(--font-body);">
+          <span style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; display: block;">Write a brief description of the modifications you made. This is added permanently to the revision tree.</span>
+        </div>
+        <div class="vcs-modal-footer">
+          <button onclick="closeCommitModal()" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.85rem;">Cancel</button>
+          <button onclick="savePage()" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;">Commit &amp; Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VCS Create Branch Modal -->
+    <div id="branch-modal" class="vcs-modal-backdrop" style="display: none;">
+      <div class="vcs-modal-container">
+        <div class="vcs-modal-header">
+          <h3>Create New Branch</h3>
+          <button onclick="closeBranchModal()">✕</button>
+        </div>
+        <div class="vcs-modal-body">
+          <div style="margin-bottom: 1rem;">
+            <label class="form-label">Branch Name</label>
+            <input type="text" id="new-branch-name" placeholder="e.g. campaign-draft" class="form-input">
+          </div>
+          <div>
+            <label class="form-label">Source Branch (Base HEAD)</label>
+            <select id="source-branch-select" class="form-input">
+              <% if (page) { %>
+                <% branches.forEach(function(b) { %>
+                  <option value="<%= b.id %>" <%= b.name === activeBranch ? 'selected' : '' %>><%= b.name %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          </div>
+        </div>
+        <div class="vcs-modal-footer">
+          <button onclick="closeBranchModal()" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.85rem;">Cancel</button>
+          <button onclick="submitCreateBranch()" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;">Create Branch</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VCS Merge Request Modal -->
+    <div id="mr-modal" class="vcs-modal-backdrop" style="display: none;">
+      <div class="vcs-modal-container">
+        <div class="vcs-modal-header">
+          <h3>Create Merge Request</h3>
+          <button onclick="closeMergeRequestModal()">✕</button>
+        </div>
+        <div class="vcs-modal-body">
+          <div style="margin-bottom: 1rem;">
+            <label class="form-label">Merge Request Title</label>
+            <input type="text" id="mr-title" placeholder="e.g. Merge marketing changes into production" class="form-input">
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <label class="form-label">Description / Summary</label>
+            <textarea id="mr-description" placeholder="Describe the changes this merge applies." class="form-input" style="height: 60px; resize: none;"></textarea>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label class="form-label">Source Branch (Draft)</label>
+              <select id="mr-source-select" class="form-input" disabled>
+                <% if (page) { %>
+                  <% branches.forEach(function(b) { %>
+                    <option value="<%= b.id %>" <%= b.name === activeBranch ? 'selected' : '' %>><%= b.name %></option>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Target Branch (Dest)</label>
+              <select id="mr-target-select" class="form-input">
+                <% if (page) { %>
+                  <% branches.forEach(function(b) { %>
+                    <% if (b.name !== activeBranch) { %>
+                      <option value="<%= b.id %>" <%= b.isDefault ? 'selected' : '' %>><%= b.name %></option>
+                    <% } %>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="vcs-modal-footer">
+          <button onclick="closeMergeRequestModal()" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.85rem;">Cancel</button>
+          <button onclick="submitMergeRequest()" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;">File Request</button>
+        </div>
+      </div>
     </div>
 
     <!-- Main Workspace Split Screen -->
@@ -43,6 +160,9 @@
           <button onclick="switchWorkspaceTab('html')" id="workspace-tab-html" class="workspace-tab-btn">HTML Body</button>
           <button onclick="switchWorkspaceTab('css')" id="workspace-tab-css" class="workspace-tab-btn">CSS Custom</button>
           <button onclick="switchWorkspaceTab('js')" id="workspace-tab-js" class="workspace-tab-btn">JS Scripts</button>
+          <% if (page) { %>
+            <button onclick="switchWorkspaceTab('diff')" id="workspace-tab-diff" class="workspace-tab-btn">VCS Diff Viewer</button>
+          <% } %>
         </div>
 
         <div style="flex: 1; display: flex; flex-direction: column; position: relative;">
@@ -60,7 +180,7 @@
               </div>
               <div>
                 <label class="form-label">URL Slug</label>
-                <input type="text" id="page-slug" value="<%= page ? page.slug : '' %>" placeholder="e.g. custom-portfolio" class="form-input">
+                <input type="text" id="page-slug" value="<%= page ? page.slug : '' %>" placeholder="e.g. custom-portfolio" class="form-input" <%= page ? 'disabled' : '' %> title="<%= page ? 'URL Slug is global and locked while editing. Change slug redirects in settings panel.' : '' %>">
               </div>
             </div>
 
@@ -86,6 +206,25 @@
                   <option value="STAGED" <%= page && page.status === 'STAGED' ? 'selected' : '' %>>Staged (Preview URL)</option>
                   <option value="PUBLISHED" <%= page && page.status === 'PUBLISHED' ? 'selected' : '' %>>Published (Instantly Live)</option>
                 </select>
+              </div>
+            </div>
+
+            <!-- SEO Meta Tags Panel -->
+            <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; margin-bottom: 1.5rem;">
+              <h3 style="font-family: var(--font-head); font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text);">SEO &amp; Index Metadata</h3>
+              <div style="display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                  <label class="form-label">Robots Header</label>
+                  <input type="text" id="meta-robots" value="<%= page ? page.metaRobots : 'index, follow' %>" class="form-input">
+                </div>
+                <div>
+                  <label class="form-label">Canonical URL</label>
+                  <input type="text" id="canonical-url" value="<%= page ? page.canonicalUrl : '' %>" placeholder="https://archie-garg.com/slug" class="form-input">
+                </div>
+              </div>
+              <div>
+                <label class="form-label">OG Sharing Image Card (URL)</label>
+                <input type="text" id="og-image" value="<%= page ? page.ogImage : '' %>" placeholder="/uploads/card-share.png" class="form-input">
               </div>
             </div>
 
@@ -122,11 +261,42 @@
               </div>
             </div>
 
+            <!-- Commit History & Reverts -->
+            <% if (page && commits && commits.length > 0) { %>
+            <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
+              <h3 style="font-family: var(--font-head); font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text);">Branch Commit History</h3>
+              <div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0.75rem; background: rgba(0,0,0,0.1);">
+                <% commits.forEach(function(commit) { %>
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                    <div style="display: flex; flex-direction: column; max-width: 75%;">
+                      <span style="font-weight: 600; color: var(--text); word-break: break-word;"><%= commit.message %></span>
+                      <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--cyan); margin-top: 0.1rem;">commit: <%= commit.hash.substring(0, 7) %></span>
+                      <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">
+                        By <%= commit.author ? commit.author.name : 'Author' %> • <%= new Date(commit.createdAt).toLocaleString() %>
+                      </span>
+                    </div>
+                    <button onclick="restoreCommit('<%= commit.hash %>')" class="btn btn-ghost" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; border-color: var(--purple-dim);">
+                      Checkout
+                    </button>
+                  </div>
+                <% }); %>
+              </div>
+            </div>
+            <% } %>
+
           </div>
 
           <!-- HTML PANEL -->
-          <div id="panel-html" class="workspace-panel" style="height: 100%; display: none;">
-            <div id="editor-html" style="width: 100%; height: 100%;"></div>
+          <div id="panel-html" class="workspace-panel" style="height: 100%; display: none; flex-direction: column;">
+            <!-- Editor Mode Selector -->
+            <div style="display: flex; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border);">
+              <button onclick="toggleEditorMode('code')" id="editor-mode-code" class="editor-mode-btn active-mode-btn">Code Editor (Monaco)</button>
+              <button onclick="toggleEditorMode('visual')" id="editor-mode-visual" class="editor-mode-btn">Visual Builder (Quill)</button>
+            </div>
+            <div id="editor-html" style="width: 100%; flex: 1;"></div>
+            <div id="quill-editor-container" style="width: 100%; flex: 1; display: none; background: #fff; color: #333; overflow-y: auto;">
+              <div id="quill-editor-body" style="height: calc(100% - 42px); min-height: 400px;"></div>
+            </div>
           </div>
 
           <!-- CSS PANEL -->
@@ -137,6 +307,43 @@
           <!-- JS PANEL -->
           <div id="panel-js" class="workspace-panel" style="height: 100%; display: none;">
             <div id="editor-js" style="width: 100%; height: 100%;"></div>
+          </div>
+
+          <!-- DIFF VIEWER PANEL -->
+          <div id="panel-diff" class="workspace-panel" style="height: 100%; display: none; flex-direction: column;">
+            <!-- Diff Controls -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-family: var(--font-body); font-size: 0.8rem; color: var(--text-muted);">Compare:</span>
+                <select id="diff-original-select" onchange="updateDiffComparison()" style="background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                  <% if (page && commits && commits.length > 0) { %>
+                    <% commits.forEach(function(c, i) { %>
+                      <option value="<%= c.hash %>" <%= i === 0 ? 'selected' : '' %> style="background: var(--bg-card); color: var(--text);">
+                        [<%= c.hash.substring(0, 7) %>] <%= c.message.length > 25 ? c.message.substring(0, 22) + '...' : c.message %>
+                      </option>
+                    <% }); %>
+                  <% } %>
+                </select>
+                <span style="font-family: var(--font-body); font-size: 0.8rem; color: var(--text-muted);">➔</span>
+                <select id="diff-modified-select" onchange="updateDiffComparison()" style="background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                  <option value="unstaged" selected style="background: var(--bg-card); color: var(--text);">Unstaged Editor Changes</option>
+                  <% if (page && commits && commits.length > 0) { %>
+                    <% commits.forEach(function(c, i) { %>
+                      <option value="<%= c.hash %>" style="background: var(--bg-card); color: var(--text);">
+                        [<%= c.hash.substring(0, 7) %>] <%= c.message.length > 25 ? c.message.substring(0, 22) + '...' : c.message %>
+                      </option>
+                    <% }); %>
+                  <% } %>
+                </select>
+              </div>
+              <div style="display: flex; gap: 0.25rem;">
+                <button onclick="setDiffType('html')" id="diff-btn-html" class="editor-mode-btn active-mode-btn">HTML</button>
+                <button onclick="setDiffType('css')" id="diff-btn-css" class="editor-mode-btn">CSS</button>
+                <button onclick="setDiffType('js')" id="diff-btn-js" class="editor-mode-btn">JS</button>
+              </div>
+            </div>
+            <!-- Diff Editor Container -->
+            <div id="editor-diff" style="width: 100%; flex: 1;"></div>
           </div>
 
         </div>
@@ -160,18 +367,18 @@
   </div>
 </section>
 
-<!-- Monaco Loader Config -->
+<!-- Monaco Loader & Workspace Logic -->
 <script>
-  let htmlEditor, cssEditor, jsEditor;
+  let htmlEditor, cssEditor, jsEditor, diffEditorInstance;
+  let activeDiffType = 'html';
   const isEdit = <%= page ? 'true' : 'false' %>;
 
   const defaultHtml = `<div class="container section">
   <div class="section-header text-center">
     <div class="section-label">Welcome To My Custom Layout</div>
     <h2 class="section-title">Hello <span class="gradient-text">World</span></h2>
-    <p class="section-subtitle">This page was created dynamically using our advanced EJS-integrated CMS system.</p>
+    <p class="section-subtitle">This page was created dynamically using our advanced Git VCS-integrated CMS.</p>
   </div>
-  
   <div class="text-center" style="margin-top: 3rem;">
     <button onclick="triggerAnimation()" class="btn btn-primary">Click Me</button>
   </div>
@@ -191,10 +398,9 @@
 }`;
 
   const defaultJs = `function triggerAnimation() {
-  alert("CMS JavaScript works perfectly!");
+  alert("CMS Version Control works beautifully!");
 }`;
 
-  // Read page parameters or use defaults
   const htmlVal = isEdit ? `<%- page ? page.htmlContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultHtml;
   const cssVal = isEdit ? `<%- page ? page.cssContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultCss;
   const jsVal = isEdit ? `<%- page ? page.jsContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultJs;
@@ -236,16 +442,38 @@
       minimap: { enabled: false }
     });
 
+    // Monaco Diff Editor
+    const diffContainer = document.getElementById('editor-diff');
+    if (diffContainer) {
+      diffEditorInstance = monaco.editor.createDiffEditor(diffContainer, {
+        theme: 'vs-dark',
+        automaticLayout: true,
+        fontSize: 13,
+        fontFamily: 'var(--font-mono)',
+        readOnly: true
+      });
+    }
+
+    // Bind Ctrl+S shortcut to trigger commit modal
+    const commitCommandId = monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS;
+    htmlEditor.addCommand(commitCommandId, function() {
+      openCommitModal();
+    });
+    cssEditor.addCommand(commitCommandId, function() {
+      openCommitModal();
+    });
+    jsEditor.addCommand(commitCommandId, function() {
+      openCommitModal();
+    });
+
     // Bind change listener to update preview on modifications
     htmlEditor.onDidChangeModelContent(debounce(triggerPreviewUpdate, 1500));
     cssEditor.onDidChangeModelContent(debounce(triggerPreviewUpdate, 1500));
     jsEditor.onDidChangeModelContent(debounce(triggerPreviewUpdate, 1500));
 
-    // Trigger initial preview build
     triggerPreviewUpdate();
   });
 
-  // Debounce helper
   function debounce(func, delay) {
     let timeout;
     return function() {
@@ -256,31 +484,41 @@
     };
   }
 
-  // Switch between EJS/HTML/CSS/JS panels
   function switchWorkspaceTab(tab) {
     document.querySelectorAll('.workspace-tab-btn').forEach(btn => btn.classList.remove('active-w-tab'));
     document.querySelectorAll('.workspace-panel').forEach(panel => panel.style.display = 'none');
 
     document.getElementById(`workspace-tab-${tab}`).classList.add('active-w-tab');
-    document.getElementById(`panel-${tab}`).style.display = 'block';
+    document.getElementById(`panel-${tab}`).style.display = tab === 'html' ? 'flex' : 'block';
+
+    if (tab === 'html' && htmlEditor) {
+      setTimeout(() => htmlEditor.layout(), 50);
+    } else if (tab === 'css' && cssEditor) {
+      setTimeout(() => cssEditor.layout(), 50);
+    } else if (tab === 'js' && jsEditor) {
+      setTimeout(() => jsEditor.layout(), 50);
+    } else if (tab === 'diff') {
+      document.getElementById(`panel-diff`).style.display = 'flex';
+      updateDiffComparison();
+      if (diffEditorInstance) {
+        setTimeout(() => diffEditorInstance.layout(), 50);
+      }
+    }
   }
 
-  // Handle color input updates
   function syncColorInput(val) {
     document.getElementById('theme-color').value = val;
     document.getElementById('theme-color-text').value = val;
     triggerPreviewUpdate();
   }
 
-  // Apply gradient preset
   function applyGradient(grad) {
     document.getElementById('gradient-css').value = grad;
     triggerPreviewUpdate();
   }
 
-  // Autofill slug suggestion
   function suggestSlug() {
-    if (isEdit) return; // Don't overwrite slug when editing
+    if (isEdit) return;
     const title = document.getElementById('page-title').value;
     const slugInput = document.getElementById('page-slug');
     const slug = title.toLowerCase()
@@ -291,7 +529,6 @@
     slugInput.value = slug;
   }
 
-  // Dynamic Browser preview builder
   function triggerPreviewUpdate() {
     if (!htmlEditor || !cssEditor || !jsEditor) return;
 
@@ -336,7 +573,6 @@
         </html>
       `;
     } else {
-      // Standard layout simulation
       content = `
         <!DOCTYPE html>
         <html lang="en">
@@ -357,19 +593,17 @@
           </style>
         </head>
         <body>
-          <!-- Mock Header -->
           <div class="navbar" style="position: relative; background: rgba(4, 6, 15, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(130, 155, 200, 0.08);">
             <div class="container" style="display: flex; justify-content: space-between; align-items: center; height: 60px;">
               <span style="font-weight: 700; color: #fff; font-size: 1.1rem; font-family: 'Space Grotesk', sans-serif;"><span style="color:${themeColor}">⬤</span> <%= appName %></span>
-              <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: ${themeColor}; border: 1px solid ${themeColor}; border-radius: 4px; padding: 2px 6px;">PREVIEW</span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: ${themeColor}; border: 1px solid ${themeColor}; border-radius: 4px; padding: 2px 6px;">PREVIEW: <%= activeBranch %></span>
             </div>
           </div>
           <main class="main-content" style="padding-top: 40px; min-height: 450px;">
             ${htmlContent}
           </main>
-          <!-- Mock Footer -->
           <footer style="text-align: center; padding: 2rem; border-top: 1px solid rgba(130, 155, 200, 0.05); color: #8a9bb8; font-size: 0.8rem;">
-            &copy; ${new Date().getFullYear()} <%= appName %> • Created via dynamic CMS
+            &copy; ${new Date().getFullYear()} <%= appName %> • Version Controlled via CMS
           </footer>
           <script>${jsContent}<\/script>
         </body>
@@ -382,7 +616,102 @@
     doc.close();
   }
 
-  // Save changes to database (AJAX)
+  // Branch & Commit Modals Controllers
+  function openCommitModal() {
+    document.getElementById('commit-modal').style.display = 'flex';
+    document.getElementById('commit-message').focus();
+  }
+  function closeCommitModal() {
+    document.getElementById('commit-modal').style.display = 'none';
+  }
+
+  function openBranchModal() {
+    document.getElementById('branch-modal').style.display = 'flex';
+    document.getElementById('new-branch-name').focus();
+  }
+  function closeBranchModal() {
+    document.getElementById('branch-modal').style.display = 'none';
+  }
+
+  function openMergeRequestModal() {
+    document.getElementById('mr-modal').style.display = 'flex';
+    document.getElementById('mr-title').focus();
+  }
+  function closeMergeRequestModal() {
+    document.getElementById('mr-modal').style.display = 'none';
+  }
+
+  function switchBranch(branchName) {
+    const pageId = document.getElementById('page-id').value;
+    window.location.href = `/admin/cms/pages/edit/${pageId}?branch=${branchName}`;
+  }
+
+  // VCS AJAX Submit Handlers
+  async function submitCreateBranch() {
+    const pageId = document.getElementById('page-id').value;
+    const branchName = document.getElementById('new-branch-name').value;
+    const sourceBranchId = document.getElementById('source-branch-select').value;
+
+    if (!branchName) {
+      showToastMsg('Branch name is required.', false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/cms/pages/${pageId}/branches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branchName, sourceBranchId })
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        showToastMsg('Branch created successfully! Switching...', true);
+        setTimeout(() => {
+          window.location.href = `/admin/cms/pages/edit/${pageId}?branch=${result.branch.name}`;
+        }, 1200);
+      } else {
+        showToastMsg(result.error || 'Failed to create branch', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToastMsg('A network error occurred', false);
+    }
+  }
+
+  async function submitMergeRequest() {
+    const pageId = document.getElementById('page-id').value;
+    const title = document.getElementById('mr-title').value;
+    const description = document.getElementById('mr-description').value;
+    const sourceBranchId = document.getElementById('mr-source-select').value;
+    const targetBranchId = document.getElementById('mr-target-select').value;
+
+    if (!title || !targetBranchId) {
+      showToastMsg('Title and Target branch are required.', false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/cms/pages/${pageId}/merge-requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, sourceBranchId, targetBranchId })
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        showToastMsg('Merge Request submitted successfully!', true);
+        closeMergeRequestModal();
+        setTimeout(() => {
+          window.location.href = '/admin/cms';
+        }, 1200);
+      } else {
+        showToastMsg(result.error || 'Failed to file Merge Request', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToastMsg('A network error occurred', false);
+    }
+  }
+
   async function savePage() {
     const id = document.getElementById('page-id').value;
     const title = document.getElementById('page-title').value;
@@ -392,7 +721,11 @@
     const status = document.getElementById('page-status').value;
     const themeColor = document.getElementById('theme-color').value;
     const gradient = document.getElementById('gradient-css').value;
-    
+    const metaRobots = document.getElementById('meta-robots').value;
+    const canonicalUrl = document.getElementById('canonical-url').value;
+    const ogImage = document.getElementById('og-image').value;
+    const commitMessage = document.getElementById('commit-message').value;
+
     if (!title || !slug) {
       showToastMsg('Title and Slug are required.', false);
       return;
@@ -412,33 +745,199 @@
       gradient,
       htmlContent,
       cssContent,
-      jsContent
+      jsContent,
+      metaRobots,
+      canonicalUrl,
+      ogImage,
+      commitMessage: commitMessage || 'Update page content'
     };
 
-    const url = id ? `/admin/cms/pages/edit/${id}` : '/admin/cms/pages';
+    const url = id ? `/admin/cms/pages/edit/${id}?branch=<%= activeBranch %>` : '/admin/cms/pages';
 
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       const result = await response.json();
 
       if (response.ok && result.success) {
-        showToastMsg('Page saved successfully! Redirecting...', true);
+        showToastMsg('Changes committed and saved!', true);
+        closeCommitModal();
         setTimeout(() => {
           window.location.href = result.redirectUrl;
         }, 1200);
       } else {
-        showToastMsg(result.error || 'Failed to save page', false);
+        showToastMsg(result.error || 'Failed to save changes', false);
       }
     } catch (err) {
       console.error(err);
       showToastMsg('A network error occurred', false);
+    }
+  }
+
+  async function restoreCommit(commitHash) {
+    const pageId = document.getElementById('page-id').value;
+    if (!confirm('Are you sure you want to checkout this commit? Your unsaved draft changes in this branch will be replaced by a new revert commit.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/cms/pages/edit/${pageId}/restore?branch=<%= activeBranch %>`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revisionId: commitHash })
+      });
+
+      if (response.ok) {
+        showToastMsg('Commit restored! Reloading...', true);
+        setTimeout(() => {
+          location.reload();
+        }, 1200);
+      } else {
+        const result = await response.json();
+        showToastMsg(result.error || 'Failed to restore commit', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToastMsg('A network error occurred', false);
+    }
+  }
+
+  // Visual Rich Text editor toggle
+  let quillInstance = null;
+  let isQuillActive = false;
+
+  function toggleEditorMode(mode) {
+    const monacoContainer = document.getElementById('editor-html');
+    const quillContainer = document.getElementById('quill-editor-container');
+    
+    const codeTab = document.getElementById('editor-mode-code');
+    const visualTab = document.getElementById('editor-mode-visual');
+
+    if (mode === 'visual') {
+      isQuillActive = true;
+      codeTab.classList.remove('active-mode-btn');
+      visualTab.classList.add('active-mode-btn');
+
+      monacoContainer.style.display = 'none';
+      quillContainer.style.display = 'block';
+
+      try {
+        if (!quillInstance) {
+          quillInstance = new Quill('#quill-editor-body', {
+            theme: 'snow',
+            modules: {
+              toolbar: [
+                [{ 'header': [1, 2, 3, 4, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                ['link', 'image', 'blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['clean']
+              ]
+            }
+          });
+          
+          quillInstance.on('text-change', () => {
+            if (isQuillActive) {
+              htmlEditor.setValue(quillInstance.root.innerHTML);
+            }
+          });
+        }
+
+        const htmlContent = htmlEditor.getValue();
+        quillInstance.clipboard.dangerouslyPasteHTML(htmlContent);
+      } catch (err) {
+        console.error('Error initializing Quill editor:', err);
+        showToastMsg('Error loading Visual Editor. Using Code Editor instead.', false);
+        isQuillActive = false;
+        codeTab.classList.add('active-mode-btn');
+        visualTab.classList.remove('active-mode-btn');
+        quillContainer.style.display = 'none';
+        monacoContainer.style.display = 'block';
+        if (htmlEditor) {
+          setTimeout(() => htmlEditor.layout(), 50);
+        }
+      }
+    } else {
+      isQuillActive = false;
+      codeTab.classList.add('active-mode-btn');
+      visualTab.classList.remove('active-mode-btn');
+
+      quillContainer.style.display = 'none';
+      monacoContainer.style.display = 'block';
+      
+      if (quillInstance) {
+        htmlEditor.setValue(quillInstance.root.innerHTML);
+      }
+      if (htmlEditor) {
+        setTimeout(() => htmlEditor.layout(), 50);
+      }
+    }
+  }
+
+  // Monaco Diff Editor Rendering
+  function setDiffType(type) {
+    document.querySelectorAll('#panel-diff .editor-mode-btn').forEach(btn => btn.classList.remove('active-mode-btn'));
+    document.getElementById(`diff-btn-${type}`).classList.add('active-mode-btn');
+    activeDiffType = type;
+    updateDiffComparison();
+  }
+
+  async function updateDiffComparison() {
+    if (!diffEditorInstance) return;
+
+    const pageId = document.getElementById('page-id').value;
+    const originalSelect = document.getElementById('diff-original-select');
+    const modifiedSelect = document.getElementById('diff-modified-select');
+    if (!originalSelect || !modifiedSelect) return;
+    
+    const originalHash = originalSelect.value;
+    const modifiedHash = modifiedSelect.value;
+
+    if (!originalHash || !modifiedHash) return;
+
+    try {
+      const fetchModifiedHash = (modifiedHash === 'unstaged') ? originalHash : modifiedHash;
+      const response = await fetch(`/admin/cms/pages/${pageId}/diff?originalHash=${originalHash}&modifiedHash=${fetchModifiedHash}`);
+      if (response.ok) {
+        const data = await response.json();
+        
+        let origText = '', modText = '', language = 'html';
+
+        if (activeDiffType === 'html') {
+          origText = data.original.htmlContent;
+          modText = (modifiedHash === 'unstaged') ? htmlEditor.getValue() : data.modified.htmlContent;
+          language = 'html';
+        } else if (activeDiffType === 'css') {
+          origText = data.original.cssContent;
+          modText = (modifiedHash === 'unstaged') ? cssEditor.getValue() : data.modified.cssContent;
+          language = 'css';
+        } else if (activeDiffType === 'js') {
+          origText = data.original.jsContent;
+          modText = (modifiedHash === 'unstaged') ? jsEditor.getValue() : data.modified.jsContent;
+          language = 'javascript';
+        }
+
+        // Set Diff Editor Models
+        const originalModel = monaco.editor.createModel(origText, language);
+        const modifiedModel = monaco.editor.createModel(modText, language);
+
+        const oldModel = diffEditorInstance.getModel();
+        diffEditorInstance.setModel({
+          original: originalModel,
+          modified: modifiedModel
+        });
+
+        if (oldModel) {
+          if (oldModel.original) oldModel.original.dispose();
+          if (oldModel.modified) oldModel.modified.dispose();
+        }
+      }
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -464,6 +963,64 @@
 </script>
 
 <style>
+  /* Modals background */
+  .vcs-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(4, 6, 15, 0.85);
+    backdrop-filter: blur(6px);
+    z-index: 100005;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vcs-modal-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    overflow: hidden;
+    animation: zoomIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  @keyframes zoomIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .vcs-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,13,26,0.4);
+  }
+  .vcs-modal-header h3 {
+    font-family: var(--font-head);
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  .vcs-modal-header button {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+  }
+  .vcs-modal-header button:hover {
+    color: var(--purple);
+  }
+  .vcs-modal-body {
+    padding: 1.5rem;
+  }
+  .vcs-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: rgba(8,13,26,0.4);
+  }
+
+  /* Tabs & Workspace Form components */
   .workspace-tab-btn {
     border: none;
     background: none;
@@ -520,6 +1077,45 @@
   .preset-grad:hover {
     transform: scale(1.1);
     border-color: #fff;
+  }
+
+  /* HTML Mode toggles */
+  .editor-mode-btn {
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: var(--r-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .editor-mode-btn:hover {
+    color: var(--text);
+    border-color: var(--purple-dim);
+  }
+  .editor-mode-btn.active-mode-btn {
+    background: var(--purple-dim);
+    border-color: var(--purple);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* Quill Snow modifications */
+  .ql-toolbar {
+    background: #eaeaea;
+    border-top-left-radius: var(--r-sm);
+    border-top-right-radius: var(--r-sm);
+    border-color: var(--border) !important;
+  }
+  .ql-container {
+    border-bottom-left-radius: var(--r-sm);
+    border-bottom-right-radius: var(--r-sm);
+    border-color: var(--border) !important;
+    background: #fff;
+    color: #333;
+    font-family: var(--font-body);
   }
 </style>
 

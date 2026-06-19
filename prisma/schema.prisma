@@ -26,6 +26,8 @@ model PortfolioUser {
   passkeys            Passkey[]
   cmsPages            CMSPage[]
   cmsAssets           CMSAsset[]
+  cmsCommits          CMSCommit[]
+  cmsMergeRequests    CMSMergeRequest[]
 }
 
 model Passkey {
@@ -48,21 +50,16 @@ model ContactSubmission {
 }
 
 model CMSPage {
-  id           Int           @id @default(autoincrement())
-  slug         String        @unique
-  title        String
-  description  String?
-  layout       String        @default("standard") // "standard", "blank"
-  themeColor   String        @default("#6366f1")
-  gradient     String        @default("linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%)")
-  htmlContent  String        @db.Text
-  cssContent   String        @db.Text
-  jsContent    String        @db.Text
-  status       String        @default("DRAFT") // "DRAFT", "STAGED", "PUBLISHED"
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id           Int               @id @default(autoincrement())
+  slug         String            @unique
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
   authorId     Int?
-  author       PortfolioUser? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  author       PortfolioUser?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  branches     CMSBranch[]
+  commits      CMSCommit[]
+  mergeRequests CMSMergeRequest[]
+  redirects    CMSRedirect[]     @relation("PageRedirects")
 }
 
 model CMSAsset {
@@ -75,5 +72,93 @@ model CMSAsset {
   createdAt    DateTime       @default(now())
   uploadedById Int?
   uploadedBy   PortfolioUser? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+}
+
+model CMSBranch {
+  id           Int           @id @default(autoincrement())
+  name         String        // e.g. "main", "draft"
+  isDefault    Boolean       @default(false)
+  pageId       Int
+  page         CMSPage       @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  headCommitId Int?          @unique
+  headCommit   CMSCommit?    @relation("BranchHead", fields: [headCommitId], references: [id])
+  commits      CMSCommit[]   @relation("BranchCommits")
+  mergeSources CMSMergeRequest[] @relation("SourceBranch")
+  mergeTargets CMSMergeRequest[] @relation("TargetBranch")
+  createdAt    DateTime      @default(now())
+
+  @@unique([pageId, name])
+}
+
+model CMSCommit {
+  id           Int           @id @default(autoincrement())
+  hash         String        @unique // Generate SHA-1 or UUID representing commit hash
+  message      String        // Custom commit/revision message
+  
+  // Page state snapshot
+  title        String
+  description  String?
+  layout       String        @default("standard")
+  themeColor   String        @default("#6366f1")
+  gradient     String        @default("linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%)")
+  htmlContent  String        @db.Text
+  cssContent   String        @db.Text
+  jsContent    String        @db.Text
+  status       String        @default("DRAFT") // "DRAFT", "STAGED", "PUBLISHED"
+  metaRobots   String        @default("index, follow")
+  canonicalUrl String?
+  ogImage      String?
+
+  pageId       Int
+  page         CMSPage       @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  branchId     Int
+  branch       CMSBranch     @relation("BranchCommits", fields: [branchId], references: [id])
+  
+  // Git DAG Parent reference
+  parentId     Int?
+  parent       CMSCommit?    @relation("CommitHistory", fields: [parentId], references: [id], onDelete: Restrict)
+  children     CMSCommit[]   @relation("CommitHistory")
+  
+  branchHead   CMSBranch?    @relation("BranchHead")
+  authorId     Int?
+  author       PortfolioUser? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt    DateTime      @default(now())
+}
+
+model CMSMergeRequest {
+  id             Int       @id @default(autoincrement())
+  title          String
+  description    String?
+  status         String    @default("OPEN") // "OPEN", "MERGED", "CLOSED"
+  pageId         Int
+  page           CMSPage   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  sourceBranchId Int
+  sourceBranch   CMSBranch @relation("SourceBranch", fields: [sourceBranchId], references: [id], onDelete: Cascade)
+  targetBranchId Int
+  targetBranch   CMSBranch @relation("TargetBranch", fields: [targetBranchId], references: [id], onDelete: Cascade)
+  createdById    Int
+  createdBy      PortfolioUser @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+}
+
+model CMSRedirect {
+  id           Int       @id @default(autoincrement())
+  fromPath     String    @unique
+  toPath       String
+  statusCode   Int       @default(301)
+  pageId       Int?
+  page         CMSPage?  @relation("PageRedirects", fields: [pageId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  action      String   // e.g. "user.create", "user.delete", "user.update", "user.password_reset"
+  details     String   @db.Text // JSON string representing change details
+  actorId     Int?     // Admin user ID who performed the action
+  actorEmail  String?  // Admin email who performed the action
+  targetId    Int?     // Target user ID affected
+  targetEmail String?  // Target user email affected
+  createdAt   DateTime @default(now())
 }
 

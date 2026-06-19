@@ -1,32 +1,32 @@
-<% if (page.layout === 'blank') { %>
+<% if (commit.layout === 'blank') { %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="<%= page.description || 'Custom page' %>" />
-  <title><%= page.title %></title>
+  <meta name="description" content="<%= commit.description || 'Custom page' %>" />
+  <title><%= commit.title %></title>
   <style>
     :root {
-      --theme-color: <%= page.themeColor %>;
-      --theme-gradient: <%= page.gradient %>;
+      --theme-color: <%= commit.themeColor %>;
+      --theme-gradient: <%= commit.gradient %>;
     }
     body {
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      background: <%= page.gradient %>;
+      background: <%= commit.gradient %>;
       color: #e4ecf7;
       font-family: 'Inter', system-ui, sans-serif;
     }
-    <%= page.cssContent %>
+    <%= commit.cssContent %>
   </style>
 </head>
 <body>
-  <%- page.htmlContent %>
+  <%- commit.htmlContent %>
   
   <script>
-    <%- page.jsContent %>
+    <%- commit.jsContent %>
   </script>
 </body>
 </html>
@@ -35,21 +35,21 @@
 
   <style>
     :root {
-      --theme-color: <%= page.themeColor %>;
-      --theme-gradient: <%= page.gradient %>;
+      --theme-color: <%= commit.themeColor %>;
+      --theme-gradient: <%= commit.gradient %>;
     }
     body {
-      background-image: <%= page.gradient %>;
+      background-image: <%= commit.gradient %>;
       background-attachment: fixed;
     }
-    <%= page.cssContent %>
+    <%= commit.cssContent %>
   </style>
 
-  <%- page.htmlContent %>
+  <%- commit.htmlContent %>
 
   <%- include('./partials/foot') %>
 
   <script>
-    <%- page.jsContent %>
+    <%- commit.jsContent %>
   </script>
 <% } %>

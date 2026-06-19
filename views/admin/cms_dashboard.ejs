@@ -1,5 +1,8 @@
 <%- include('../partials/head') %>
 
+<!-- Load Monaco Editor via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/loader.min.js"></script>
+
 <section class="section section-alt" style="min-height: 85vh;">
   <div class="container">
     
@@ -25,7 +28,7 @@
     </div>
 
     <!-- Alert / Toast Notification -->
-    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
+    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
       <span id="toast-icon">ℹ️</span>
       <span id="toast-message"></span>
     </div>
@@ -34,6 +37,9 @@
     <div style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem;">
       <button onclick="switchTab('pages')" id="tab-btn-pages" class="tab-button active-tab" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
         Pages (<%= pages.length %>)
+      </button>
+      <button onclick="switchTab('mrs')" id="tab-btn-mrs" class="tab-button" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
+        Merge Requests (<%= mergeRequests.length %>)
       </button>
       <button onclick="switchTab('media')" id="tab-btn-media" class="tab-button" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
         Media Assets (<%= assets.length %>)
@@ -103,6 +109,45 @@
       </div>
     </div>
 
+    <!-- Merge Requests Tab Panel -->
+    <div id="tab-content-mrs" class="tab-panel" style="display: none;">
+      <div class="cms-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 2rem; box-shadow: 0 12px 40px rgba(0,0,0,0.3);">
+        <% if (mergeRequests.length === 0) { %>
+          <div style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⇌</div>
+            <h3>No open Merge Requests.</h3>
+            <p style="margin-top: 0.5rem;">Merge requests submitted by editors will appear here for review and merge approvals.</p>
+          </div>
+        <% } else { %>
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <% mergeRequests.forEach(function(mr) { %>
+              <div id="mr-card-<%= mr.id %>" style="border: 1px solid var(--border); border-radius: var(--r-md); padding: 1.5rem; background: rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                  <div>
+                    <h3 style="font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: #fff; margin-bottom: 0.25rem;"><%= mr.title %></h3>
+                    <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.4;"><%= mr.description || 'No description provided.' %></p>
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap;">
+                      <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--cyan); background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 4px; padding: 2px 8px;">
+                        <%= mr.sourceBranch.name %> ➔ <%= mr.targetBranch.name %>
+                      </span>
+                      <span style="font-size: 0.78rem; color: var(--text-muted);">
+                        Submitted by: <strong><%= mr.createdBy ? mr.createdBy.name : 'Editor' %></strong> • <%= new Date(mr.createdAt).toLocaleString() %>
+                      </span>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button onclick="viewMergeRequestDiff(<%= mr.page.id %>, '<%= mr.sourceBranch.headCommit ? mr.sourceBranch.headCommit.hash : '' %>', '<%= mr.targetBranch.headCommit ? mr.targetBranch.headCommit.hash : '' %>', '<%= mr.title.replace(/'/g, "\\'") %>')" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.82rem; border-color: rgba(0,212,255,0.2); color: var(--cyan);">View Diff</button>
+                    <button onclick="closeMergeRequest(<%= mr.id %>)" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.82rem; border-color: rgba(239,68,68,0.2); color: #f87171;">Close MR</button>
+                    <button onclick="approveMergeRequest(<%= mr.id %>, '<%= mr.title %>')" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.82rem; box-shadow: none;">Approve &amp; Merge</button>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
     <!-- Media Assets Tab Panel -->
     <div id="tab-content-media" class="tab-panel" style="display: none;">
       
@@ -141,6 +186,31 @@
 <!-- Include Preview Modal -->
 <%- include('./partials/preview_modal') %>
 
+<!-- VCS Merge Request Diff Modal -->
+<div id="mr-diff-modal" class="vcs-modal-backdrop" style="display: none;">
+  <div class="vcs-modal-container" style="max-width: 90vw; width: 1200px; height: 85vh; display: flex; flex-direction: column;">
+    <div class="vcs-modal-header">
+      <h3 id="mr-diff-title">Merge Request Diff</h3>
+      <button onclick="closeMrDiffModal()">✕</button>
+    </div>
+    <div class="vcs-modal-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+        <span style="font-family: var(--font-body); font-size: 0.85rem; color: var(--text-muted);" id="mr-diff-branch-info"></span>
+        <div style="display: flex; gap: 0.25rem;">
+          <button onclick="setMrDiffType('html')" id="mr-diff-btn-html" class="editor-mode-btn active-mode-btn">HTML</button>
+          <button onclick="setMrDiffType('css')" id="mr-diff-btn-css" class="editor-mode-btn">CSS</button>
+          <button onclick="setMrDiffType('js')" id="mr-diff-btn-js" class="editor-mode-btn">JS</button>
+        </div>
+      </div>
+      <!-- Diff Editor Container -->
+      <div id="mr-editor-diff" style="width: 100%; flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: var(--r-md);"></div>
+    </div>
+    <div class="vcs-modal-footer" style="padding: 0.75rem 1.5rem;">
+      <button onclick="closeMrDiffModal()" class="btn btn-ghost" style="padding: 0.4rem 1.5rem; font-size: 0.85rem;">Close</button>
+    </div>
+  </div>
+</div>
+
 <style>
   .tab-button {
     background: none;
@@ -168,6 +238,87 @@
     transform: translateY(-4px);
     border-color: var(--border-hover);
     box-shadow: 0 8px 25px rgba(157, 92, 255, 0.15);
+  }
+
+  /* Modals background */
+  .vcs-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(4, 6, 15, 0.85);
+    backdrop-filter: blur(6px);
+    z-index: 100005;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vcs-modal-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    overflow: hidden;
+    animation: zoomIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  @keyframes zoomIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .vcs-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,13,26,0.4);
+  }
+  .vcs-modal-header h3 {
+    font-family: var(--font-head);
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  .vcs-modal-header button {
+    font-size: 1.2rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .vcs-modal-header button:hover {
+    color: var(--purple);
+  }
+  .vcs-modal-body {
+    padding: 1.5rem;
+  }
+  .vcs-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: rgba(8,13,26,0.4);
+  }
+  .editor-mode-btn {
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    color: var(--text-muted);
+    padding: 0.3rem 0.8rem;
+    font-size: 0.78rem;
+    font-family: var(--font-body);
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .editor-mode-btn:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+  }
+  .editor-mode-btn.active-mode-btn {
+    background: var(--purple-dim);
+    border-color: var(--purple);
+    color: #fff;
   }
 </style>
 
@@ -231,6 +382,58 @@
     } catch (err) {
       console.error(err);
       showToast('Network error deleting page', false);
+    }
+  }
+
+  async function approveMergeRequest(mrId, title) {
+    if (!confirm(`Are you sure you want to approve and merge "${title}"? This will make all changes live on the target branch immediately.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/cms/merge-requests/${mrId}/merge`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        showToast('Merge Request approved and changes merged successfully!', true);
+        const card = document.getElementById(`mr-card-${mrId}`);
+        if (card) card.style.opacity = '0';
+        setTimeout(() => {
+          location.reload(); // Reload to update HEAD commits and lists
+        }, 1200);
+      } else {
+        const result = await response.json();
+        showToast(result.error || 'Failed to merge changes', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('A network error occurred', false);
+    }
+  }
+
+  async function closeMergeRequest(mrId) {
+    if (!confirm('Are you sure you want to close this Merge Request without merging?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/cms/merge-requests/${mrId}/close`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        showToast('Merge Request closed.', true);
+        const card = document.getElementById(`mr-card-${mrId}`);
+        if (card) card.style.opacity = '0';
+        setTimeout(() => {
+          location.reload();
+        }, 1200);
+      } else {
+        const result = await response.json();
+        showToast(result.error || 'Failed to close Merge Request', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('A network error occurred', false);
     }
   }
 
@@ -423,6 +626,95 @@
       console.error(err);
       showToast('Network error deleting asset', false);
     }
+  }
+
+  // VCS Merge Request Diff Viewer
+  let mrDiffEditorInstance = null;
+  let activeMrDiffType = 'html';
+  let currentMrDiffData = null;
+
+  async function viewMergeRequestDiff(pageId, sourceHeadHash, targetHeadHash, mrTitle) {
+    document.getElementById('mr-diff-title').textContent = `Diff: ${mrTitle}`;
+    document.getElementById('mr-diff-branch-info').textContent = `Comparing target [${targetHeadHash.substring(0,7)}] ➔ source [${sourceHeadHash.substring(0,7)}]`;
+    
+    // Show Modal
+    document.getElementById('mr-diff-modal').style.display = 'flex';
+
+    // Fetch Diff
+    try {
+      const response = await fetch(`/admin/cms/pages/${pageId}/diff?originalHash=${targetHeadHash}&modifiedHash=${sourceHeadHash}`);
+      if (response.ok) {
+        currentMrDiffData = await response.json();
+        
+        // Initialize Monaco Diff Editor if not already initialized
+        if (!mrDiffEditorInstance) {
+          require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs' } });
+          require(['vs/editor/editor.main'], function () {
+            const container = document.getElementById('mr-editor-diff');
+            mrDiffEditorInstance = monaco.editor.createDiffEditor(container, {
+              theme: 'vs-dark',
+              automaticLayout: true,
+              fontSize: 13,
+              fontFamily: 'var(--font-mono)',
+              readOnly: true
+            });
+            renderMrDiff();
+          });
+        } else {
+          renderMrDiff();
+        }
+      } else {
+        showToast('Failed to load merge request diff.', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error loading merge request diff.', false);
+    }
+  }
+
+  function setMrDiffType(type) {
+    document.querySelectorAll('#mr-diff-modal .editor-mode-btn').forEach(btn => btn.classList.remove('active-mode-btn'));
+    document.getElementById(`mr-diff-btn-${type}`).classList.add('active-mode-btn');
+    activeMrDiffType = type;
+    renderMrDiff();
+  }
+
+  function renderMrDiff() {
+    if (!mrDiffEditorInstance || !currentMrDiffData) return;
+    
+    let origText = '', modText = '', language = 'html';
+    
+    if (activeMrDiffType === 'html') {
+      origText = currentMrDiffData.original.htmlContent;
+      modText = currentMrDiffData.modified.htmlContent;
+      language = 'html';
+    } else if (activeMrDiffType === 'css') {
+      origText = currentMrDiffData.original.cssContent;
+      modText = currentMrDiffData.modified.cssContent;
+      language = 'css';
+    } else if (activeMrDiffType === 'js') {
+      origText = currentMrDiffData.original.jsContent;
+      modText = currentMrDiffData.modified.jsContent;
+      language = 'javascript';
+    }
+
+    const originalModel = monaco.editor.createModel(origText, language);
+    const modifiedModel = monaco.editor.createModel(modText, language);
+
+    const oldModel = mrDiffEditorInstance.getModel();
+    mrDiffEditorInstance.setModel({
+      original: originalModel,
+      modified: modifiedModel
+    });
+    
+    if (oldModel) {
+      if (oldModel.original) oldModel.original.dispose();
+      if (oldModel.modified) oldModel.modified.dispose();
+    }
+  }
+
+  function closeMrDiffModal() {
+    document.getElementById('mr-diff-modal').style.display = 'none';
   }
 </script>
 

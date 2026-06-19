@@ -16,6 +16,630 @@
 
   <a href="#hero" class="back-to-top" id="backToTop" aria-label="Back to top">&#8679;</a>
 
+  <!-- Floating AI Assistant Button -->
+  <button id="ai-chat-toggle" class="ai-chat-toggle" onclick="toggleAIChat()" aria-label="Open AI Assistant">
+    <span class="ai-icon">💬</span>
+    <span class="ai-notification-dot"></span>
+  </button>
+
+  <!-- AI Assistant Chat Container -->
+  <div id="ai-chat-container" class="ai-chat-container" style="display: none;">
+    <div class="ai-chat-header">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span class="ai-status-dot"></span>
+        <h4 class="ai-chat-title">Harshit's <span class="gradient-text">Assistant</span></h4>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button onclick="clearAIChat()" class="ai-header-btn" title="Clear Chat">🧹</button>
+        <button onclick="toggleAIChat()" class="ai-header-btn" title="Close">✕</button>
+      </div>
+    </div>
+
+    <div id="ai-chat-messages" class="ai-chat-messages">
+      <div class="ai-message ai-message-assistant">
+        Hello! I'm Harshit's AI Assistant. Ask me anything about his resume, technical skills, background, or credentials!
+      </div>
+    </div>
+
+    <!-- Suggestion Chips -->
+    <div class="ai-chat-suggestions">
+      <button onclick="sendSuggestedQuery('Tell me about Harshit\'s background.')">🎓 Background</button>
+      <button onclick="sendSuggestedQuery('What is his technical stack?')">💻 Stack</button>
+      <button onclick="sendSuggestedQuery('What projects has he worked on?')">🚀 Projects</button>
+      <% if (user && user.role === 'ADMIN') { %>
+        <button onclick="sendSuggestedQuery('List all user accounts in the system')">👥 List Users</button>
+      <% } %>
+    </div>
+
+    <form id="ai-chat-form" class="ai-chat-input-area" onsubmit="submitAIChat(event)">
+      <input type="text" id="ai-chat-input" placeholder="Type a message..." autocomplete="off">
+      <button type="submit" class="ai-chat-send-btn">Send</button>
+    </form>
+  </div>
+
+  <style>
+    .ai-chat-toggle {
+      position: fixed;
+      bottom: 90px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--theme-gradient, linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%));
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(157, 92, 255, 0.4);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .ai-chat-toggle:hover {
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 6px 24px rgba(0, 212, 255, 0.6);
+    }
+    .ai-notification-dot {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      background: #10b981;
+      border: 2px solid #0a111f;
+      border-radius: 50%;
+      animation: aiPulseGlow 2s infinite;
+    }
+    @keyframes aiPulseGlow {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .ai-chat-container {
+      position: fixed;
+      bottom: 160px;
+      right: 24px;
+      width: 380px;
+      height: 520px;
+      background: rgba(10, 17, 31, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(157, 92, 255, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: aiSlideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    @keyframes aiSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .ai-chat-header {
+      padding: 1rem 1.25rem;
+      background: rgba(8, 13, 26, 0.5);
+      border-bottom: 1px solid rgba(130, 155, 200, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ai-chat-title {
+      margin: 0;
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    .ai-status-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .ai-header-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: color 0.2s;
+      padding: 2px;
+    }
+    .ai-header-btn:hover {
+      color: var(--cyan);
+    }
+
+    .ai-chat-messages {
+      flex: 1;
+      padding: 1.25rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .ai-chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    .ai-chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .ai-chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(157, 92, 255, 0.2);
+      border-radius: 4px;
+    }
+    .ai-chat-messages::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 212, 255, 0.4);
+    }
+
+    .ai-message {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      max-width: 85%;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      line-height: 1.45;
+      word-wrap: break-word;
+    }
+    .ai-message-assistant {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+    .ai-message-user {
+      align-self: flex-end;
+      background: rgba(157, 92, 255, 0.12);
+      border: 1px solid rgba(157, 92, 255, 0.25);
+      color: #fff;
+    }
+    .ai-message-system {
+      align-self: center;
+      background: rgba(245, 158, 11, 0.05);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      text-align: center;
+      font-size: 0.8rem;
+      max-width: 90%;
+      border-radius: 8px;
+    }
+
+    .ai-chat-suggestions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.6rem 1.25rem;
+      overflow-x: auto;
+      white-space: nowrap;
+      background: rgba(0, 0, 0, 0.15);
+      border-top: 1px solid rgba(130, 155, 200, 0.05);
+    }
+    .ai-chat-suggestions::-webkit-scrollbar {
+      display: none;
+    }
+    .ai-chat-suggestions button {
+      background: rgba(0, 212, 255, 0.03);
+      border: 1px solid rgba(0, 212, 255, 0.15);
+      border-radius: 20px;
+      color: var(--cyan);
+      font-family: var(--font-body);
+      font-size: 0.76rem;
+      padding: 0.35rem 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ai-chat-suggestions button:hover {
+      background: rgba(0, 212, 255, 0.1);
+      border-color: var(--cyan);
+      color: white;
+    }
+
+    .ai-chat-input-area {
+      padding: 1rem;
+      border-top: 1px solid rgba(130, 155, 200, 0.1);
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(8, 13, 26, 0.5);
+    }
+    .ai-chat-input-area input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(130, 155, 200, 0.2);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.55rem 0.8rem;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .ai-chat-input-area input:focus {
+      border-color: var(--purple);
+    }
+    .ai-chat-send-btn {
+      background: var(--theme-gradient, linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%));
+      border: none;
+      border-radius: 8px;
+      color: white;
+      padding: 0.5rem 1.1rem;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .ai-chat-send-btn:hover {
+      opacity: 0.9;
+    }
+    
+    .ai-loading-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .ai-loading-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: aiBounceDot 1.4s infinite ease-in-out both;
+    }
+    .ai-loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .ai-loading-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes aiBounceDot {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1.0); }
+    }
+
+    .ai-confirm-card {
+      background: rgba(245, 158, 11, 0.04);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      margin-top: 0.5rem;
+      font-family: var(--font-body);
+      align-self: stretch;
+    }
+    .ai-confirm-title {
+      margin: 0 0 0.4rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #fbbf24;
+    }
+    .ai-confirm-btns {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .ai-btn-confirm {
+      background: #d97706;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      font-size: 0.75rem;
+      padding: 0.35rem 0.8rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .ai-btn-confirm:hover {
+      background: #b45309;
+    }
+    .ai-btn-cancel {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 0.35rem 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ai-btn-cancel:hover {
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+    }
+  </style>
+
+  <script>
+    let aiChatHistory = [
+      { role: 'assistant', content: "Hello! I'm Harshit's AI Assistant. Ask me anything about his resume, technical skills, background, or credentials!" }
+    ];
+
+    function toggleAIChat() {
+      const container = document.getElementById('ai-chat-container');
+      const dot = document.querySelector('.ai-notification-dot');
+      if (container.style.display === 'none') {
+        container.style.display = 'flex';
+        document.getElementById('ai-chat-input').focus();
+        if (dot) dot.style.display = 'none'; // Clear notification dot
+      } else {
+        container.style.display = 'none';
+      }
+    }
+
+    function clearAIChat() {
+      if (!confirm('Clear message history?')) return;
+      aiChatHistory = [
+        { role: 'assistant', content: "Hello! I'm Harshit's AI Assistant. Ask me anything about his resume, technical skills, background, or credentials!" }
+      ];
+      const log = document.getElementById('ai-chat-messages');
+      log.innerHTML = `
+        <div class="ai-message ai-message-assistant">
+          Hello! I'm Harshit's AI Assistant. Ask me anything about his resume, technical skills, background, or credentials!
+        </div>
+      `;
+    }
+
+    function sendSuggestedQuery(text) {
+      const input = document.getElementById('ai-chat-input');
+      input.value = text;
+      document.getElementById('ai-chat-form').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+
+    function formatMarkdown(text) {
+      if (!text) return '';
+      // Escape HTML to prevent injection
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      
+      // Formatting
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      html = html.replace(/`(.*?)`/g, '<code style="background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: var(--cyan);">$1</code>');
+      
+      // Formatting lists
+      html = html.replace(/^\s*[-*]\s+(.*?)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*?<\/li>)/g, '<ul>$1</ul>');
+      html = html.replace(/<\/ul>\s*<ul>/g, '');
+      
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
+
+    async function submitAIChat(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('ai-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      input.disabled = true;
+
+      // 1. Render User Message
+      appendMessage('user', text);
+      aiChatHistory.push({ role: 'user', content: text });
+
+      // 2. Render Typing Indicator
+      const messagesContainer = document.getElementById('ai-chat-messages');
+      const loaderDiv = document.createElement('div');
+      loaderDiv.className = 'ai-message ai-message-assistant';
+      loaderDiv.id = 'ai-chat-loader';
+      loaderDiv.innerHTML = `
+        <div class="ai-loading-dots">
+          <span class="ai-loading-dot"></span>
+          <span class="ai-loading-dot"></span>
+          <span class="ai-loading-dot"></span>
+        </div>
+      `;
+      messagesContainer.appendChild(loaderDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      await triggerAIChatResponse();
+      input.disabled = false;
+      input.focus();
+    }
+
+    async function triggerAIChatResponse() {
+      const messagesContainer = document.getElementById('ai-chat-messages');
+      
+      try {
+        const pageTextContent = document.querySelector('main')?.innerText || document.body.innerText;
+        
+        const response = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: aiChatHistory,
+            url: window.location.href,
+            pageContent: pageTextContent.substring(0, 3000) // Keep context capped
+          })
+        });
+
+        // Remove Typing Indicator
+        const loader = document.getElementById('ai-chat-loader');
+        if (loader) loader.remove();
+
+        if (!response.ok) {
+          let errMsg = '❌ Temporary connection error. Please try again.';
+          if (response.status === 429) {
+            errMsg = '⚠️ Too many requests. Please wait 60 seconds.';
+            try {
+              const errData = await response.json();
+              if (errData && errData.error) {
+                errMsg = `⚠️ ${errData.error}`;
+              }
+            } catch (e) {}
+          } else {
+            try {
+              const errData = await response.json();
+              if (errData && errData.error) {
+                errMsg = `❌ ${errData.error}`;
+              }
+            } catch (e) {}
+          }
+          appendMessage('system', errMsg);
+          return;
+        }
+
+        // Initialize empty assistant message element
+        const assistantMessageDiv = document.createElement('div');
+        assistantMessageDiv.className = 'ai-message ai-message-assistant';
+        messagesContainer.appendChild(assistantMessageDiv);
+
+        // Read stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let textAccumulator = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          textAccumulator += chunk;
+
+          // Strip tool calls from visual chat bubble
+          const toolCallIndex = textAccumulator.lastIndexOf('[TOOL_CALLS]:');
+          let cleanText = textAccumulator;
+          if (toolCallIndex !== -1) {
+            cleanText = textAccumulator.substring(0, toolCallIndex);
+          }
+
+          assistantMessageDiv.innerHTML = formatMarkdown(cleanText.trim());
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Process tool calls if any
+        const toolCallIndex = textAccumulator.lastIndexOf('[TOOL_CALLS]:');
+        if (toolCallIndex !== -1) {
+          const cleanText = textAccumulator.substring(0, toolCallIndex).trim();
+          aiChatHistory.push({ role: 'assistant', content: cleanText });
+          
+          const toolJson = textAccumulator.substring(toolCallIndex + '[TOOL_CALLS]:'.length);
+          try {
+            const toolData = JSON.parse(toolJson);
+            if (toolData && toolData.toolResults) {
+              toolData.toolResults.forEach(res => {
+                if (res.result && res.result.status === 'pending_confirmation') {
+                  renderConfirmationCard(res.result);
+                }
+              });
+            }
+          } catch (e) {
+            console.error('Failed to parse tool JSON:', e);
+          }
+        } else {
+          aiChatHistory.push({ role: 'assistant', content: textAccumulator.trim() });
+        }
+
+      } catch (err) {
+        console.error(err);
+        const loader = document.getElementById('ai-chat-loader');
+        if (loader) loader.remove();
+        appendMessage('system', '❌ Failed to communicate with Assistant.');
+      }
+    }
+
+    function appendMessage(role, content) {
+      const messagesContainer = document.getElementById('ai-chat-messages');
+      const div = document.createElement('div');
+      div.className = `ai-message ai-message-${role}`;
+      div.innerHTML = role === 'system' ? content : formatMarkdown(content);
+      messagesContainer.appendChild(div);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function renderConfirmationCard(toolResult) {
+      const messagesContainer = document.getElementById('ai-chat-messages');
+      const cardDiv = document.createElement('div');
+      cardDiv.className = 'ai-confirm-card';
+      cardDiv.id = `confirm-card-${Date.now()}`;
+      cardDiv.innerHTML = `
+        <div class="ai-confirm-title">⚠️ Admin Confirmation Required</div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">${toolResult.message}</div>
+        <div class="ai-confirm-btns">
+          <button onclick="executeConfirmedTool(this, '${toolResult.action}', '${toolResult.userId}', '${toolResult.email}', '${toolResult.newRole || ''}')" class="ai-btn-confirm">Confirm</button>
+          <button onclick="cancelConfirmedTool(this)" class="ai-btn-cancel">Cancel</button>
+        </div>
+      `;
+      messagesContainer.appendChild(cardDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    async function executeConfirmedTool(btn, action, userId, email, newRole) {
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+      const cancelBtn = btn.nextElementSibling;
+      if (cancelBtn) cancelBtn.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/ai/execute-tool', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, userId, email, newRole })
+        });
+        const result = await response.json();
+        const card = btn.closest('.ai-confirm-card');
+
+        if (response.ok && result.success) {
+          card.innerHTML = `<div style="color: #10b981; font-size: 0.85rem; font-weight: 600;">✅ Action confirmed: ${result.message}</div>`;
+          
+          let toolResultMsg = `System confirmation: Action "${action}" succeeded for user ${email}. Result: ${result.message}`;
+          if (result.newPassword) {
+            toolResultMsg += ` New generated password is: ${result.newPassword}`;
+          }
+
+          aiChatHistory.push({ role: 'user', content: toolResultMsg });
+
+          // Render Typing Indicator
+          const messagesContainer = document.getElementById('ai-chat-messages');
+          const loaderDiv = document.createElement('div');
+          loaderDiv.className = 'ai-message ai-message-assistant';
+          loaderDiv.id = 'ai-chat-loader';
+          loaderDiv.innerHTML = `
+            <div class="ai-loading-dots">
+              <span class="ai-loading-dot"></span>
+              <span class="ai-loading-dot"></span>
+              <span class="ai-loading-dot"></span>
+            </div>
+          `;
+          messagesContainer.appendChild(loaderDiv);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+          await triggerAIChatResponse();
+        } else {
+          card.innerHTML = `<div style="color: #ef4444; font-size: 0.85rem; font-weight: 600;">❌ Action failed: ${result.error || 'Server error'}</div>`;
+        }
+      } catch (err) {
+        console.error(err);
+        btn.textContent = 'Confirm';
+        btn.disabled = false;
+        if (cancelBtn) cancelBtn.style.display = 'inline-block';
+      }
+    }
+
+    function cancelConfirmedTool(btn) {
+      const card = btn.closest('.ai-confirm-card');
+      card.innerHTML = `<div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">🚫 Action cancelled by administrator.</div>`;
+      
+      aiChatHistory.push({ role: 'user', content: 'System confirmation: Action cancelled by administrator.' });
+      
+      // Render Typing Indicator
+      const messagesContainer = document.getElementById('ai-chat-messages');
+      const loaderDiv = document.createElement('div');
+      loaderDiv.className = 'ai-message ai-message-assistant';
+      loaderDiv.id = 'ai-chat-loader';
+      loaderDiv.innerHTML = `
+        <div class="ai-loading-dots">
+          <span class="ai-loading-dot"></span>
+          <span class="ai-loading-dot"></span>
+          <span class="ai-loading-dot"></span>
+        </div>
+      `;
+      messagesContainer.appendChild(loaderDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      triggerAIChatResponse();
+    }
+  </script>
+
   <script src="/js/main.js"></script>
 </body>
 </html>
