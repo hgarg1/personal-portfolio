@@ -21,6 +21,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve uploads from dynamic dir (/tmp/uploads on Vercel, public/uploads locally)
+const isVercel = process.env.VERCEL === '1' || process.env.NOW_REGION !== undefined;
+const dynamicUploadsDir = isVercel ? '/tmp/uploads' : path.join(__dirname, 'public/uploads');
+app.use('/uploads', express.static(dynamicUploadsDir));
+
 app.use(cookieSession({
   name: 'session',
   keys: [process.env.SESSION_SECRET || 'portfolio-secret-key-2026'],

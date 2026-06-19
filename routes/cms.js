@@ -9,9 +9,15 @@ const fs = require('fs');
 const sharp = require('sharp');
 
 // Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../public/uploads');
+const isVercel = process.env.VERCEL === '1' || process.env.NOW_REGION !== undefined;
+const uploadDir = isVercel ? '/tmp/uploads' : path.join(__dirname, '../public/uploads');
+
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (err) {
+    console.warn('⚠️ [CMS Router] Failed to create upload directory:', err.message);
+  }
 }
 
 // Multer storage engine configuration
