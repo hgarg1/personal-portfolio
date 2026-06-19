@@ -1,0 +1,429 @@
+<%- include('../partials/head') %>
+
+<section class="section section-alt" style="min-height: 85vh;">
+  <div class="container">
+    
+    <!-- Admin Header -->
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+      <div>
+        <div class="section-label">Administration</div>
+        <h1 class="section-title">CMS <span class="gradient-text">Control Panel</span></h1>
+        <p class="section-subtitle">Build custom pages, upload media assets, and manage content instantly.</p>
+      </div>
+      <div style="display: flex; gap: 1rem;">
+        <% if (user && user.role === 'ADMIN') { %>
+          <a href="/admin/users" class="btn btn-ghost">
+            <span>Manage Users</span>
+            <span>👤</span>
+          </a>
+        <% } %>
+        <a href="/admin/cms/pages/new" class="btn btn-primary">
+          <span>Create New Page</span>
+          <span style="font-size: 1.1em;">+</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Alert / Toast Notification -->
+    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
+      <span id="toast-icon">ℹ️</span>
+      <span id="toast-message"></span>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem;">
+      <button onclick="switchTab('pages')" id="tab-btn-pages" class="tab-button active-tab" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
+        Pages (<%= pages.length %>)
+      </button>
+      <button onclick="switchTab('media')" id="tab-btn-media" class="tab-button" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
+        Media Assets (<%= assets.length %>)
+      </button>
+    </div>
+
+    <!-- Pages Tab Panel -->
+    <div id="tab-content-pages" class="tab-panel">
+      <div class="cms-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 2rem; box-shadow: 0 12px 40px rgba(0,0,0,0.3);">
+        <% if (pages.length === 0) { %>
+          <div style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+            <h3>No custom pages created yet.</h3>
+            <p style="margin-top: 0.5rem; margin-bottom: 1.5rem;">Create a custom page with raw HTML, styling, and JS scripts.</p>
+            <a href="/admin/cms/pages/new" class="btn btn-primary">Create Your First Page</a>
+          </div>
+        <% } else { %>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body);">
+              <thead>
+                <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.15); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; text-transform: uppercase;">
+                  <th style="padding: 1rem 0.5rem;">Title</th>
+                  <th style="padding: 1rem 0.5rem;">Slug</th>
+                  <th style="padding: 1rem 0.5rem; text-align: center;">Layout</th>
+                  <th style="padding: 1rem 0.5rem; text-align: center;">Status</th>
+                  <th style="padding: 1rem 0.5rem;">Last Updated</th>
+                  <th style="padding: 1rem 0.5rem; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% pages.forEach(function(page) { %>
+                  <tr id="page-row-<%= page.id %>" style="border-bottom: 1px solid rgba(130, 155, 200, 0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(157, 92, 255, 0.02)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 1.25rem 0.5rem; font-weight: 600; color: var(--text);"><%= page.title %></td>
+                    <td style="padding: 1.25rem 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);">
+                      <a href="/<%= page.slug %>" target="_blank" style="color: var(--cyan); text-decoration: underline; text-underline-offset: 4px;">/<%= page.slug %></a>
+                    </td>
+                    <td style="padding: 1.25rem 0.5rem; text-align: center;">
+                      <span style="font-size: 0.72rem; font-family: var(--font-mono); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px;">
+                        <%= page.layout.toUpperCase() %>
+                      </span>
+                    </td>
+                    <td style="padding: 1.25rem 0.5rem; text-align: center;">
+                      <% if (page.status === 'PUBLISHED') { %>
+                        <span style="font-size: 0.72rem; font-family: var(--font-mono); background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 6px; font-weight: 600;">PUBLISHED</span>
+                      <% } else if (page.status === 'STAGED') { %>
+                        <span style="font-size: 0.72rem; font-family: var(--font-mono); background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 4px; padding: 2px 6px; font-weight: 600;">STAGED</span>
+                      <% } else { %>
+                        <span style="font-size: 0.72rem; font-family: var(--font-mono); background: rgba(138, 155, 184, 0.1); color: var(--text-muted); border: 1px solid rgba(138, 155, 184, 0.3); border-radius: 4px; padding: 2px 6px;">DRAFT</span>
+                      <% } %>
+                    </td>
+                    <td style="padding: 1.25rem 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                      <%= new Date(page.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </td>
+                    <td style="padding: 1.25rem 0.5rem; text-align: right;">
+                      <div style="display: inline-flex; gap: 0.5rem;">
+                        <a href="/<%= page.slug %>" target="_blank" class="btn btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="View Page">👁️</a>
+                        <a href="/admin/cms/pages/edit/<%= page.id %>" class="btn btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: var(--purple-dim); color: var(--text);" title="Edit Page">📝</a>
+                        <button onclick="deletePage(<%= page.id %>, '<%= page.title %>')" class="btn btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: rgba(239, 68, 68, 0.2); color: #ef4444;" onmouseover="this.style.background='rgba(239, 68, 68, 0.08)'" onmouseout="this.style.background='none'" title="Delete Page">🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Media Assets Tab Panel -->
+    <div id="tab-content-media" class="tab-panel" style="display: none;">
+      
+      <!-- Drag & Drop Upload Panel -->
+      <div id="drop-zone" style="border: 2px dashed var(--border); background: var(--bg-card); border-radius: var(--r-lg); padding: 2.5rem; text-align: center; margin-bottom: 2.5rem; cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center;" onmouseover="this.style.borderColor='var(--purple)'" onmouseout="this.style.borderColor='var(--border)'">
+        <input type="file" id="file-input" style="display: none;" multiple onchange="handleFileSelect(event)">
+        <div style="font-size: 3.5rem; margin-bottom: 1rem; filter: drop-shadow(0 4px 10px rgba(157,92,255,0.25));">📤</div>
+        <h3 style="font-family: var(--font-head); font-weight: 600; color: var(--text);">Drag & Drop files here</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.4rem; margin-bottom: 1rem;">Supports images, videos, audio, PDFs, codes, text, Word, Excel, and PowerPoint documents</p>
+        <button onclick="document.getElementById('file-input').click()" class="btn btn-ghost" style="padding: 0.5rem 1.5rem; font-size: 0.88rem;">Select Files</button>
+        <div id="upload-progress-bar" style="display: none; width: 100%; max-width: 320px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 1.5rem; overflow: hidden;">
+          <div id="upload-progress-fill" style="width: 0%; height: 100%; background: var(--grad); transition: width 0.2s;"></div>
+        </div>
+        <div id="upload-status" style="display: none; color: var(--cyan); font-size: 0.82rem; font-family: var(--font-mono); margin-top: 0.4rem;">Uploading...</div>
+      </div>
+
+      <!-- Assets Grid -->
+      <div id="assets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem;">
+        <% if (assets.length === 0) { %>
+          <div id="no-assets-msg" style="grid-column: 1 / -1; text-align: center; padding: 4rem 0; color: var(--text-muted);">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">🗂️</div>
+            <h3>Your Media Library is empty.</h3>
+            <p style="margin-top: 0.5rem;">Upload files to display them here and copy their URLs for your pages.</p>
+          </div>
+        <% } else { %>
+          <% assets.forEach(function(asset) { %>
+            <%- include('./partials/asset_card', { asset: asset }) %>
+          <% }); %>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Include Preview Modal -->
+<%- include('./partials/preview_modal') %>
+
+<style>
+  .tab-button {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-button.active-tab {
+    color: var(--cyan) !important;
+    border-bottom-color: var(--cyan) !important;
+  }
+  .tab-button:hover {
+    color: var(--text) !important;
+  }
+  .media-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+  }
+  .media-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-hover);
+    box-shadow: 0 8px 25px rgba(157, 92, 255, 0.15);
+  }
+</style>
+
+<script>
+  // Tab Switching Logic
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active-tab'));
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.style.display = 'none');
+
+    document.getElementById(`tab-btn-${tab}`).classList.add('active-tab');
+    document.getElementById(`tab-content-${tab}`).style.display = 'block';
+  }
+
+  // Toast System
+  function showToast(message, isSuccess = true) {
+    const toast = document.getElementById('toast');
+    const toastIcon = document.getElementById('toast-icon');
+    const toastMessage = document.getElementById('toast-message');
+    
+    toastIcon.textContent = isSuccess ? '✅' : '❌';
+    toast.style.borderColor = isSuccess ? 'var(--cyan)' : '#ef4444';
+    toastMessage.textContent = message;
+    
+    toast.style.display = 'flex';
+    toast.style.opacity = '1';
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 300);
+    }, 4000);
+  }
+
+  // Page CRUD: Delete
+  async function deletePage(id, title) {
+    if (!confirm(`Are you sure you want to delete the page "${title}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/cms/pages/delete/${id}`, {
+        method: 'POST'
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        showToast('Page deleted successfully', true);
+        const row = document.getElementById(`page-row-${id}`);
+        row.style.opacity = '0';
+        setTimeout(() => {
+          row.remove();
+          // Check if table empty
+          const tbody = document.querySelector('#tab-content-pages tbody');
+          if (tbody && tbody.children.length === 0) {
+            location.reload();
+          }
+        }, 300);
+      } else {
+        showToast(result.error || 'Failed to delete page', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error deleting page', false);
+    }
+  }
+
+  // Upload Logic: Setup Drag & Drop events
+  const dropZone = document.getElementById('drop-zone');
+  
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--cyan)';
+      dropZone.style.background = 'rgba(0, 212, 255, 0.02)';
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--border)';
+      dropZone.style.background = 'var(--bg-card)';
+    }, false);
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    uploadFiles(files);
+  });
+
+  function handleFileSelect(e) {
+    const files = e.target.files;
+    uploadFiles(files);
+  }
+
+  async function uploadFiles(files) {
+    if (files.length === 0) return;
+    
+    const progressFill = document.getElementById('upload-progress-fill');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const statusText = document.getElementById('upload-status');
+    const msg = document.getElementById('no-assets-msg');
+    
+    progressBar.style.display = 'block';
+    statusText.style.display = 'block';
+    progressFill.style.width = '0%';
+
+    let total = files.length;
+    let completed = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      statusText.textContent = `Uploading ${file.name} (${i + 1}/${total})...`;
+
+      try {
+        const response = await fetch('/admin/cms/assets/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          completed++;
+          progressFill.style.width = `${Math.round((completed / total) * 100)}%`;
+          
+          // Prepend asset element to grid dynamically
+          if (msg) msg.remove();
+          
+          // Generate asset card HTML and insert into grid
+          const grid = document.getElementById('assets-grid');
+          const asset = result.asset;
+          
+          // We can call a helper to get layout of card
+          const cardHtml = renderAssetCardHtml(asset);
+          grid.insertAdjacentHTML('afterbegin', cardHtml);
+        } else {
+          showToast(`Failed to upload ${file.name}: ${result.error || 'Server error'}`, false);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast(`Network error uploading ${file.name}`, false);
+      }
+    }
+
+    statusText.textContent = 'Upload completed!';
+    setTimeout(() => {
+      progressBar.style.display = 'none';
+      statusText.style.display = 'none';
+      progressFill.style.width = '0%';
+    }, 2000);
+    
+    showToast(`Successfully uploaded ${completed} of ${total} files`, true);
+  }
+
+  function renderAssetCardHtml(asset) {
+    const size = asset.size > 1024 * 1024 
+      ? (asset.size / (1024 * 1024)).toFixed(1) + ' MB'
+      : (asset.size / 1024).toFixed(0) + ' KB';
+      
+    let previewHtml = '';
+    let icon = '📄';
+    
+    if (asset.mimeType.startsWith('image/')) {
+      previewHtml = `<div style="background-image: url('${asset.url}'); background-size: cover; background-position: center; width: 100%; height: 120px;"></div>`;
+    } else {
+      if (asset.mimeType.startsWith('video/')) icon = '🎬';
+      else if (asset.mimeType.startsWith('audio/')) icon = '🎵';
+      else if (asset.mimeType === 'application/pdf') icon = '📕';
+      else if (asset.mimeType.startsWith('text/') || /\.(txt|md|js|css|json|html)$/i.test(asset.originalName)) icon = '⚙️';
+      else if (/\.(docx|doc)$/i.test(asset.originalName)) icon = '📝';
+      else if (/\.(xlsx|xls)$/i.test(asset.originalName)) icon = '📊';
+      else if (/\.(pptx|ppt)$/i.test(asset.originalName)) icon = '📉';
+      
+      previewHtml = `
+        <div style="width: 100%; height: 120px; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: rgba(255,255,255,0.02);">
+          ${icon}
+        </div>
+      `;
+    }
+
+    return `
+      <div id="asset-card-${asset.id}" class="media-card">
+        ${previewHtml}
+        <div style="padding: 1rem; display: flex; flex-direction: column; flex-grow: 1;">
+          <h4 style="font-family: var(--font-head); font-weight: 600; font-size: 0.9rem; color: var(--text); word-break: break-all; margin-bottom: 0.3rem;" class="asset-title-text" title="${asset.originalName}">
+            ${asset.originalName.length > 20 ? asset.originalName.substring(0, 18) + '...' : asset.originalName}
+          </h4>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1rem;">${size}</span>
+          <div style="display: flex; gap: 0.4rem; margin-top: auto; justify-content: space-between;">
+            <button onclick="openPreviewModal('${asset.filename}', '${asset.originalName.replace(/'/g, "\\'")}', '${asset.mimeType}', '${asset.url}', ${asset.size})" class="btn btn-ghost" style="padding: 0.35rem 0.6rem; font-size: 0.78rem; flex-grow: 1; justify-content: center;">
+              <span>Preview</span>
+            </button>
+            <button onclick="copyAssetUrl('${asset.url}', this)" class="btn btn-ghost" style="padding: 0.35rem 0.5rem; font-size: 0.78rem;" title="Copy Link">📋</button>
+            <button onclick="deleteAsset(${asset.id}, '${asset.originalName.replace(/'/g, "\\'")}')" class="btn btn-ghost" style="padding: 0.35rem 0.5rem; font-size: 0.78rem; border-color: rgba(239, 68, 68, 0.2); color: #ef4444;" title="Delete">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function copyAssetUrl(url, btn) {
+    try {
+      await navigator.clipboard.writeText(url);
+      const origText = btn.textContent;
+      btn.textContent = '✓';
+      btn.style.borderColor = 'var(--cyan)';
+      setTimeout(() => {
+        btn.textContent = origText;
+        btn.style.borderColor = 'var(--border)';
+      }, 1200);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function deleteAsset(id, name) {
+    if (!confirm(`Are you sure you want to delete "${name}"? This will break any pages referencing this file.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/cms/assets/delete/${id}`, {
+        method: 'POST'
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        showToast('Asset deleted successfully', true);
+        const card = document.getElementById(`asset-card-${id}`);
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+          card.remove();
+          // Check if grid empty
+          const grid = document.getElementById('assets-grid');
+          if (grid && grid.children.length === 0) {
+            grid.innerHTML = `
+              <div id="no-assets-msg" style="grid-column: 1 / -1; text-align: center; padding: 4rem 0; color: var(--text-muted);">
+                <div style="font-size: 3.5rem; margin-bottom: 1rem;">🗂️</div>
+                <h3>Your Media Library is empty.</h3>
+                <p style="margin-top: 0.5rem;">Upload files to display them here and copy their URLs for your pages.</p>
+              </div>
+            `;
+          }
+        }, 300);
+      } else {
+        showToast(result.error || 'Failed to delete asset', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Network error deleting asset', false);
+    }
+  }
+</script>
+
+<%- include('../partials/foot') %>

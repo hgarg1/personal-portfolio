@@ -1,0 +1,43 @@
+<%
+  const size = asset.size > 1024 * 1024 
+    ? (asset.size / (1024 * 1024)).toFixed(1) + ' MB'
+    : (asset.size / 1024).toFixed(0) + ' KB';
+    
+  let previewHtml = '';
+  let icon = '📄';
+  
+  if (asset.mimeType.startsWith('image/')) {
+    previewHtml = `<div style="background-image: url('${asset.url}'); background-size: cover; background-position: center; width: 100%; height: 120px;"></div>`;
+  } else {
+    if (asset.mimeType.startsWith('video/')) icon = '🎬';
+    else if (asset.mimeType.startsWith('audio/')) icon = '🎵';
+    else if (asset.mimeType === 'application/pdf') icon = '📕';
+    else if (asset.mimeType.startsWith('text/') || /\.(txt|md|js|css|json|html)$/i.test(asset.originalName)) icon = '⚙️';
+    else if (/\.(docx|doc)$/i.test(asset.originalName)) icon = '📝';
+    else if (/\.(xlsx|xls)$/i.test(asset.originalName)) icon = '📊';
+    else if (/\.(pptx|ppt)$/i.test(asset.originalName)) icon = '📉';
+    
+    previewHtml = `
+      <div style="width: 100%; height: 120px; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: rgba(255,255,255,0.02);">
+        ${icon}
+      </div>
+    `;
+  }
+%>
+
+<div id="asset-card-<%= asset.id %>" class="media-card">
+  <%- previewHtml %>
+  <div style="padding: 1rem; display: flex; flex-direction: column; flex-grow: 1;">
+    <h4 style="font-family: var(--font-head); font-weight: 600; font-size: 0.9rem; color: var(--text); word-break: break-all; margin-bottom: 0.3rem;" class="asset-title-text" title="<%= asset.originalName %>">
+      <%= asset.originalName.length > 20 ? asset.originalName.substring(0, 18) + '...' : asset.originalName %>
+    </h4>
+    <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1rem;"><%= size %></span>
+    <div style="display: flex; gap: 0.4rem; margin-top: auto; justify-content: space-between;">
+      <button onclick="openPreviewModal('<%= asset.filename %>', '<%= asset.originalName.replace(/'/g, "\\'") %>', '<%= asset.mimeType %>', '<%= asset.url %>', <%= asset.size %>)" class="btn btn-ghost" style="padding: 0.35rem 0.6rem; font-size: 0.78rem; flex-grow: 1; justify-content: center;">
+        <span>Preview</span>
+      </button>
+      <button onclick="copyAssetUrl('<%= asset.url %>', this)" class="btn btn-ghost" style="padding: 0.35rem 0.5rem; font-size: 0.78rem;" title="Copy Link">📋</button>
+      <button onclick="deleteAsset(<%= asset.id %>, '<%= asset.originalName.replace(/'/g, "\\'") %>')" class="btn btn-ghost" style="padding: 0.35rem 0.5rem; font-size: 0.78rem; border-color: rgba(239, 68, 68, 0.2); color: #ef4444;" title="Delete">🗑️</button>
+    </div>
+  </div>
+</div>

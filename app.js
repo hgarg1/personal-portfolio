@@ -28,8 +28,11 @@ app.use(cookieSession({
   sameSite: 'lax'
 }));
 
+const { ensureGlobalAdmin } = require('./lib/middleware');
+
 // Expose session user to views
 app.use((req, res, next) => {
+  ensureGlobalAdmin(req);
   res.locals.user = req.session.user || null;
   next();
 });
@@ -42,11 +45,54 @@ const indexRouter = require('./routes/index');
 const aboutRouter = require('./routes/about');
 const contactRouter = require('./routes/contact');
 const authRouter = require('./routes/auth');
+const cmsRouter = require('./routes/cms');
+const usersRouter = require('./routes/users');
 
 app.use('/', indexRouter);
 app.use('/about', aboutRouter);
 app.use('/contact', contactRouter);
 app.use('/auth', authRouter);
+app.use('/admin/cms', cmsRouter);
+app.use('/admin/users', usersRouter);
+
+// ─── Dynamic CMS Pages Routing ────────────────────────────────
+app.get('/:slug', async (req, res, next) => {
+  try {
+    const slug = req.params.slug.toLowerCase();
+    
+    // Skip if matches static routes or favicon
+    const reservedSlugs = ['about', 'contact', 'auth', 'admin', 'favicon.ico'];
+    if (reservedSlugs.includes(slug)) {
+      return next();
+    }
+
+    const prisma = require('./lib/prisma');
+    const page = await prisma.cMSPage.findUnique({
+      where: { slug }
+    });
+
+    if (!page) {
+      return next(); // Pass to 404
+    }
+
+    // Access control:
+    // - PUBLISHED: available to everyone
+    // - STAGED / DRAFT: require authentication and EDITOR or ADMIN role
+    if (page.status === 'PUBLISHED') {
+      return res.render('cms_page', { page, title: page.title });
+    }
+
+    // Check if user is logged in and authorized
+    if (req.session && req.session.user && ['ADMIN', 'EDITOR'].includes(req.session.user.role)) {
+      return res.render('cms_page', { page, title: `[Preview] ${page.title}` });
+    }
+
+    next();
+  } catch (err) {
+    console.error('Error rendering dynamic CMS page:', err);
+    next(err);
+  }
+});
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((req, res) => {

@@ -1,0 +1,526 @@
+<%- include('../partials/head') %>
+
+<!-- Load Monaco Editor via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/loader.min.js"></script>
+
+<section class="section section-alt" style="padding-top: 80px; padding-bottom: 2rem; min-height: calc(100vh - 80px); display: flex; flex-direction: column;">
+  <div class="container" style="max-width: 100%; padding-inline: 2rem; display: flex; flex-direction: column; flex: 1;">
+    
+    <!-- Editor Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div class="section-label">CMS Workspace</div>
+        <h1 style="font-family: var(--font-head); font-size: 1.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem;">
+          <%= page ? 'Edit Page:' : 'Create New' %> <span class="gradient-text"><%= page ? page.title : 'Custom Page' %></span>
+        </h1>
+      </div>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <a href="/admin/cms" class="btn btn-ghost" style="padding: 0.5rem 1.2rem; font-size: 0.88rem;">
+          <span>Cancel</span>
+        </a>
+        <button onclick="savePage()" class="btn btn-primary" style="padding: 0.5rem 1.8rem; font-size: 0.88rem;">
+          <span>Save Changes</span>
+          <span>💾</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); align-items: center; gap: 0.5rem;">
+      <span id="toast-icon">ℹ️</span>
+      <span id="toast-message"></span>
+    </div>
+
+    <!-- Main Workspace Split Screen -->
+    <div class="editor-workspace" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; flex: 1; min-height: 600px;">
+      
+      <!-- Left Panel: Configuration and Code Editors -->
+      <div style="display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+        
+        <!-- Tab Headers -->
+        <div style="display: flex; background: rgba(8, 13, 26, 0.6); border-bottom: 1px solid var(--border);">
+          <button onclick="switchWorkspaceTab('settings')" id="workspace-tab-settings" class="workspace-tab-btn active-w-tab">Settings</button>
+          <button onclick="switchWorkspaceTab('html')" id="workspace-tab-html" class="workspace-tab-btn">HTML Body</button>
+          <button onclick="switchWorkspaceTab('css')" id="workspace-tab-css" class="workspace-tab-btn">CSS Custom</button>
+          <button onclick="switchWorkspaceTab('js')" id="workspace-tab-js" class="workspace-tab-btn">JS Scripts</button>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; position: relative;">
+          
+          <!-- SETTINGS TAB PANEL -->
+          <div id="panel-settings" class="workspace-panel" style="padding: 2rem; overflow-y: auto; height: 100%; display: block;">
+            
+            <input type="hidden" id="page-id" value="<%= page ? page.id : '' %>">
+
+            <!-- Title & Slug -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+              <div>
+                <label class="form-label">Page Title</label>
+                <input type="text" id="page-title" value="<%= page ? page.title : '' %>" placeholder="e.g. My Custom Portfolio" class="form-input" oninput="suggestSlug()">
+              </div>
+              <div>
+                <label class="form-label">URL Slug</label>
+                <input type="text" id="page-slug" value="<%= page ? page.slug : '' %>" placeholder="e.g. custom-portfolio" class="form-input">
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div style="margin-bottom: 1.5rem;">
+              <label class="form-label">SEO Description (Meta Tag)</label>
+              <textarea id="page-description" placeholder="Short summary describing the page content for SEO optimization." class="form-input" style="height: 60px; resize: none;"><%= page ? page.description : '' %></textarea>
+            </div>
+
+            <!-- Layout & Status -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+              <div>
+                <label class="form-label">Layout Template</label>
+                <select id="page-layout" class="form-input" onchange="triggerPreviewUpdate()">
+                  <option value="standard" <%= page && page.layout === 'standard' ? 'selected' : '' %>>Standard (Navigation & Footer)</option>
+                  <option value="blank" <%= page && page.layout === 'blank' ? 'selected' : '' %>>Blank Canvas (Empty Slate)</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Status</label>
+                <select id="page-status" class="form-input">
+                  <option value="DRAFT" <%= page && page.status === 'DRAFT' ? 'selected' : '' %>>Draft (Admin Only)</option>
+                  <option value="STAGED" <%= page && page.status === 'STAGED' ? 'selected' : '' %>>Staged (Preview URL)</option>
+                  <option value="PUBLISHED" <%= page && page.status === 'PUBLISHED' ? 'selected' : '' %>>Published (Instantly Live)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Design Section (Theme Color & Gradients) -->
+            <div style="border-top: 1px solid var(--border); padding-top: 1.5rem;">
+              <h3 style="font-family: var(--font-head); font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text);">Design Branding</h3>
+              
+              <!-- Color Picker -->
+              <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div>
+                  <label class="form-label" style="margin-bottom: 0.3rem;">Primary Theme Color</label>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="color" id="theme-color" value="<%= page ? page.themeColor : '#6366f1' %>" onchange="syncColorInput(this.value)" style="border: none; background: none; width: 36px; height: 36px; cursor: pointer;">
+                    <input type="text" id="theme-color-text" value="<%= page ? page.themeColor : '#6366f1' %>" class="form-input" style="width: 100px; padding: 0.4rem;" oninput="syncColorInput(this.value)">
+                  </div>
+                </div>
+                <div style="flex-grow: 1;">
+                  <span style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.3; display: block;">This color is exposed as a CSS variable <code>--theme-color</code> and can be referenced in your page styling.</span>
+                </div>
+              </div>
+
+              <!-- Gradient Builder -->
+              <div>
+                <label class="form-label">Background Gradient CSS</label>
+                <input type="text" id="gradient-css" value="<%= page ? page.gradient : 'linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%)' %>" placeholder="linear-gradient(...)" class="form-input" style="font-family: var(--font-mono); font-size: 0.85rem;" oninput="triggerPreviewUpdate()">
+                
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  <button onclick="applyGradient('linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%)')" class="preset-grad" style="background: linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%);"></button>
+                  <button onclick="applyGradient('linear-gradient(135deg, #f43f5e 0%, #f59e0b 100%)')" class="preset-grad" style="background: linear-gradient(135deg, #f43f5e 0%, #f59e0b 100%);"></button>
+                  <button onclick="applyGradient('linear-gradient(135deg, #10b981 0%, #059669 100%)')" class="preset-grad" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);"></button>
+                  <button onclick="applyGradient('linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)')" class="preset-grad" style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);"></button>
+                  <button onclick="applyGradient('linear-gradient(135deg, #0f172a 0%, #1e293b 100%)')" class="preset-grad" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid var(--border);"></button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- HTML PANEL -->
+          <div id="panel-html" class="workspace-panel" style="height: 100%; display: none;">
+            <div id="editor-html" style="width: 100%; height: 100%;"></div>
+          </div>
+
+          <!-- CSS PANEL -->
+          <div id="panel-css" class="workspace-panel" style="height: 100%; display: none;">
+            <div id="editor-css" style="width: 100%; height: 100%;"></div>
+          </div>
+
+          <!-- JS PANEL -->
+          <div id="panel-js" class="workspace-panel" style="height: 100%; display: none;">
+            <div id="editor-js" style="width: 100%; height: 100%;"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Panel: Side-by-Side Live Preview -->
+      <div style="display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; background: rgba(8, 13, 26, 0.6); border-bottom: 1px solid var(--border);">
+          <span style="font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Interactive Live Preview</span>
+          <button onclick="triggerPreviewUpdate()" style="color: var(--cyan); font-size: 0.8rem; font-family: var(--font-mono); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 4px; padding: 2px 8px; background: rgba(0, 212, 255, 0.05); cursor: pointer;" onmouseover="this.style.background='rgba(0, 212, 255, 0.15)'" onmouseout="this.style.background='rgba(0, 212, 255, 0.05)'">
+            Reload Preview 🔄
+          </button>
+        </div>
+        <div style="flex: 1; background: #fff; position: relative;">
+          <iframe id="preview-frame" style="width: 100%; height: 100%; border: none; background: #fff;"></iframe>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- Monaco Loader Config -->
+<script>
+  let htmlEditor, cssEditor, jsEditor;
+  const isEdit = <%= page ? 'true' : 'false' %>;
+
+  const defaultHtml = `<div class="container section">
+  <div class="section-header text-center">
+    <div class="section-label">Welcome To My Custom Layout</div>
+    <h2 class="section-title">Hello <span class="gradient-text">World</span></h2>
+    <p class="section-subtitle">This page was created dynamically using our advanced EJS-integrated CMS system.</p>
+  </div>
+  
+  <div class="text-center" style="margin-top: 3rem;">
+    <button onclick="triggerAnimation()" class="btn btn-primary">Click Me</button>
+  </div>
+</div>`;
+
+  const defaultCss = `.gradient-text {
+  background: var(--theme-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.section-header.text-center {
+  text-align: center;
+}
+.text-center {
+  text-align: center;
+}`;
+
+  const defaultJs = `function triggerAnimation() {
+  alert("CMS JavaScript works perfectly!");
+}`;
+
+  // Read page parameters or use defaults
+  const htmlVal = isEdit ? `<%- page ? page.htmlContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultHtml;
+  const cssVal = isEdit ? `<%- page ? page.cssContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultCss;
+  const jsVal = isEdit ? `<%- page ? page.jsContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultJs;
+
+  // Initialize Monaco Editors
+  require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs' } });
+  require(['vs/editor/editor.main'], function () {
+    
+    // HTML Editor
+    htmlEditor = monaco.editor.create(document.getElementById('editor-html'), {
+      value: htmlVal,
+      language: 'html',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      fontSize: 13,
+      fontFamily: 'var(--font-mono)',
+      minimap: { enabled: false }
+    });
+
+    // CSS Editor
+    cssEditor = monaco.editor.create(document.getElementById('editor-css'), {
+      value: cssVal,
+      language: 'css',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      fontSize: 13,
+      fontFamily: 'var(--font-mono)',
+      minimap: { enabled: false }
+    });
+
+    // JS Editor
+    jsEditor = monaco.editor.create(document.getElementById('editor-js'), {
+      value: jsVal,
+      language: 'javascript',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      fontSize: 13,
+      fontFamily: 'var(--font-mono)',
+      minimap: { enabled: false }
+    });
+
+    // Bind change listener to update preview on modifications
+    htmlEditor.onDidChangeModelContent(debounce(triggerPreviewUpdate, 1500));
+    cssEditor.onDidChangeModelContent(debounce(triggerPreviewUpdate, 1500));
+    jsEditor.onDidChangeModelContent(debounce(triggerPreviewUpdate, 1500));
+
+    // Trigger initial preview build
+    triggerPreviewUpdate();
+  });
+
+  // Debounce helper
+  function debounce(func, delay) {
+    let timeout;
+    return function() {
+      const context = this;
+      const args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+  }
+
+  // Switch between EJS/HTML/CSS/JS panels
+  function switchWorkspaceTab(tab) {
+    document.querySelectorAll('.workspace-tab-btn').forEach(btn => btn.classList.remove('active-w-tab'));
+    document.querySelectorAll('.workspace-panel').forEach(panel => panel.style.display = 'none');
+
+    document.getElementById(`workspace-tab-${tab}`).classList.add('active-w-tab');
+    document.getElementById(`panel-${tab}`).style.display = 'block';
+  }
+
+  // Handle color input updates
+  function syncColorInput(val) {
+    document.getElementById('theme-color').value = val;
+    document.getElementById('theme-color-text').value = val;
+    triggerPreviewUpdate();
+  }
+
+  // Apply gradient preset
+  function applyGradient(grad) {
+    document.getElementById('gradient-css').value = grad;
+    triggerPreviewUpdate();
+  }
+
+  // Autofill slug suggestion
+  function suggestSlug() {
+    if (isEdit) return; // Don't overwrite slug when editing
+    const title = document.getElementById('page-title').value;
+    const slugInput = document.getElementById('page-slug');
+    const slug = title.toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9-/]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    slugInput.value = slug;
+  }
+
+  // Dynamic Browser preview builder
+  function triggerPreviewUpdate() {
+    if (!htmlEditor || !cssEditor || !jsEditor) return;
+
+    const htmlContent = htmlEditor.getValue();
+    const cssContent = cssEditor.getValue();
+    const jsContent = jsEditor.getValue();
+    const layout = document.getElementById('page-layout').value;
+    const themeColor = document.getElementById('theme-color').value;
+    const gradient = document.getElementById('gradient-css').value;
+
+    const iframe = document.getElementById('preview-frame');
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+    let content = '';
+
+    if (layout === 'blank') {
+      content = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            :root {
+              --theme-color: ${themeColor};
+              --theme-gradient: ${gradient};
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              min-height: 100vh;
+              background: ${gradient};
+              color: #e4ecf7;
+              font-family: 'Inter', system-ui, sans-serif;
+            }
+            ${cssContent}
+          </style>
+        </head>
+        <body>
+          ${htmlContent}
+          <script>${jsContent}<\/script>
+        </body>
+        </html>
+      `;
+    } else {
+      // Standard layout simulation
+      content = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <link rel="stylesheet" href="/css/style.css">
+          <style>
+            :root {
+              --theme-color: ${themeColor};
+              --theme-gradient: ${gradient};
+            }
+            body {
+              background: #04060f;
+              background-image: ${gradient};
+              background-attachment: fixed;
+            }
+            ${cssContent}
+          </style>
+        </head>
+        <body>
+          <!-- Mock Header -->
+          <div class="navbar" style="position: relative; background: rgba(4, 6, 15, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(130, 155, 200, 0.08);">
+            <div class="container" style="display: flex; justify-content: space-between; align-items: center; height: 60px;">
+              <span style="font-weight: 700; color: #fff; font-size: 1.1rem; font-family: 'Space Grotesk', sans-serif;"><span style="color:${themeColor}">⬤</span> <%= appName %></span>
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: ${themeColor}; border: 1px solid ${themeColor}; border-radius: 4px; padding: 2px 6px;">PREVIEW</span>
+            </div>
+          </div>
+          <main class="main-content" style="padding-top: 40px; min-height: 450px;">
+            ${htmlContent}
+          </main>
+          <!-- Mock Footer -->
+          <footer style="text-align: center; padding: 2rem; border-top: 1px solid rgba(130, 155, 200, 0.05); color: #8a9bb8; font-size: 0.8rem;">
+            &copy; ${new Date().getFullYear()} <%= appName %> • Created via dynamic CMS
+          </footer>
+          <script>${jsContent}<\/script>
+        </body>
+        </html>
+      `;
+    }
+
+    doc.open();
+    doc.write(content);
+    doc.close();
+  }
+
+  // Save changes to database (AJAX)
+  async function savePage() {
+    const id = document.getElementById('page-id').value;
+    const title = document.getElementById('page-title').value;
+    const slug = document.getElementById('page-slug').value;
+    const description = document.getElementById('page-description').value;
+    const layout = document.getElementById('page-layout').value;
+    const status = document.getElementById('page-status').value;
+    const themeColor = document.getElementById('theme-color').value;
+    const gradient = document.getElementById('gradient-css').value;
+    
+    if (!title || !slug) {
+      showToastMsg('Title and Slug are required.', false);
+      return;
+    }
+
+    const htmlContent = htmlEditor.getValue();
+    const cssContent = cssEditor.getValue();
+    const jsContent = jsEditor.getValue();
+
+    const payload = {
+      title,
+      slug,
+      description,
+      layout,
+      status,
+      themeColor,
+      gradient,
+      htmlContent,
+      cssContent,
+      jsContent
+    };
+
+    const url = id ? `/admin/cms/pages/edit/${id}` : '/admin/cms/pages';
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        showToastMsg('Page saved successfully! Redirecting...', true);
+        setTimeout(() => {
+          window.location.href = result.redirectUrl;
+        }, 1200);
+      } else {
+        showToastMsg(result.error || 'Failed to save page', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToastMsg('A network error occurred', false);
+    }
+  }
+
+  function showToastMsg(message, isSuccess) {
+    const toast = document.getElementById('toast');
+    const toastIcon = document.getElementById('toast-icon');
+    const toastMessage = document.getElementById('toast-message');
+
+    toastIcon.textContent = isSuccess ? '✅' : '❌';
+    toast.style.borderColor = isSuccess ? 'var(--cyan)' : '#ef4444';
+    toastMessage.textContent = message;
+
+    toast.style.display = 'flex';
+    toast.style.opacity = '1';
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 300);
+    }, 3000);
+  }
+</script>
+
+<style>
+  .workspace-tab-btn {
+    border: none;
+    background: none;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.8rem 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .workspace-tab-btn.active-w-tab {
+    background: var(--bg);
+    color: var(--text);
+    border-bottom: 2px solid var(--purple);
+    font-weight: 600;
+  }
+  .workspace-tab-btn:hover:not(.active-w-tab) {
+    background: rgba(255,255,255,0.02);
+    color: var(--text);
+  }
+  .form-label {
+    display: block;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--text);
+    padding: 0.65rem 0.85rem;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus {
+    border-color: var(--purple);
+  }
+  .preset-grad {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .preset-grad:hover {
+    transform: scale(1.1);
+    border-color: #fff;
+  }
+</style>
+
+<%- include('../partials/foot') %>

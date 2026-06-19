@@ -1,0 +1,321 @@
+<!-- Document/Media Preview Modal -->
+<div id="preview-modal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(4, 6, 15, 0.85); backdrop-filter: blur(8px); z-index: 100000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+  <div class="modal-container" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); width: 90%; max-width: 960px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); transform: scale(0.95); transition: transform 0.3s ease;">
+    <!-- Modal Header -->
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.8rem; border-bottom: 1px solid rgba(130, 155, 200, 0.15); background: rgba(8, 13, 26, 0.5);">
+      <div style="display: flex; flex-direction: column;">
+        <span id="preview-title" style="font-family: var(--font-head); font-weight: 600; font-size: 1.25rem; color: var(--text);">Document Preview</span>
+        <span id="preview-meta" style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">file_details.pdf (1.2 MB)</span>
+      </div>
+      <button onclick="closePreviewModal()" style="font-size: 1.5rem; color: var(--text-muted); transition: color 0.2s; padding: 0.2rem;" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text-muted)'">✕</button>
+    </div>
+
+    <!-- Modal Content Area -->
+    <div id="preview-body" style="flex: 1 1 auto; overflow-y: auto; padding: 1.8rem; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 350px; position: relative;">
+      <!-- Content injected by JavaScript -->
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.8rem; border-top: 1px solid rgba(130, 155, 200, 0.1); background: rgba(8, 13, 26, 0.5);">
+      <div>
+        <button id="preview-copy-btn" onclick="copyPreviewUrl()" class="btn btn-ghost" style="padding: 0.5rem 1.2rem; font-size: 0.82rem;">
+          <span>Copy Asset URL</span>
+          <span>📋</span>
+        </button>
+      </div>
+      <div>
+        <a id="preview-download-btn" href="#" download class="btn btn-primary" style="padding: 0.5rem 1.4rem; font-size: 0.82rem; box-shadow: none;">
+          <span>Download</span>
+          <span>📥</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .office-preview-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 2.5rem;
+    max-width: 480px;
+    margin: auto;
+  }
+</style>
+
+<script>
+  let activeAssetUrl = '';
+  let previewEditorInstance = null;
+
+  function openPreviewModal(filename, originalName, mimeType, url, sizeBytes) {
+    const modal = document.getElementById('preview-modal');
+    const container = modal.querySelector('.modal-container');
+    const title = document.getElementById('preview-title');
+    const meta = document.getElementById('preview-meta');
+    const body = document.getElementById('preview-body');
+    const downloadBtn = document.getElementById('preview-download-btn');
+    
+    activeAssetUrl = url;
+
+    // Reset body content and classes
+    body.innerHTML = '';
+    body.style.display = 'flex';
+    body.style.alignItems = 'center';
+    body.style.justifyContent = 'center';
+
+    // Format human-readable size
+    const size = sizeBytes > 1024 * 1024 
+      ? (sizeBytes / (1024 * 1024)).toFixed(2) + ' MB'
+      : (sizeBytes / 1024).toFixed(1) + ' KB';
+
+    title.textContent = originalName;
+    meta.textContent = `${mimeType} • ${size}`;
+    downloadBtn.href = url;
+
+    // Determine type
+    if (mimeType.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = originalName;
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '65vh';
+      img.style.borderRadius = 'var(--r-md)';
+      img.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
+      body.appendChild(img);
+    } 
+    else if (mimeType.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.src = url;
+      video.controls = true;
+      video.autoplay = true;
+      video.style.width = '100%';
+      video.style.maxHeight = '65vh';
+      video.style.borderRadius = 'var(--r-md)';
+      body.appendChild(video);
+    } 
+    else if (mimeType.startsWith('audio/')) {
+      const audio = document.createElement('audio');
+      audio.src = url;
+      audio.controls = true;
+      audio.autoplay = true;
+      audio.style.width = '80%';
+      body.appendChild(audio);
+    } 
+    else if (mimeType === 'application/pdf') {
+      body.style.display = 'block';
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      iframe.style.width = '100%';
+      iframe.style.height = '65vh';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = 'var(--r-md)';
+      body.appendChild(iframe);
+    } 
+    // Plain Text, JSON, and common code scripts preview using Monaco Editor
+    else if (
+      mimeType.startsWith('text/') || 
+      mimeType === 'application/json' || 
+      mimeType === 'application/javascript' ||
+      /\.(txt|md|js|css|json|html|xml|svg)$/i.test(originalName)
+    ) {
+      body.style.display = 'block';
+      body.style.padding = '0';
+      
+      const editorContainer = document.createElement('div');
+      editorContainer.id = 'monaco-preview-editor';
+      editorContainer.style.width = '100%';
+      editorContainer.style.height = '65vh';
+      body.appendChild(editorContainer);
+
+      // Loading Monaco Editor via CDN
+      if (typeof monaco === 'undefined') {
+        // Load monaco loader if not loaded
+        if (!document.getElementById('monaco-loader-script')) {
+          const script = document.createElement('script');
+          script.id = 'monaco-loader-script';
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/loader.min.js';
+          script.onload = () => initMonacoPreview(filename, originalName);
+          document.head.appendChild(script);
+        } else {
+          // Script is loading, check periodically
+          const interval = setInterval(() => {
+            if (typeof require !== 'undefined') {
+              clearInterval(interval);
+              initMonacoPreview(filename, originalName);
+            }
+          }, 100);
+        }
+      } else {
+        initMonacoPreview(filename, originalName);
+      }
+    } 
+    // Office files: Word, Excel, PowerPoint
+    else if (
+      [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+        'application/msword', // DOC
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // XLSX
+        'application/vnd.ms-excel', // XLS
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation', // PPTX
+        'application/vnd.ms-powerpoint' // PPT
+      ].includes(mimeType) ||
+      /\.(docx|doc|xlsx|xls|pptx|ppt)$/i.test(originalName)
+    ) {
+      const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      
+      if (!isLocalhost) {
+        // Production: Use Microsoft Office Embed Service
+        body.style.display = 'block';
+        const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(window.location.origin + url)}`;
+        
+        const iframe = document.createElement('iframe');
+        iframe.src = officeUrl;
+        iframe.style.width = '100%';
+        iframe.style.height = '65vh';
+        iframe.style.border = 'none';
+        iframe.style.borderRadius = 'var(--r-md)';
+        body.appendChild(iframe);
+      } else {
+        // Development local display
+        const box = document.createElement('div');
+        box.className = 'office-preview-box';
+        
+        let icon = '📄';
+        if (/\.(docx|doc)$/i.test(originalName)) icon = '📝';
+        else if (/\.(xlsx|xls)$/i.test(originalName)) icon = '📊';
+        else if (/\.(pptx|ppt)$/i.test(originalName)) icon = '📉';
+
+        box.innerHTML = `
+          <div style="font-size: 3.5rem; margin-bottom: 1rem;">${icon}</div>
+          <h3 style="font-family: var(--font-head); font-weight:600; margin-bottom: 0.5rem; color: var(--text);">${originalName}</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.4;">
+            Office Web Viewer is disabled in local environment. Download the file to view locally. In production, this document will render directly in the browser.
+          </p>
+          <a href="${url}" download class="btn btn-primary">
+            <span>Download Document</span>
+            <span>📥</span>
+          </a>
+        `;
+        body.appendChild(box);
+      }
+    } 
+    // Fallback card
+    else {
+      const box = document.createElement('div');
+      box.className = 'office-preview-box';
+      box.innerHTML = `
+        <div style="font-size: 3.5rem; margin-bottom: 1rem;">📁</div>
+        <h3 style="font-family: var(--font-head); font-weight:600; margin-bottom: 0.5rem; color: var(--text);">${originalName}</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          In-browser preview is not supported for this file type (${mimeType}).
+        </p>
+        <a href="${url}" download class="btn btn-primary">
+          <span>Download File</span>
+          <span>📥</span>
+        </a>
+      `;
+      body.appendChild(box);
+    }
+
+    // Open Modal with Fade In
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      modal.style.opacity = '1';
+      container.style.transform = 'scale(1)';
+    }, 10);
+  }
+
+  function closePreviewModal() {
+    const modal = document.getElementById('preview-modal');
+    const container = modal.querySelector('.modal-container');
+
+    modal.style.opacity = '0';
+    container.style.transform = 'scale(0.95)';
+    
+    if (previewEditorInstance) {
+      previewEditorInstance.dispose();
+      previewEditorInstance = null;
+    }
+
+    setTimeout(() => {
+      modal.style.display = 'none';
+      const body = document.getElementById('preview-body');
+      body.innerHTML = ''; // Stop any autoplaying media
+    }, 300);
+  }
+
+  // Handle clicking outside modal content to close
+  window.addEventListener('click', (e) => {
+    const modal = document.getElementById('preview-modal');
+    if (e.target === modal) {
+      closePreviewModal();
+    }
+  });
+
+  async function copyPreviewUrl() {
+    if (!activeAssetUrl) return;
+    try {
+      await navigator.clipboard.writeText(activeAssetUrl);
+      const btn = document.getElementById('preview-copy-btn');
+      const origText = btn.querySelector('span').textContent;
+      btn.querySelector('span').textContent = 'Copied!';
+      btn.style.borderColor = 'var(--cyan)';
+      setTimeout(() => {
+        btn.querySelector('span').textContent = origText;
+        btn.style.borderColor = 'var(--border)';
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  }
+
+  function initMonacoPreview(filename, originalName) {
+    // Configure Monaco
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs' } });
+    require(['vs/editor/editor.main'], async function () {
+      // Get file content
+      let content = '';
+      try {
+        const response = await fetch(`/admin/cms/assets/content/${filename}`);
+        if (response.ok) {
+          content = await response.text();
+        } else {
+          content = 'Error loading file content.';
+        }
+      } catch (err) {
+        console.error(err);
+        content = 'Network error fetching file content.';
+      }
+
+      // Determine syntax language
+      let language = 'plaintext';
+      const ext = originalName.split('.').pop().toLowerCase();
+      if (ext === 'js') language = 'javascript';
+      else if (ext === 'css') language = 'css';
+      else if (ext === 'html') language = 'html';
+      else if (ext === 'json') language = 'json';
+      else if (ext === 'xml') language = 'xml';
+      else if (ext === 'svg') language = 'html';
+      else if (ext === 'md') language = 'markdown';
+
+      const editorContainer = document.getElementById('monaco-preview-editor');
+      if (!editorContainer) return; // Modal closed before load
+
+      previewEditorInstance = monaco.editor.create(editorContainer, {
+        value: content,
+        language: language,
+        theme: 'vs-dark',
+        readOnly: true,
+        minimap: { enabled: false },
+        automaticLayout: true,
+        fontSize: 13,
+        fontFamily: 'var(--font-mono)'
+      });
+    });
+  }
+</script>

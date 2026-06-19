@@ -6,6 +6,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
 model PortfolioUser {
   id                  Int       @id @default(autoincrement())
   email               String    @unique
@@ -15,8 +21,11 @@ model PortfolioUser {
   verificationCode    String?
   verificationExpires DateTime?
   passkeyFailedAttempts Int     @default(0)
+  role                Role      @default(VIEWER)
   createdAt           DateTime  @default(now())
   passkeys            Passkey[]
+  cmsPages            CMSPage[]
+  cmsAssets           CMSAsset[]
 }
 
 model Passkey {
@@ -37,3 +46,34 @@ model ContactSubmission {
   message   String
   createdAt DateTime @default(now())
 }
+
+model CMSPage {
+  id           Int           @id @default(autoincrement())
+  slug         String        @unique
+  title        String
+  description  String?
+  layout       String        @default("standard") // "standard", "blank"
+  themeColor   String        @default("#6366f1")
+  gradient     String        @default("linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%)")
+  htmlContent  String        @db.Text
+  cssContent   String        @db.Text
+  jsContent    String        @db.Text
+  status       String        @default("DRAFT") // "DRAFT", "STAGED", "PUBLISHED"
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  authorId     Int?
+  author       PortfolioUser? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+}
+
+model CMSAsset {
+  id           Int            @id @default(autoincrement())
+  filename     String         @unique
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  createdAt    DateTime       @default(now())
+  uploadedById Int?
+  uploadedBy   PortfolioUser? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+}
+

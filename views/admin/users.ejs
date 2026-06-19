@@ -1,0 +1,128 @@
+<%- include('../partials/head') %>
+
+<section class="section section-alt" style="min-height: 80vh;">
+  <div class="container">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+      <div>
+        <div class="section-label">Administration</div>
+        <h1 class="section-title">User <span class="gradient-text">Management</span></h1>
+        <p class="section-subtitle">Configure user roles and manage site privileges.</p>
+      </div>
+      <div>
+        <a href="/admin/cms" class="btn btn-ghost">
+          <span>CMS Control Panel</span>
+          <span style="font-size: 1.1em;">📊</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Alert / Toast Notification -->
+    <div id="toast" class="toast-notification" style="display: none; position: fixed; bottom: 24px; right: 24px; background: rgba(10, 17, 31, 0.95); border: 1px solid var(--purple); border-radius: var(--r-md); padding: 1rem 1.5rem; color: var(--text); backdrop-filter: blur(10px); z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
+      <span id="toast-icon">ℹ️</span>
+      <span id="toast-message"></span>
+    </div>
+
+    <div class="users-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 2rem; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body);">
+          <thead>
+            <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.15); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; text-transform: uppercase;">
+              <th style="padding: 1rem 0.5rem;">User</th>
+              <th style="padding: 1rem 0.5rem;">Email</th>
+              <th style="padding: 1rem 0.5rem; text-align: center;">Verified</th>
+              <th style="padding: 1rem 0.5rem; text-align: center;">Passkeys</th>
+              <th style="padding: 1rem 0.5rem;">Joined</th>
+              <th style="padding: 1rem 0.5rem; text-align: right; width: 180px;">Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% users.forEach(function(u) { %>
+              <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(157, 92, 255, 0.03)'" onmouseout="this.style.background='transparent'">
+                <td style="padding: 1.25rem 0.5rem; font-weight: 600; color: var(--text);">
+                  <%= u.name || 'Anonymous User' %>
+                  <% if (u.email === 'garg.archie@gmail.com') { %>
+                    <span style="font-size: 0.7rem; font-family: var(--font-mono); background: var(--purple-dim); color: var(--purple); border: 1px solid var(--border-hover); border-radius: 4px; padding: 2px 6px; margin-left: 6px; font-weight: normal; vertical-align: middle;">GLOBAL ADMIN</span>
+                  <% } %>
+                </td>
+                <td style="padding: 1.25rem 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);"><%= u.email %></td>
+                <td style="padding: 1.25rem 0.5rem; text-align: center;">
+                  <% if (u.emailVerified) { %>
+                    <span style="color: #10b981; font-size: 1.1rem; title='Email Verified'">✅</span>
+                  <% } else { %>
+                    <span style="color: #ef4444; font-size: 1.1rem; title='Pending Verification'">❌</span>
+                  <% } %>
+                </td>
+                <td style="padding: 1.25rem 0.5rem; text-align: center; font-family: var(--font-mono); color: var(--text-muted);">
+                  <%= u.passkeys.length %>
+                </td>
+                <td style="padding: 1.25rem 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                  <%= new Date(u.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                </td>
+                <td style="padding: 1.25rem 0.5rem; text-align: right;">
+                  <select 
+                    onchange="updateUserRole(<%= u.id %>, this.value)" 
+                    style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); padding: 0.4rem 0.8rem; font-family: var(--font-body); font-size: 0.88rem; cursor: pointer; outline: none; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--purple)'"
+                    onblur="this.style.borderColor='var(--border)'"
+                    <%= u.email === 'garg.archie@gmail.com' ? 'disabled' : '' %>
+                  >
+                    <option value="VIEWER" <%= u.role === 'VIEWER' ? 'selected' : '' %>>Viewer</option>
+                    <option value="EDITOR" <%= u.role === 'EDITOR' ? 'selected' : '' %>>Editor</option>
+                    <option value="ADMIN" <%= u.role === 'ADMIN' ? 'selected' : '' %>>Admin</option>
+                  </select>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  function showToast(message, isSuccess = true) {
+    const toast = document.getElementById('toast');
+    const toastIcon = document.getElementById('toast-icon');
+    const toastMessage = document.getElementById('toast-message');
+    
+    toastIcon.textContent = isSuccess ? '✅' : '❌';
+    toast.style.borderColor = isSuccess ? 'var(--cyan)' : '#ef4444';
+    toastMessage.textContent = message;
+    
+    toast.style.display = 'flex';
+    toast.style.opacity = '1';
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 300);
+    }, 4000);
+  }
+
+  async function updateUserRole(userId, newRole) {
+    try {
+      const response = await fetch('/admin/users/role', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, role: newRole })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        showToast(result.message, true);
+      } else {
+        showToast(result.error || 'Failed to update role', false);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('A network error occurred', false);
+    }
+  }
+</script>
+
+<%- include('../partials/foot') %>

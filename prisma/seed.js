@@ -19,12 +19,14 @@ async function main() {
   });
 
   if (existingUser) {
-    console.log(`⚠️ User ${email} already exists. Updating password...`);
+    console.log(`⚠️ User ${email} already exists. Updating password and role...`);
     await prisma.portfolioUser.update({
       where: { email },
       data: {
         password: passwordHash,
         name,
+        role: 'ADMIN',
+        emailVerified: true,
       },
     });
   } else {
@@ -34,6 +36,8 @@ async function main() {
         email,
         name,
         password: passwordHash,
+        role: 'ADMIN',
+        emailVerified: true,
       },
     });
   }
