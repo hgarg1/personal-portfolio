@@ -15,6 +15,26 @@
         </form>
       </div>
 
+      <!-- Admin Navigation Shortcuts -->
+      <% if (user && (user.role === 'ADMIN' || user.role === 'EDITOR')) { %>
+      <div class="submissions-panel animate-on-scroll" style="margin-bottom: 2rem; padding: 1.5rem 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+        <div style="display: flex; flex-direction: column;">
+          <span style="font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; color: var(--text);">Administration Tools</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Manage site pages, media files, and update user access levels.</span>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <a href="/admin/cms" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.6rem 1.4rem; box-shadow: none;">
+            CMS Control Panel 📊
+          </a>
+          <% if (user.role === 'ADMIN') { %>
+            <a href="/admin/users" class="btn btn-ghost" style="font-size: 0.85rem; padding: 0.6rem 1.4rem;">
+              User Management 👤
+            </a>
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+
       <!-- Contact Submissions Panel -->
       <div class="submissions-panel animate-on-scroll">
         <h2 class="sub-heading" style="margin-bottom: 1.5rem;">Contact Form Submissions</h2>
