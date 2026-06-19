@@ -1173,6 +1173,31 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   align-items: center;
   gap: 1rem;
   min-width: 140px;
+  position: relative;
+  overflow: hidden;
+}
+
+.edu-card-left::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/umd-bg.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+  transition: transform 0.6s ease;
+}
+
+.edu-card:hover .edu-card-left::after {
+  transform: scale(1.08);
+}
+
+.edu-school-badge,
+.edu-school-info {
+  position: relative;
+  z-index: 1;
 }
 
 .edu-school-badge {
@@ -1869,6 +1894,34 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   position: relative;
   overflow: hidden;
   transition: transform var(--ease), border-color var(--ease), box-shadow var(--ease);
+}
+
+.exec-card::after {
+  content: '';
+  position: absolute;
+  right: -5%;
+  bottom: -15%;
+  width: 320px;
+  height: 320px;
+  background-image: url('/images/hbs-bg.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: 0;
+  transition: transform 0.6s ease, opacity 0.6s ease;
+}
+
+.exec-card:hover::after {
+  transform: scale(1.06) translate(-5px, -5px);
+  opacity: 0.11;
+}
+
+.exec-card-header,
+.exec-card-body {
+  position: relative;
+  z-index: 1;
 }
 
 /* Crimson color theme overlay */
