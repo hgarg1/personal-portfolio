@@ -1,11 +1,12 @@
 const express = require('express');
 const router  = express.Router();
+const prisma  = require('../lib/prisma');
 
 router.get('/', (req, res) => {
   res.render('contact', { title: 'Contact', success: null, error: null });
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { name, email, message } = req.body;
 
   // AJAX request — return JSON
@@ -13,8 +14,17 @@ router.post('/', (req, res) => {
     if (!name || !email || !message) {
       return res.status(400).json({ success: false, error: 'All fields are required.' });
     }
-    console.log(`\u{1F4EC} New message from ${name} <${email}>:\n${message}\n`);
-    return res.json({ success: true });
+    
+    try {
+      await prisma.contactSubmission.create({
+        data: { name, email, message }
+      });
+      console.log(`✉️ New message saved from ${name} <${email}>`);
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('Contact database save error (AJAX):', err);
+      return res.status(500).json({ success: false, error: 'Internal server error.' });
+    }
   }
 
   // Traditional form POST — render page
@@ -26,12 +36,24 @@ router.post('/', (req, res) => {
     });
   }
 
-  console.log(`\u{1F4EC} New message from ${name} <${email}>:\n${message}\n`);
-  res.render('contact', {
-    title: 'Contact',
-    success: `Thanks, ${name}! Your message has been received.`,
-    error: null,
-  });
+  try {
+    await prisma.contactSubmission.create({
+      data: { name, email, message }
+    });
+    console.log(`✉️ New message saved from ${name} <${email}>`);
+    res.render('contact', {
+      title: 'Contact',
+      success: `Thanks, ${name}! Your message has been received.`,
+      error: null,
+    });
+  } catch (err) {
+    console.error('Contact database save error (traditional):', err);
+    res.render('contact', {
+      title: 'Contact',
+      success: null,
+      error: 'An internal server error occurred while sending your message.',
+    });
+  }
 });
 
 module.exports = router;
