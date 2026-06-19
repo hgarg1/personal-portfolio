@@ -606,10 +606,11 @@ router.post('/passkey/register', isAuthenticated, async (req, res) => {
     });
 
     if (verification.verified && verification.registrationInfo) {
-      const { credentialPublicKey, credentialID, counter } = verification.registrationInfo;
+      const { credential } = verification.registrationInfo;
+      const { id, publicKey, counter, transports } = credential;
 
-      const credentialIDBase64url = Buffer.from(credentialID).toString('base64url');
-      const publicKeyBase64url = Buffer.from(credentialPublicKey).toString('base64url');
+      const credentialIDBase64url = typeof id === 'string' ? id : Buffer.from(id).toString('base64url');
+      const publicKeyBase64url = Buffer.from(publicKey).toString('base64url');
 
       // Save to database
       await prisma.passkey.create({
@@ -617,7 +618,7 @@ router.post('/passkey/register', isAuthenticated, async (req, res) => {
           credentialID: credentialIDBase64url,
           publicKey: publicKeyBase64url,
           counter: BigInt(counter),
-          transports: body.response.transports ? body.response.transports.join(',') : null,
+          transports: transports ? transports.join(',') : (body.response.transports ? body.response.transports.join(',') : null),
           userId: req.session.user.id,
         },
       });
