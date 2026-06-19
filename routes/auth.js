@@ -477,13 +477,8 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
 
 // POST /auth/logout - Log Out
 router.post('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Logout error:', err);
-    }
-    res.clearCookie('connect.sid');
-    res.redirect('/auth');
-  });
+  req.session = null;
+  res.redirect('/auth');
 });
 
 // ─── Passkey (WebAuthn) Routes ──────────────────────────────────────────────────
