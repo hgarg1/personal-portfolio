@@ -704,10 +704,11 @@ router.post('/passkey/login', async (req, res) => {
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
-      authenticator: {
-        credentialPublicKey: Buffer.from(passkey.publicKey, 'base64url'),
-        credentialID: Buffer.from(passkey.credentialID, 'base64url'),
+      credential: {
+        id: passkey.credentialID,
+        publicKey: Buffer.from(passkey.publicKey, 'base64url'),
         counter: Number(passkey.counter),
+        transports: passkey.transports ? passkey.transports.split(',') : undefined,
       },
       requireUserVerification: false,
     });
