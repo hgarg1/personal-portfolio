@@ -290,6 +290,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   justify-content: center;
   overflow: hidden;
   padding-top: 64px;
+  padding-bottom: 6.5rem;
 }
 
 .hero-canvas {
