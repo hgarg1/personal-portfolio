@@ -46,6 +46,7 @@ model ContactSubmission {
   name      String
   email     String
   message   String
+  replied   Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 

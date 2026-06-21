@@ -45,7 +45,12 @@
               <div class="submission-card">
                 <div class="submission-meta">
                   <div class="submission-sender">
-                    <span class="submission-name"><%= sub.name %></span>
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                      <span class="submission-name"><%= sub.name %></span>
+                      <% if (sub.replied) { %>
+                        <span class="replied-badge">✓ Replied</span>
+                      <% } %>
+                    </div>
                     <a href="mailto:<%= sub.email %>" class="submission-email"><%= sub.email %></a>
                   </div>
                   <span class="submission-date">
@@ -62,6 +67,7 @@
                 <% if (sub.email) { %>
                   <div class="submission-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
                     <button type="button" class="btn btn-ghost btn-reply-ai" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: rgba(255,255,255,0.15);" 
+                            data-id="<%= sub.id %>"
                             data-name="<%= sub.name %>"
                             data-email="<%= sub.email %>"
                             data-message="<%= sub.message %>"
@@ -284,17 +290,18 @@
     });
 
     // AI Respond Handlers
-    let currentSubmission = { name: '', email: '', message: '' };
+    let currentSubmission = { id: null, name: '', email: '', message: '' };
 
     window.handleReplyClick = function(btn) {
+      const id = btn.getAttribute('data-id');
       const name = btn.getAttribute('data-name');
       const email = btn.getAttribute('data-email');
       const message = btn.getAttribute('data-message');
-      openAIModal(name, email, message);
+      openAIModal(id, name, email, message);
     };
 
-    window.openAIModal = function(name, email, message) {
-      currentSubmission = { name, email, message };
+    window.openAIModal = function(id, name, email, message) {
+      currentSubmission = { id, name, email, message };
       draftResponse(name, email, message);
     };
 
@@ -394,7 +401,13 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ toEmail, toName, subject, responseMessage })
+          body: JSON.stringify({
+            submissionId: currentSubmission.id,
+            toEmail,
+            toName,
+            subject,
+            responseMessage
+          })
         });
 
         const data = await res.json();
@@ -402,6 +415,7 @@
           showAIStatus('🎉 Response email sent successfully!', true);
           setTimeout(() => {
             closeAIModal();
+            window.location.reload();
           }, 2000);
         } else {
           throw new Error(data.error || 'Failed to send response email.');
@@ -613,6 +627,18 @@
     opacity: 0.4 !important;
     cursor: not-allowed !important;
     pointer-events: none !important;
+  }
+  .replied-badge {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+    color: #34d399 !important;
+    padding: 0.15rem 0.5rem !important;
+    border-radius: var(--r-sm, 4px) !important;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    line-height: 1 !important;
   }
 </style>
   </div>

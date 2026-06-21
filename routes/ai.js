@@ -369,7 +369,7 @@ Instructions for your draft:
 
 // POST /api/ai/send-response - Send the response email to the submitter
 router.post('/send-response', isAuthenticatedAdminOrEditor, async (req, res) => {
-  const { toEmail, toName, subject, responseMessage } = req.body;
+  const { submissionId, toEmail, toName, subject, responseMessage } = req.body;
 
   if (!toEmail || !toName || !subject || !responseMessage) {
     return res.status(400).json({ error: 'toEmail, toName, subject, and responseMessage are required.' });
@@ -389,6 +389,18 @@ router.post('/send-response', isAuthenticatedAdminOrEditor, async (req, res) => 
         targetId: null,
         targetEmail: toEmail
       });
+
+      // Update contact submission replied status in database
+      if (submissionId) {
+        try {
+          await prisma.contactSubmission.update({
+            where: { id: parseInt(submissionId, 10) },
+            data: { replied: true },
+          });
+        } catch (dbErr) {
+          console.error('❌ Failed to update submission replied status in database:', dbErr);
+        }
+      }
 
       return res.json({ success: true, message: 'Response email sent successfully.' });
     } else {
