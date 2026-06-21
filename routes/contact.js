@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const prisma  = require('../lib/prisma');
+const { sendContactSubmissionEmail } = require('../lib/email');
 
 router.get('/', (req, res) => {
   res.render('contact', { title: 'Contact', success: null, error: null });
@@ -20,6 +21,10 @@ router.post('/', async (req, res) => {
         data: { name, email, message }
       });
       console.log(`✉️ New message saved from ${name} <${email}>`);
+      // Send email alert asynchronously in background
+      sendContactSubmissionEmail(name, email, message).catch(err => {
+        console.error('Failed to send contact submission email (AJAX):', err);
+      });
       return res.json({ success: true });
     } catch (err) {
       console.error('Contact database save error (AJAX):', err);
@@ -41,6 +46,10 @@ router.post('/', async (req, res) => {
       data: { name, email, message }
     });
     console.log(`✉️ New message saved from ${name} <${email}>`);
+    // Send email alert asynchronously in background
+    sendContactSubmissionEmail(name, email, message).catch(err => {
+      console.error('Failed to send contact submission email (traditional):', err);
+    });
     res.render('contact', {
       title: 'Contact',
       success: `Thanks, ${name}! Your message has been received.`,
