@@ -297,4 +297,107 @@ router.post('/execute-tool', async (req, res) => {
   }
 });
 
+// Middleware to verify authentication for protected AI routes
+function isAuthenticatedAdminOrEditor(req, res, next) {
+  if (req.session && req.session.user && ['ADMIN', 'EDITOR'].includes(req.session.user.role)) {
+    return next();
+  }
+  res.status(403).json({ error: 'Access denied: Editor or Admin privileges required.' });
+}
+
+// POST /api/ai/draft-response - Draft a response to a contact form submission using AI
+router.post('/draft-response', isAuthenticatedAdminOrEditor, async (req, res) => {
+  const { name, email, message } = req.body;
+
+  if (!name || !message) {
+    return res.status(400).json({ error: 'Name and message are required' });
+  }
+
+  try {
+    // 1. Load resume context from the PDF
+    const resumeText = await loadResumeText();
+
+    // 2. Build system prompt
+    const systemPrompt = `You are Harshit Garg, an AI Systems Architect, Full-Stack Engineer, and Platform Builder.
+You are drafting a professional, charming, and helpful email reply to a contact form submission from a visitor on your website.
+
+Here is the context of your background and resume:
+=========================================
+${resumeText}
+=========================================
+
+Visitor Details:
+- Name: ${name}
+- Email: ${email || 'Not provided'}
+- Message:
+"${message}"
+
+Instructions for your draft:
+- Write the response email in the first person ("I").
+- Address the visitor by name politely.
+- Address their message directly, using details from your background/resume if they ask about your skills, projects, employment, availability, or experience.
+- Keep the tone professional, welcoming, and confident.
+- Do NOT include subject lines, placeholders, or standard brackets (like "[Your Name]" or "[Date]"). Sign it off as "Best regards,\nHarshit Garg".
+- Output ONLY the email body text.`;
+
+    // 3. Stream text
+    const result = streamText({
+      model: 'openai/gpt-4o-mini',
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: `Please draft a reply to the contact submission from ${name}.` }
+      ]
+    });
+
+    // 4. Stream response to client
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    for await (const chunk of result.textStream) {
+      res.write(chunk);
+    }
+    res.end();
+  } catch (err) {
+    console.error('❌ Error drafting response with AI:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to draft AI response.' });
+    } else {
+      res.end();
+    }
+  }
+});
+
+// POST /api/ai/send-response - Send the response email to the submitter
+router.post('/send-response', isAuthenticatedAdminOrEditor, async (req, res) => {
+  const { toEmail, toName, subject, responseMessage } = req.body;
+
+  if (!toEmail || !toName || !subject || !responseMessage) {
+    return res.status(400).json({ error: 'toEmail, toName, subject, and responseMessage are required.' });
+  }
+
+  try {
+    const { sendResponseEmail } = require('../lib/email');
+    const success = await sendResponseEmail(toEmail, toName, subject, responseMessage);
+
+    if (success) {
+      // Create audit log for sending email response
+      await logAction({
+        action: 'contact.respond',
+        details: { sentTo: toEmail, subject },
+        actorId: req.session.user.id,
+        actorEmail: req.session.user.email,
+        targetId: null,
+        targetEmail: toEmail
+      });
+
+      return res.json({ success: true, message: 'Response email sent successfully.' });
+    } else {
+      return res.status(500).json({ error: 'Failed to send email. Check SMTP settings.' });
+    }
+  } catch (err) {
+    console.error('❌ Error sending email response:', err);
+    res.status(500).json({ error: 'Failed to send response email.' });
+  }
+});
+
 module.exports = router;

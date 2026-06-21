@@ -59,6 +59,17 @@
                   </span>
                 </div>
                 <p class="submission-message"><%= sub.message %></p>
+                <% if (sub.email) { %>
+                  <div class="submission-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn btn-ghost btn-reply-ai" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: rgba(255,255,255,0.15);" 
+                            data-name="<%= sub.name %>"
+                            data-email="<%= sub.email %>"
+                            data-message="<%= sub.message %>"
+                            onclick="handleReplyClick(this)">
+                      Reply with AI 🤖
+                    </button>
+                  </div>
+                <% } %>
               </div>
             <% }); %>
           </div>
@@ -103,6 +114,53 @@
             <p class="no-submissions-text">No passkeys registered yet. Register a passkey to enable biometric login (Touch ID, Face ID, Windows Hello).</p>
           </div>
         <% } %>
+      </div>
+
+      <!-- AI Response Modal -->
+      <div id="ai-response-modal" class="vcs-modal-backdrop" style="display: none;">
+        <div class="vcs-modal-container" style="max-width: 650px; width: 95%;">
+          <div class="vcs-modal-header">
+            <h3 id="ai-modal-title">Draft Response with AI</h3>
+            <button onclick="closeAIModal()">✕</button>
+          </div>
+          <div class="vcs-modal-body" style="padding: 1.5rem;">
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Recipient Name</span>
+                  <span id="ai-recipient-name" style="font-size: 0.9rem; color: var(--text); font-weight: 500;"></span>
+                </div>
+                <div>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Recipient Email</span>
+                  <span id="ai-recipient-email" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted); word-break: break-all;"></span>
+                </div>
+              </div>
+
+              <div>
+                <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Original Message</span>
+                <div id="ai-original-message" style="background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0.75rem 1rem; font-size: 0.82rem; max-height: 100px; overflow-y: auto; color: var(--text-muted); white-space: pre-wrap;"></div>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Email Subject</label>
+                <input type="text" id="ai-email-subject" class="form-input" style="font-size: 0.88rem;" value="Re: Contact Form Submission" />
+              </div>
+
+              <div>
+                <label class="form-label" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">AI Generated Draft Response</label>
+                <textarea id="ai-response-text" class="form-input" style="height: 250px; font-family: var(--font-body); font-size: 0.88rem; line-height: 1.5; resize: vertical; background: rgba(0,0,0,0.25);"></textarea>
+              </div>
+
+              <div id="ai-toast" style="display: none; padding: 0.5rem; border-radius: 4px; font-size: 0.82rem; font-family: var(--font-mono); text-align: center;"></div>
+
+            </div>
+          </div>
+          <div class="vcs-modal-footer">
+            <button onclick="regenerateAIDraft()" id="ai-regen-btn" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.85rem;" disabled>Regenerate Draft 🔄</button>
+            <button onclick="sendAIResponse()" id="ai-send-btn" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;" disabled>Send Response ✉️</button>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -217,6 +275,149 @@
         }
       });
     });
+
+    // AI Respond Handlers
+    let currentSubmission = { name: '', email: '', message: '' };
+
+    window.handleReplyClick = function(btn) {
+      const name = btn.getAttribute('data-name');
+      const email = btn.getAttribute('data-email');
+      const message = btn.getAttribute('data-message');
+      openAIModal(name, email, message);
+    };
+
+    window.openAIModal = function(name, email, message) {
+      currentSubmission = { name, email, message };
+      draftResponse(name, email, message);
+    };
+
+    window.closeAIModal = function() {
+      document.getElementById('ai-response-modal').style.display = 'none';
+      const toast = document.getElementById('ai-toast');
+      toast.style.display = 'none';
+      toast.textContent = '';
+      document.getElementById('ai-send-btn').textContent = 'Send Response ✉️';
+    };
+
+    window.regenerateAIDraft = function() {
+      if (currentSubmission.name) {
+        draftResponse(currentSubmission.name, currentSubmission.email, currentSubmission.message);
+      }
+    };
+
+    async function draftResponse(name, email, message) {
+      // Reset fields
+      document.getElementById('ai-recipient-name').textContent = name;
+      document.getElementById('ai-recipient-email').textContent = email;
+      document.getElementById('ai-original-message').textContent = message;
+      document.getElementById('ai-email-subject').value = `Re: Contact Form Submission - Harshit Garg`;
+      document.getElementById('ai-response-text').value = 'Generating response draft... 🤖';
+      
+      // Disable buttons
+      const regenBtn = document.getElementById('ai-regen-btn');
+      const sendBtn = document.getElementById('ai-send-btn');
+      regenBtn.disabled = true;
+      sendBtn.disabled = true;
+
+      // Show modal
+      document.getElementById('ai-response-modal').style.display = 'flex';
+
+      try {
+        const response = await fetch('/api/ai/draft-response', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name, email, message })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate draft.');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        
+        // Clear the placeholder
+        document.getElementById('ai-response-text').value = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const text = decoder.decode(value, { stream: true });
+          document.getElementById('ai-response-text').value += text;
+          
+          // Auto-scroll textarea to bottom as it writes
+          const textarea = document.getElementById('ai-response-text');
+          textarea.scrollTop = textarea.scrollHeight;
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('ai-response-text').value = 'Error generating draft: ' + err.message;
+      } finally {
+        regenBtn.disabled = false;
+        sendBtn.disabled = false;
+      }
+    }
+
+    window.sendAIResponse = async function() {
+      const toEmail = document.getElementById('ai-recipient-email').textContent;
+      const toName = document.getElementById('ai-recipient-name').textContent;
+      const subject = document.getElementById('ai-email-subject').value;
+      const responseMessage = document.getElementById('ai-response-text').value;
+
+      if (!toEmail || !subject || !responseMessage) {
+        showAIStatus('Please make sure all fields are populated.', false);
+        return;
+      }
+
+      const sendBtn = document.getElementById('ai-send-btn');
+      const regenBtn = document.getElementById('ai-regen-btn');
+      sendBtn.disabled = true;
+      regenBtn.disabled = true;
+      sendBtn.textContent = 'Sending... ⏳';
+
+      try {
+        const res = await fetch('/api/ai/send-response', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ toEmail, toName, subject, responseMessage })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showAIStatus('🎉 Response email sent successfully!', true);
+          setTimeout(() => {
+            closeAIModal();
+          }, 2000);
+        } else {
+          throw new Error(data.error || 'Failed to send response email.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAIStatus('❌ Error: ' + err.message, false);
+        sendBtn.disabled = false;
+        regenBtn.disabled = false;
+        sendBtn.textContent = 'Send Response ✉️';
+      }
+    };
+
+    function showAIStatus(msg, isSuccess) {
+      const toast = document.getElementById('ai-toast');
+      toast.style.display = 'block';
+      toast.textContent = msg;
+      if (isSuccess) {
+        toast.style.background = 'rgba(16, 185, 129, 0.15)';
+        toast.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+        toast.style.color = '#10b981';
+      } else {
+        toast.style.background = 'rgba(239, 68, 68, 0.15)';
+        toast.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+        toast.style.color = '#ef4444';
+      }
+    }
   });
 </script>
   </div>

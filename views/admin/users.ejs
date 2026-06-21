@@ -535,60 +535,6 @@
     color: var(--purple);
   }
 
-  /* Modals css */
-  .vcs-modal-backdrop {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(4, 6, 15, 0.85);
-    backdrop-filter: blur(6px);
-    z-index: 100005;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .vcs-modal-container {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-    overflow: hidden;
-    animation: zoomIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-  @keyframes zoomIn {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-  .vcs-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background: rgba(8,13,26,0.4);
-  }
-  .vcs-modal-header h3 {
-    font-family: var(--font-head);
-    font-size: 1.15rem;
-    font-weight: 600;
-  }
-  .vcs-modal-header button {
-    font-size: 1.2rem;
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-  }
-  .vcs-modal-header button:hover {
-    color: var(--purple);
-  }
-  .vcs-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--border);
-    background: rgba(8,13,26,0.4);
-  }
   .form-label {
     display: block;
     font-family: var(--font-body);
