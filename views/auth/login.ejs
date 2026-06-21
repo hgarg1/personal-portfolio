@@ -9,13 +9,13 @@
         <p class="auth-subtitle">Provide your credentials to access the system dashboard.</p>
       </div>
 
-      <div id="authAlert" class="auth-error-alert" style="display: none; margin-bottom: 1.5rem;">
+      <div id="authAlert" class="auth-error-alert" style="display: none;">
         <span class="error-icon">⚠️</span>
         <span id="authAlertMsg" class="error-message"></span>
       </div>
 
       <% if (error) { %>
-      <div class="auth-error-alert" style="margin-bottom: 1.5rem;">
+      <div class="auth-error-alert">
         <span class="error-icon">⚠️</span>
         <span class="error-message"><%= error %></span>
       </div>
@@ -47,53 +47,24 @@
         </button>
 
         <!-- Passkey trigger button (hidden by default) -->
-        <button type="button" id="passkeyBtn" class="btn btn-primary btn-full" style="display: none; margin-top: 1rem; background: linear-gradient(135deg, var(--purple), var(--pink));">
+        <button type="button" id="passkeyBtn" class="btn btn-primary btn-full btn-passkey" style="display: none;">
           Sign In with Passkey &nbsp;🔑
         </button>
       </form>
 
       <!-- Fallback link container -->
-      <div id="fallbackContainer" style="display: none; margin-top: 1.25rem; text-align: center;">
-        <a href="#" id="fallbackLink" style="color: var(--text-muted); text-decoration: none; font-size: 0.8rem; font-family: var(--font-mono); transition: color var(--ease);">
+      <div id="fallbackContainer" class="auth-fallback-container" style="display: none;">
+        <a href="#" id="fallbackLink" class="auth-fallback-link">
           // use password instead
         </a>
       </div>
 
-      <div style="margin-top: 1.5rem; text-align: center; font-size: 0.82rem; color: var(--text-muted);">
-        Don't have an account? <a href="/auth/signup" style="color: var(--purple); text-decoration: none; font-weight: 500; transition: color var(--ease);">Sign Up</a>
+      <div class="auth-signup-prompt">
+        Don't have an account? <a href="/auth/signup">Sign Up</a>
       </div>
     </div>
   </div>
 </section>
-
-<style>
-  .passkey-banner {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.25);
-    padding: 1rem;
-    border-radius: var(--r-md);
-    margin-bottom: 1.5rem;
-    animation: fadeIn 0.4s var(--ease);
-  }
-  .passkey-banner-icon {
-    font-size: 1.5rem;
-  }
-  .passkey-banner-text {
-    font-size: 0.85rem;
-    color: var(--text);
-    line-height: 1.4;
-  }
-  .passkey-banner-text strong {
-    color: var(--purple-light);
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

@@ -1,6 +1,6 @@
 <%- include('../partials/head') %>
 
-<section class="section section-alt" style="min-height: 80vh; padding-top: 80px; padding-bottom: 3rem;">
+<section class="section section-alt" style="min-height: 80svh; min-height: 80dvh; padding-top: 80px; padding-bottom: 3rem;">
   <div class="container" style="max-width: 96% !important; width: 96% !important;">
     
     <!-- Admin Header -->
@@ -29,7 +29,7 @@
     </div>
 
     <!-- Tab Navigation -->
-    <div style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem;">
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem;">
       <button onclick="switchTab('users')" id="tab-btn-users" class="tab-button <%= activeTab === 'users' ? 'active-tab' : '' %>" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border: none; border-bottom: 2px solid transparent; background: none; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
         Users (<%= users.length %>)
       </button>
@@ -41,8 +41,8 @@
     <!-- Users Tab Panel -->
     <div id="tab-content-users" class="tab-panel" style="<%= activeTab === 'users' ? 'display: block;' : 'display: none;' %>">
       <div class="users-card" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 2rem; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.35);">
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body); table-layout: fixed;">
+        <div class="table-responsive-wrapper">
+          <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body); table-layout: fixed;">
             <thead>
               <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.15); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; text-transform: uppercase;">
                 <th style="padding: 1rem 0.75rem; width: 22%;">User</th>
@@ -57,32 +57,32 @@
             <tbody>
               <% users.forEach(function(u) { %>
                 <tr id="user-row-<%= u.id %>" style="border-bottom: 1px solid rgba(130, 155, 200, 0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(157, 92, 255, 0.02)'" onmouseout="this.style.background='transparent'">
-                  <td style="padding: 1.25rem 0.75rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= u.name || 'Anonymous User' %>">
+                  <td data-label="User" style="padding: 1.25rem 0.75rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= u.name || 'Anonymous User' %>">
                     <%= u.name || 'Anonymous User' %>
                     <% if (u.email === 'garg.archie@gmail.com') { %>
                       <span style="font-size: 0.65rem; font-family: var(--font-mono); background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(157, 92, 255, 0.2); border-radius: 4px; padding: 2px 6px; margin-left: 6px; font-weight: normal; vertical-align: middle;">GLOBAL ADMIN</span>
                     <% } %>
                   </td>
-                  <td style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= u.email %>"><%= u.email %></td>
-                  <td style="padding: 1.25rem 0.75rem; text-align: center;">
+                  <td data-label="Email" style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= u.email %>"><%= u.email %></td>
+                  <td data-label="Verified" style="padding: 1.25rem 0.75rem; text-align: center;">
                     <% if (u.emailVerified) { %>
                       <span style="color: #10b981; font-size: 1.1rem;" title="Email Verified">✅</span>
                     <% } else { %>
                       <span style="color: #ef4444; font-size: 1.1rem;" title="Pending Verification">❌</span>
                     <% } %>
                   </td>
-                  <td style="padding: 1.25rem 0.75rem; text-align: center; font-family: var(--font-mono); color: var(--text-muted);">
+                  <td data-label="Passkeys" style="padding: 1.25rem 0.75rem; text-align: center; font-family: var(--font-mono); color: var(--text-muted);">
                     <%= u.passkeys.length %>
                   </td>
-                  <td style="padding: 1.25rem 0.75rem; color: var(--text-muted); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <td data-label="Joined" style="padding: 1.25rem 0.75rem; color: var(--text-muted); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     <%= new Date(u.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
                   </td>
-                  <td style="padding: 1.25rem 0.75rem; text-align: center;">
+                  <td data-label="Role" style="padding: 1.25rem 0.75rem; text-align: center;">
                     <span style="font-size: 0.72rem; font-family: var(--font-mono); font-weight: 600; padding: 3px 8px; border-radius: 4px; border: 1px solid; <%= u.role === 'ADMIN' ? 'background: rgba(157, 92, 255, 0.1); color: #c084fc; border-color: rgba(157,92,255,0.3);' : u.role === 'EDITOR' ? 'background: rgba(0, 212, 255, 0.1); color: #22d3ee; border-color: rgba(0,212,255,0.3);' : 'background: rgba(138, 155, 184, 0.1); color: #9ca3af; border-color: rgba(138,155,184,0.3);' %>">
                       <%= u.role %>
                     </span>
                   </td>
-                  <td style="padding: 1.25rem 0.75rem; text-align: right;">
+                  <td data-label="Actions" style="padding: 1.25rem 0.75rem; text-align: right;">
                     <% if (u.email !== 'garg.archie@gmail.com') { %>
                       <div style="display: inline-flex; gap: 0.4rem;">
                         <button onclick="openEditUserModal(<%= u.id %>, '<%= (u.name || '').replace(/'/g, '\\\'') %>', '<%= u.email %>', '<%= u.role %>', <%= u.emailVerified %>)" class="btn btn-ghost" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Edit Account Details">📝</button>
@@ -181,8 +181,8 @@
             <button type="submit" class="btn btn-primary" style="padding: 0.45rem 1.25rem; font-size: 0.82rem; height: auto;">Apply Filters</button>
           </div>
         </form>
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body); table-layout: fixed;">
+        <div class="table-responsive-wrapper">
+          <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body); table-layout: fixed;">
             <thead>
               <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.15); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; text-transform: uppercase;">
                 <th style="padding: 1rem 0.75rem; width: 22%;">Timestamp</th>
@@ -203,18 +203,26 @@
               <% } else { %>
                 <% auditLogs.forEach(function(log) { %>
                   <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(157, 92, 255, 0.02)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 1.25rem 0.75rem; color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= new Date(log.createdAt).toLocaleString() %>">
+                    <td data-label="Timestamp" style="padding: 1.25rem 0.75rem; color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= new Date(log.createdAt).toLocaleString() %>">
                       <%= new Date(log.createdAt).toLocaleString() %>
                     </td>
-                    <td style="padding: 1.25rem 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <td data-label="Action" style="padding: 1.25rem 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                       <span style="font-size: 0.72rem; font-family: var(--font-mono); font-weight: 600; padding: 2px 6px; border-radius: 4px; border: 1px solid; <%= log.action.startsWith('user.create') ? 'background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16,185,129,0.2);' : log.action.startsWith('user.delete') ? 'background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239,68,68,0.2);' : log.action.startsWith('user.password') ? 'background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245,158,11,0.2);' : 'background: rgba(0, 212, 255, 0.1); color: #22d3ee; border-color: rgba(0,212,255,0.2);' %>">
                         <%= log.action %>
                       </span>
                     </td>
-                    <td style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.88rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= log.actorEmail || 'System' %>"><%= log.actorEmail || 'System' %></td>
-                    <td style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.88rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= log.targetEmail || 'N/A' %>"><%= log.targetEmail || 'N/A' %></td>
-                    <td style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= log.details %>">
-                      <%= log.details %>
+                    <td data-label="Actor" style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.88rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= log.actorEmail || 'System' %>"><%= log.actorEmail || 'System' %></td>
+                    <td data-label="Target" style="padding: 1.25rem 0.75rem; font-family: var(--font-mono); font-size: 0.88rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= log.targetEmail || 'N/A' %>"><%= log.targetEmail || 'N/A' %></td>
+                    <td data-label="Details" style="padding: 1.25rem 0.75rem;">
+                      <button type="button" class="btn btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-family: var(--font-mono); width: auto;"
+                              data-action="<%= log.action %>"
+                              data-actor="<%= log.actorEmail || 'System' %>"
+                              data-target="<%= log.targetEmail || 'N/A' %>"
+                              data-timestamp="<%= new Date(log.createdAt).toLocaleString() %>"
+                              data-details="<%= log.details %>"
+                              onclick="openLogDetails(this)">
+                        // details
+                      </button>
                     </td>
                   </tr>
                 <% }); %>
@@ -455,6 +463,50 @@
   </div>
 </div>
 
+<!-- 4. AUDIT LOG DETAILS MODAL -->
+<div id="log-details-modal" class="vcs-modal-backdrop" style="display: none;">
+  <div class="vcs-modal-container" style="max-width: 600px; width: 95%;">
+    <div class="vcs-modal-header">
+      <h3>Audit Log Entry Details</h3>
+      <button onclick="closeLogDetailsModal()">✕</button>
+    </div>
+    <div class="vcs-modal-body" style="padding: 1.5rem;">
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Action performed</span>
+          <span id="log-modal-action" style="font-size: 0.85rem; font-family: var(--font-mono); font-weight: 600; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(0, 212, 255, 0.2); background: rgba(0, 212, 255, 0.1); color: #22d3ee; display: inline-block;"></span>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Actor (Admin)</span>
+            <span id="log-modal-actor" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text);"></span>
+          </div>
+          <div>
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Target (User)</span>
+            <span id="log-modal-target" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);"></span>
+          </div>
+        </div>
+
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Timestamp</span>
+          <span id="log-modal-timestamp" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);"></span>
+        </div>
+
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Details</span>
+          <div id="log-modal-details" style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 1rem; font-size: 0.9rem; line-height: 1.6; color: var(--text); overflow-wrap: break-word; white-space: pre-wrap; font-family: var(--font-body);"></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="vcs-modal-footer">
+      <button onclick="closeLogDetailsModal()" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;">Close</button>
+    </div>
+  </div>
+</div>
+
 <style>
   .tab-button {
     background: none;
@@ -563,6 +615,49 @@
 </style>
 
 <script>
+  // Audit Log Modal Helpers
+  function openLogDetails(btn) {
+    const action = btn.getAttribute('data-action');
+    const actor = btn.getAttribute('data-actor');
+    const target = btn.getAttribute('data-target');
+    const timestamp = btn.getAttribute('data-timestamp');
+    const details = btn.getAttribute('data-details');
+    
+    document.getElementById('log-modal-action').textContent = action;
+    document.getElementById('log-modal-actor').textContent = actor;
+    document.getElementById('log-modal-target').textContent = target;
+    document.getElementById('log-modal-timestamp').textContent = timestamp;
+    document.getElementById('log-modal-details').textContent = details;
+    
+    // Style adjustments based on action type
+    const actionBadge = document.getElementById('log-modal-action');
+    actionBadge.className = '';
+    actionBadge.style.cssText = 'font-size: 0.85rem; font-family: var(--font-mono); font-weight: 600; padding: 3px 8px; border-radius: 4px; border: 1px solid; display: inline-block;';
+    if (action.startsWith('user.create')) {
+      actionBadge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+      actionBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+      actionBadge.style.color = '#10b981';
+    } else if (action.startsWith('user.delete')) {
+      actionBadge.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+      actionBadge.style.background = 'rgba(239, 68, 68, 0.1)';
+      actionBadge.style.color = '#f87171';
+    } else if (action.startsWith('user.password')) {
+      actionBadge.style.borderColor = 'rgba(245, 158, 11, 0.2)';
+      actionBadge.style.background = 'rgba(245, 158, 11, 0.1)';
+      actionBadge.style.color = '#fbbf24';
+    } else {
+      actionBadge.style.borderColor = 'rgba(0, 212, 255, 0.2)';
+      actionBadge.style.background = 'rgba(0, 212, 255, 0.1)';
+      actionBadge.style.color = '#22d3ee';
+    }
+
+    document.getElementById('log-details-modal').style.display = 'flex';
+  }
+
+  function closeLogDetailsModal() {
+    document.getElementById('log-details-modal').style.display = 'none';
+  }
+
   // Tab Switching Logic
   function switchTab(tab) {
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active-tab'));

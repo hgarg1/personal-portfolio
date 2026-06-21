@@ -17,17 +17,17 @@
 
       <!-- Admin Navigation Shortcuts -->
       <% if (user && (user.role === 'ADMIN' || user.role === 'EDITOR')) { %>
-      <div class="submissions-panel animate-on-scroll" style="margin-bottom: 2rem; padding: 1.5rem 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-        <div style="display: flex; flex-direction: column;">
-          <span style="font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; color: var(--text);">Administration Tools</span>
-          <span style="font-size: 0.8rem; color: var(--text-muted);">Manage site pages, media files, and update user access levels.</span>
+      <div class="submissions-panel admin-tools-panel animate-on-scroll">
+        <div class="admin-tools-info">
+          <span class="admin-tools-title">Administration Tools</span>
+          <span class="admin-tools-desc">Manage site pages, media files, and update user access levels.</span>
         </div>
-        <div style="display: flex; gap: 1rem;">
-          <a href="/admin/cms" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.6rem 1.4rem; box-shadow: none;">
+        <div class="admin-tools-actions">
+          <a href="/admin/cms" class="btn btn-primary btn-admin-tool">
             CMS Control Panel 📊
           </a>
           <% if (user.role === 'ADMIN') { %>
-            <a href="/admin/users" class="btn btn-ghost" style="font-size: 0.85rem; padding: 0.6rem 1.4rem;">
+            <a href="/admin/users" class="btn btn-ghost btn-admin-tool">
               User Management 👤
             </a>
           <% } %>
@@ -37,7 +37,7 @@
 
       <!-- Contact Submissions Panel -->
       <div class="submissions-panel animate-on-scroll">
-        <h2 class="sub-heading" style="margin-bottom: 1.5rem;">Contact Form Submissions</h2>
+        <h2 class="sub-heading sub-heading-margin">Contact Form Submissions</h2>
 
         <% if (submissions && submissions.length > 0) { %>
           <div class="submissions-list">
@@ -71,10 +71,10 @@
       </div>
 
       <!-- Passkeys & Biometrics Panel -->
-      <div class="submissions-panel animate-on-scroll" style="margin-top: 3rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-          <h2 class="sub-heading" style="margin: 0;">Passkeys &amp; Biometrics</h2>
-          <button type="button" class="btn btn-primary" id="registerPasskeyBtn" style="font-size: 0.85rem; padding: 0.5rem 1.25rem;">
+      <div class="submissions-panel passkeys-panel animate-on-scroll">
+        <div class="panel-header">
+          <h2 class="sub-heading">Passkeys &amp; Biometrics</h2>
+          <button type="button" class="btn btn-primary btn-add-passkey" id="registerPasskeyBtn">
             Add Passkey &nbsp;&#10022;
           </button>
         </div>
@@ -82,23 +82,23 @@
         <% if (passkeys && passkeys.length > 0) { %>
           <div class="submissions-list">
             <% passkeys.forEach(function(pk) { %>
-              <div class="submission-card" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; gap: 1rem; flex-wrap: wrap;">
-                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                  <span class="submission-name" style="font-size: 1rem; color: var(--text);">
+              <div class="submission-card passkey-card">
+                <div class="passkey-info">
+                  <span class="submission-name passkey-name">
                     🔐 Passkey (Windows Hello / FaceID)
                   </span>
-                  <span style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);">
+                  <span class="passkey-meta">
                     ID: <%= pk.credentialID.substring(0, 16) %>... | Created: <%= new Date(pk.createdAt).toLocaleDateString() %>
                   </span>
                 </div>
-                <button type="button" class="btn-delete-passkey" data-id="<%= pk.id %>" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); color: #fca5a5; padding: 0.4rem 1rem; border-radius: var(--r-md); font-family: var(--font-mono); font-size: 0.75rem; cursor: pointer; transition: all var(--ease);">
+                <button type="button" class="btn-delete-passkey" data-id="<%= pk.id %>">
                   // delete
                 </button>
               </div>
             <% }); %>
           </div>
         <% } else { %>
-          <div class="no-submissions" style="padding: 3rem 1.5rem;">
+          <div class="no-submissions passkeys-empty">
             <span class="no-submissions-icon">🔑</span>
             <p class="no-submissions-text">No passkeys registered yet. Register a passkey to enable biometric login (Touch ID, Face ID, Windows Hello).</p>
           </div>
@@ -106,14 +106,6 @@
       </div>
 
     </div>
-
-<style>
-  .btn-delete-passkey:hover {
-    background: rgba(239, 68, 68, 0.25) !important;
-    border-color: rgba(239, 68, 68, 0.5) !important;
-    color: #ef4444 !important;
-  }
-</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {

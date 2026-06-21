@@ -3,7 +3,7 @@
 <!-- Load Monaco Editor via CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs/loader.min.js"></script>
 
-<section class="section section-alt" style="min-height: 85vh;">
+<section class="section section-alt" style="min-height: 85svh; min-height: 85dvh;">
   <div class="container">
     
     <!-- Admin Header -->
@@ -34,7 +34,7 @@
     </div>
 
     <!-- Tab Navigation -->
-    <div style="display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem;">
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem;">
       <button onclick="switchTab('pages')" id="tab-btn-pages" class="tab-button active-tab" style="font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; padding: 0.75rem 0.5rem; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">
         Pages (<%= pages.length %>)
       </button>
@@ -57,8 +57,8 @@
             <a href="/admin/cms/pages/new" class="btn btn-primary">Create Your First Page</a>
           </div>
         <% } else { %>
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body);">
+          <div class="table-responsive-wrapper">
+            <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left; font-family: var(--font-body);">
               <thead>
                 <tr style="border-bottom: 1px solid rgba(130, 155, 200, 0.15); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; text-transform: uppercase;">
                   <th style="padding: 1rem 0.5rem;">Title</th>
@@ -72,16 +72,16 @@
               <tbody>
                 <% pages.forEach(function(page) { %>
                   <tr id="page-row-<%= page.id %>" style="border-bottom: 1px solid rgba(130, 155, 200, 0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(157, 92, 255, 0.02)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 1.25rem 0.5rem; font-weight: 600; color: var(--text);"><%= page.title %></td>
-                    <td style="padding: 1.25rem 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);">
+                    <td data-label="Title" style="padding: 1.25rem 0.5rem; font-weight: 600; color: var(--text);"><%= page.title %></td>
+                    <td data-label="Slug" style="padding: 1.25rem 0.5rem; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);">
                       <a href="/<%= page.slug %>" target="_blank" style="color: var(--cyan); text-decoration: underline; text-underline-offset: 4px;">/<%= page.slug %></a>
                     </td>
-                    <td style="padding: 1.25rem 0.5rem; text-align: center;">
+                    <td data-label="Layout" style="padding: 1.25rem 0.5rem; text-align: center;">
                       <span style="font-size: 0.72rem; font-family: var(--font-mono); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px;">
                         <%= page.layout.toUpperCase() %>
                       </span>
                     </td>
-                    <td style="padding: 1.25rem 0.5rem; text-align: center;">
+                    <td data-label="Status" style="padding: 1.25rem 0.5rem; text-align: center;">
                       <% if (page.status === 'PUBLISHED') { %>
                         <span style="font-size: 0.72rem; font-family: var(--font-mono); background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; padding: 2px 6px; font-weight: 600;">PUBLISHED</span>
                       <% } else if (page.status === 'STAGED') { %>
@@ -90,10 +90,10 @@
                         <span style="font-size: 0.72rem; font-family: var(--font-mono); background: rgba(138, 155, 184, 0.1); color: var(--text-muted); border: 1px solid rgba(138, 155, 184, 0.3); border-radius: 4px; padding: 2px 6px;">DRAFT</span>
                       <% } %>
                     </td>
-                    <td style="padding: 1.25rem 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
+                    <td data-label="Last Updated" style="padding: 1.25rem 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
                       <%= new Date(page.updatedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
                     </td>
-                    <td style="padding: 1.25rem 0.5rem; text-align: right;">
+                    <td data-label="Actions" style="padding: 1.25rem 0.5rem; text-align: right;">
                       <div style="display: inline-flex; gap: 0.5rem;">
                         <a href="/<%= page.slug %>" target="_blank" class="btn btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" title="View Page">👁️</a>
                         <a href="/admin/cms/pages/edit/<%= page.id %>" class="btn btn-ghost" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: var(--purple-dim); color: var(--text);" title="Edit Page">📝</a>

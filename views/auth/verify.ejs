@@ -1,105 +1,5 @@
 <%- include('../partials/head') %>
 
-<style>
-  .otp-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-block: 1.5rem;
-  }
-  .otp-input {
-    width: 3.5rem;
-    height: 4rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    color: var(--text);
-    font-family: var(--font-head);
-    font-size: 1.75rem;
-    font-weight: 700;
-    text-align: center;
-    transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
-  }
-  .otp-input:focus {
-    outline: none;
-    border-color: var(--purple);
-    background: rgba(109, 40, 217, 0.05);
-    box-shadow: 0 0 15px rgba(109, 40, 217, 0.3);
-  }
-  .auth-success-alert {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.25);
-    color: #a7f3d0;
-    border-radius: var(--r-md);
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.85rem;
-  }
-  .resend-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-    font-size: 0.85rem;
-  }
-  .resend-text {
-    color: var(--text-muted);
-  }
-  .resend-btn {
-    background: none;
-    border: none;
-    color: var(--purple);
-    font-weight: 600;
-    cursor: pointer;
-    padding: 0;
-    font-size: 0.85rem;
-    transition: color var(--ease);
-  }
-  .resend-btn:hover {
-    color: #a78bfa;
-  }
-  .resend-btn:disabled {
-    color: var(--text-muted);
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-  .resend-timer {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-  }
-  .dev-banner {
-    margin-top: 2rem;
-    background: rgba(167, 139, 250, 0.05);
-    border: 1px dashed rgba(167, 139, 250, 0.3);
-    border-radius: var(--r-md);
-    padding: 1rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .dev-banner-badge {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    color: var(--purple);
-    letter-spacing: 0.1em;
-    margin-bottom: 0.25rem;
-  }
-  .dev-banner-text {
-    font-size: 0.9rem;
-    color: var(--text);
-  }
-  .dev-code-val {
-    font-family: var(--font-mono);
-    font-weight: 700;
-    color: var(--purple);
-    font-size: 1.1rem;
-    letter-spacing: 2px;
-  }
-</style>
 
 <section class="section auth-section">
   <div class="container">
@@ -155,8 +55,8 @@
       </div>
       <% } %>
       
-      <div style="margin-top: 1.5rem; text-align: center;">
-        <a href="/auth" style="color: var(--text-muted); text-decoration: none; font-size: 0.8rem; opacity: 0.7;">&larr; Back to Login</a>
+      <div class="auth-back-container">
+        <a href="/auth" class="auth-back-link">&larr; Back to Login</a>
       </div>
     </div>
   </div>
@@ -175,13 +75,9 @@
     if (inputs[0]) inputs[0].focus();
 
     inputs.forEach((input, index) => {
-      // Move to next input on keyup
-      input.addEventListener('keyup', (e) => {
+      // Move to next input on input (more reliable on mobile keyboards)
+      input.addEventListener('input', () => {
         const value = input.value;
-        if (e.key === 'Backspace' || e.key === 'Delete') {
-          return;
-        }
-
         if (value.length === 1 && index < inputs.length - 1) {
           inputs[index + 1].focus();
         }

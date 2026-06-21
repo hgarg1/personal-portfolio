@@ -239,8 +239,7 @@
                 <div>
                   <label class="form-label" style="margin-bottom: 0.3rem;">Primary Theme Color</label>
                   <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <input type="color" id="theme-color" value="<%= page ? page.themeColor : '#6366f1' %>" onchange="syncColorInput(this.value)" style="border: none; background: none; width: 36px; height: 36px; cursor: pointer;">
-                    <input type="text" id="theme-color-text" value="<%= page ? page.themeColor : '#6366f1' %>" class="form-input" style="width: 100px; padding: 0.4rem;" oninput="syncColorInput(this.value)">
+                    <input type="text" id="theme-color" data-coloris value="<%= page ? page.themeColor : '#6366f1' %>" onchange="syncColorInput(this.value)" class="form-input" style="width: 140px; padding: 0.4rem;">
                   </div>
                 </div>
                 <div style="flex-grow: 1;">
@@ -345,8 +344,36 @@
           </div>
 
           <!-- CSS PANEL -->
-          <div id="panel-css" class="workspace-panel" style="height: 100%; display: none;">
-            <div id="editor-css" style="width: 100%; height: 100%;"></div>
+          <div id="panel-css" class="workspace-panel" style="height: 100%; display: none; flex-direction: column;">
+            <!-- Editor Mode Selector -->
+            <div style="display: flex; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border);">
+              <button onclick="toggleCSSEditorMode('code')" id="css-mode-code" class="editor-mode-btn active-mode-btn">Code Editor (Monaco)</button>
+              <button onclick="toggleCSSEditorMode('visual')" id="css-mode-visual" class="editor-mode-btn">Visual Layouts (CSS Classes)</button>
+            </div>
+            <div id="editor-css" style="width: 100%; flex: 1;"></div>
+            
+            <div id="css-builder-container" style="width: 100%; flex: 1; display: none; background: var(--bg-card); color: var(--text); overflow: hidden; position: relative;">
+              <div style="display: flex; height: 100%; width: 100%;">
+                
+                <!-- Left Sidebar: CSS Layout Palette -->
+                <div id="css-builder-sidebar" style="width: 250px; background: rgba(0,0,0,0.25); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; padding: 1rem; flex-shrink: 0; user-select: none;">
+                  <h3 style="font-family: var(--font-head); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem; font-weight: 700;">
+                    <i data-lucide="plus-circle" style="width: 15px; height: 15px; color: var(--cyan);"></i> Layout Presets
+                  </h3>
+                  <div id="css-layout-palette" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <!-- Preset Layout cards will go here -->
+                  </div>
+                </div>
+
+                <!-- Center Canvas: Active CSS Classes -->
+                <div id="css-builder-canvas-wrapper" style="flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.08); overflow-y: auto; padding: 1.5rem; position: relative;">
+                  <div id="css-builder-canvas" style="display: flex; flex-direction: column; gap: 1.25rem; min-height: 100%; padding-bottom: 8rem;">
+                    <!-- CSS layouts will render here -->
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </div>
 
           <!-- JS PANEL -->
@@ -417,6 +444,17 @@
   let htmlEditor, cssEditor, jsEditor, diffEditorInstance;
   let activeDiffType = 'html';
   const isEdit = <%= page ? 'true' : 'false' %>;
+
+  // Visual Block Builder State
+  let canvasBlocks = [];
+  let activeBlockId = null;
+  let sortableInstance = null;
+  let isVisualActive = false;
+
+  // CSS Layout Builder State
+  let cssLayouts = [];
+  let activeCssLayoutId = null;
+  let isCssVisualActive = false;
 
   const defaultHtml = `<div class="container section">
   <div class="section-header text-center">
@@ -525,6 +563,21 @@
     if (typeof initCanvasSortable === 'function') {
       initCanvasSortable();
     }
+    if (typeof initCSSLayoutPalette === 'function') {
+      initCSSLayoutPalette();
+    }
+    if (typeof renderCSSCanvas === 'function') {
+      renderCSSCanvas();
+    }
+    if (window.Coloris) {
+      window.Coloris({
+        el: '[data-coloris]',
+        theme: 'dark',
+        themeMode: 'dark',
+        format: 'hex',
+        clearButton: false
+      });
+    }
   });
 
   function debounce(func, delay) {
@@ -538,30 +591,62 @@
   }
 
   function switchWorkspaceTab(tab) {
+    if (isVisualActive) {
+      serializeCanvasToHTML();
+    }
+    if (isCssVisualActive) {
+      serializeCSSCanvasToCode();
+    }
+
     document.querySelectorAll('.workspace-tab-btn').forEach(btn => btn.classList.remove('active-w-tab'));
     document.querySelectorAll('.workspace-panel').forEach(panel => panel.style.display = 'none');
 
     document.getElementById(`workspace-tab-${tab}`).classList.add('active-w-tab');
-    document.getElementById(`panel-${tab}`).style.display = tab === 'html' ? 'flex' : 'block';
 
-    if (tab === 'html' && htmlEditor) {
-      setTimeout(() => htmlEditor.layout(), 50);
-    } else if (tab === 'css' && cssEditor) {
-      setTimeout(() => cssEditor.layout(), 50);
-    } else if (tab === 'js' && jsEditor) {
-      setTimeout(() => jsEditor.layout(), 50);
-    } else if (tab === 'diff') {
-      document.getElementById(`panel-diff`).style.display = 'flex';
-      updateDiffComparison();
-      if (diffEditorInstance) {
-        setTimeout(() => diffEditorInstance.layout(), 50);
+    if (tab === 'css') {
+      document.getElementById('panel-css').style.display = 'flex';
+      if (isCssVisualActive) {
+        document.getElementById('editor-css').style.display = 'none';
+        document.getElementById('css-builder-container').style.display = 'block';
+      } else {
+        document.getElementById('editor-css').style.display = 'block';
+        document.getElementById('css-builder-container').style.display = 'none';
+        if (cssEditor) {
+          setTimeout(() => cssEditor.layout(), 50);
+        }
+      }
+    } else if (tab === 'html') {
+      document.getElementById('panel-html').style.display = 'flex';
+      if (isVisualActive) {
+        document.getElementById('editor-html').style.display = 'none';
+        document.getElementById('builder-container').style.display = 'block';
+      } else {
+        document.getElementById('editor-html').style.display = 'block';
+        document.getElementById('builder-container').style.display = 'none';
+        if (htmlEditor) {
+          setTimeout(() => htmlEditor.layout(), 50);
+        }
+      }
+    } else {
+      document.getElementById(`panel-${tab}`).style.display = 'block';
+      if (tab === 'js' && jsEditor) {
+        setTimeout(() => jsEditor.layout(), 50);
+      } else if (tab === 'diff') {
+        document.getElementById(`panel-diff`).style.display = 'flex';
+        updateDiffComparison();
+        if (diffEditorInstance) {
+          setTimeout(() => diffEditorInstance.layout(), 50);
+        }
       }
     }
   }
 
   function syncColorInput(val) {
-    document.getElementById('theme-color').value = val;
-    document.getElementById('theme-color-text').value = val;
+    const el = document.getElementById('theme-color');
+    if (el) {
+      el.value = val;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     triggerPreviewUpdate();
   }
 
@@ -766,6 +851,13 @@
   }
 
   async function savePage() {
+    if (isVisualActive) {
+      serializeCanvasToHTML();
+    }
+    if (isCssVisualActive) {
+      serializeCSSCanvasToCode();
+    }
+
     const id = document.getElementById('page-id').value;
     const title = document.getElementById('page-title').value;
     const slug = document.getElementById('page-slug').value;
@@ -858,11 +950,6 @@
     }
   }
 
-  // Visual Block Builder State
-  let canvasBlocks = [];
-  let activeBlockId = null;
-  let sortableInstance = null;
-  let isVisualActive = false;
 
   // Widget Registry & Schemas
   const WIDGET_REGISTRY = {
@@ -1114,93 +1201,20 @@
         return config;
       }
     },
-    row: {
-      name: 'Multi-Column Row',
-      icon: 'columns',
+    spacer: {
+      name: 'Spacer Block',
+      icon: 'move',
       config: {
-        layout: { label: 'Layout Columns', type: 'select', options: ['50/50', '70/30', '30/70', '33/33/33'], default: '50/50' },
-        bgColor: { label: 'Background Color', type: 'color', default: 'transparent' },
-        col1: { label: 'Column 1 Content', type: 'nested', default: [
-          { type: 'text', config: { content: '<h3>Column 1</h3><p>Edit nested content in settings modal.</p>', textColor: '#e4ecf7', bgColor: 'transparent', padding: '1rem 0' } }
-        ]},
-        col2: { label: 'Column 2 Content', type: 'nested', default: [
-          { type: 'text', config: { content: '<h3>Column 2</h3><p>Edit nested content in settings modal.</p>', textColor: '#e4ecf7', bgColor: 'transparent', padding: '1rem 0' } }
-        ]},
-        col3: { label: 'Column 3 Content', type: 'nested', default: [] }
+        height: { label: 'Height (spacing)', type: 'select', options: ['1rem', '2rem', '3rem', '4rem', '6rem', '8rem'], default: '2rem' }
       },
       render: function(config) {
-        const layout = config.layout || '50/50';
         const encoded = encodeURIComponent(JSON.stringify(config));
-        
-        let flexStyles = [];
-        if (layout === '50/50') flexStyles = ['flex: 1;', 'flex: 1;'];
-        else if (layout === '70/30') flexStyles = ['flex: 7;', 'flex: 3;'];
-        else if (layout === '30/70') flexStyles = ['flex: 3;', 'flex: 7;'];
-        else if (layout === '33/33/33') flexStyles = ['flex: 1;', 'flex: 1;', 'flex: 1;'];
-
-        const renderInnerBlocks = (colBlocks) => {
-          if (!colBlocks || colBlocks.length === 0) {
-            return '<div class="empty-column-placeholder" style="border: 1px dashed rgba(255,255,255,0.08); padding: 1.5rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; border-radius: 6px;">[Empty Column]</div>';
-          }
-          return colBlocks.map(block => {
-            const widget = WIDGET_REGISTRY[block.type];
-            if (!widget) return '';
-            let html = widget.render(block.config);
-            html = html.replace('data-widget=', 'data-subwidget=');
-            html = html.replace('data-config=', 'data-subconfig=');
-            return html;
-          }).join('\n');
-        };
-
-        return `<section data-widget="row" data-config="${encoded}" class="widget-rendered-section" style="background-color: ${config.bgColor}; padding: 2rem 0;">
-  <div class="widget-rendered-container" style="display: flex; gap: 2rem; flex-wrap: wrap; width: 100%;">
-    <div class="col-layout col-1" style="${flexStyles[0]} min-width: 280px; box-sizing: border-box;">
-      ${renderInnerBlocks(config.col1)}
-    </div>
-    <div class="col-layout col-2" style="${flexStyles[1]} min-width: 280px; box-sizing: border-box;">
-      ${renderInnerBlocks(config.col2)}
-    </div>
-    ${layout === '33/33/33' ? `
-    <div class="col-layout col-3" style="${flexStyles[2]} min-width: 280px; box-sizing: border-box;">
-      ${renderInnerBlocks(config.col3)}
-    </div>` : ''}
-  </div>
-</section>`;
+        return `<div data-widget="spacer" data-config="${encoded}" style="height: ${config.height}; width: 100%; clear: both;"></div>`;
       },
       parse: function(el, currentConfig) {
         const config = { ...currentConfig };
-        
-        const parseColumn = (colSelector) => {
-          const colEl = el.querySelector(colSelector);
-          if (!colEl) return [];
-          
-          const subEls = Array.from(colEl.querySelectorAll('[data-subwidget]'));
-          const blocks = [];
-          subEls.forEach(sub => {
-            const subType = sub.getAttribute('data-subwidget');
-            const rawSubConf = sub.getAttribute('data-subconfig');
-            if (subType && WIDGET_REGISTRY[subType]) {
-              let subConfig = {};
-              if (rawSubConf) {
-                try {
-                  subConfig = JSON.parse(decodeURIComponent(rawSubConf));
-                } catch(e) {}
-              }
-              if (WIDGET_REGISTRY[subType].parse) {
-                try {
-                  subConfig = WIDGET_REGISTRY[subType].parse(sub, subConfig);
-                } catch(e) {}
-              }
-              blocks.push({ type: subType, config: subConfig });
-            }
-          });
-          return blocks;
-        };
-
-        config.col1 = parseColumn('.col-1');
-        config.col2 = parseColumn('.col-2');
-        if (config.layout === '33/33/33') {
-          config.col3 = parseColumn('.col-3');
+        if (el.style.height) {
+          config.height = el.style.height;
         }
         return config;
       }
@@ -1624,6 +1638,16 @@
     const formContainer = document.getElementById('config-form-container');
     if (!drawer || !formContainer) return;
 
+    // Restore title and save button behavior for normal HTML block editing
+    const modalTitle = drawer.querySelector('h3');
+    if (modalTitle) {
+      modalTitle.innerHTML = `<i data-lucide="sliders" style="width: 18px; height: 18px; color: var(--purple);"></i> Block Settings`;
+    }
+    const saveBtn = drawer.querySelector('.btn-primary');
+    if (saveBtn) {
+      saveBtn.setAttribute('onclick', 'closeConfigDrawer()');
+    }
+
     formContainer.innerHTML = '';
     const widget = WIDGET_REGISTRY[block.type];
 
@@ -1919,6 +1943,565 @@
 
     renderCanvas();
   }
+
+  // 6.5 CSS Layout Builder Engines
+  const CSS_LAYOUT_PRESETS = {
+    'flex-row': {
+      name: 'Flex Row (Equal Columns)',
+      icon: 'columns',
+      defaultConfig: {
+        selector: '.flex-row-layout',
+        type: 'flex',
+        gap: '1rem',
+        columns: '3',
+        align: 'stretch'
+      }
+    },
+    'responsive-grid': {
+      name: 'Responsive Grid',
+      icon: 'grid',
+      defaultConfig: {
+        selector: '.responsive-grid-layout',
+        type: 'grid',
+        gap: '1.5rem',
+        columns: '3',
+        align: 'stretch'
+      }
+    },
+    'sidebar-split': {
+      name: 'Sidebar Split (1/3 vs 2/3)',
+      icon: 'layout',
+      defaultConfig: {
+        selector: '.sidebar-split-layout',
+        type: 'flex',
+        gap: '2rem',
+        columns: 'sidebar',
+        align: 'stretch'
+      }
+    }
+  };
+
+  function initCSSLayoutPalette() {
+    const palette = document.getElementById('css-layout-palette');
+    if (!palette) return;
+    palette.innerHTML = '';
+
+    Object.keys(CSS_LAYOUT_PRESETS).forEach(type => {
+      const preset = CSS_LAYOUT_PRESETS[type];
+      const card = document.createElement('div');
+      card.className = 'widget-palette-item';
+      card.style.cursor = 'pointer';
+      card.innerHTML = `
+        <i data-lucide="${preset.icon}"></i>
+        <div style="display: flex; flex-direction: column;">
+          <span style="font-size: 0.85rem; font-weight: 600;">${preset.name}</span>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        addCSSLayout(type);
+      });
+
+      palette.appendChild(card);
+    });
+
+    if (window.lucide) window.lucide.createIcons({ attrs: { class: 'lucide-icon' } });
+  }
+
+  window.addCSSLayout = function(presetType) {
+    const preset = CSS_LAYOUT_PRESETS[presetType];
+    if (!preset) return;
+
+    const config = JSON.parse(JSON.stringify(preset.defaultConfig));
+
+    let counter = 1;
+    let baseSelector = config.selector;
+    let finalSelector = baseSelector;
+    while (cssLayouts.some(l => l.selector === finalSelector)) {
+      finalSelector = `${baseSelector}-${counter}`;
+      counter++;
+    }
+    config.selector = finalSelector;
+
+    const newLayout = {
+      id: 'layout-' + Math.random().toString(36).substr(2, 9),
+      ...config
+    };
+
+    cssLayouts.push(newLayout);
+    activeCssLayoutId = newLayout.id;
+
+    renderCSSCanvas();
+    serializeCSSCanvasToCode();
+    openCSSConfigDrawer(newLayout.id);
+  };
+
+  window.deleteCSSLayout = function(id) {
+    cssLayouts = cssLayouts.filter(l => l.id !== id);
+    if (activeCssLayoutId === id) {
+      activeCssLayoutId = null;
+      closeCSSConfigDrawer();
+    }
+    renderCSSCanvas();
+    serializeCSSCanvasToCode();
+  };
+
+  function getCSSLayoutDescription(layout) {
+    const colsLabel = layout.columns === 'sidebar' ? 'Sidebar Split (1/3 vs 2/3)' : (layout.columns.startsWith('auto-') ? `Auto Fit (${layout.columns.split('-')[1]}px min)` : `${layout.columns} Columns`);
+    return `
+      <div style="display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.82rem; color: var(--text-muted);">
+        <div><strong>Type:</strong> <span style="color: var(--cyan); text-transform: uppercase;">${layout.type}</span></div>
+        <div><strong>Columns:</strong> <span style="color: #fff;">${colsLabel}</span></div>
+        <div><strong>Gap:</strong> <span style="color: #fff;">${layout.gap}</span></div>
+        <div><strong>Align:</strong> <span style="color: #fff;">${layout.align}</span></div>
+      </div>
+    `;
+  }
+
+  function renderCSSCanvas() {
+    const canvas = document.getElementById('css-builder-canvas');
+    if (!canvas) return;
+    canvas.innerHTML = '';
+
+    if (cssLayouts.length === 0) {
+      canvas.innerHTML = `
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: var(--r-md); padding: 3rem; text-align: center; color: var(--text-muted);">
+          <i data-lucide="layout" style="width: 48px; height: 48px; margin-bottom: 1rem; color: var(--border); opacity: 0.6;"></i>
+          <h4 style="margin: 0 0 0.5rem 0; font-family: var(--font-head); color: var(--text);">No Custom CSS Layouts Defined</h4>
+          <p style="font-size: 0.85rem; margin: 0 0 1.25rem 0; max-width: 320px;">Use the presets in the left panel to add layout classes that compile directly to CSS.</p>
+        </div>
+      `;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    cssLayouts.forEach(layout => {
+      const card = document.createElement('div');
+      card.className = `canvas-block ${layout.id === activeCssLayoutId ? 'active-block' : ''}`;
+      card.id = layout.id;
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.canvas-btn')) return;
+        activeCssLayoutId = layout.id;
+        document.querySelectorAll('#css-builder-canvas .canvas-block').forEach(el => {
+          el.classList.toggle('active-block', el.id === layout.id);
+        });
+      });
+
+      card.addEventListener('dblclick', (e) => {
+        if (e.target.closest('.canvas-btn')) return;
+        openCSSConfigDrawer(layout.id);
+      });
+
+      card.innerHTML = `
+        <div class="canvas-block-overlay">
+          <span class="canvas-block-title" style="cursor: pointer; font-family: var(--font-mono); color: var(--cyan); font-weight: 600;">
+            <i data-lucide="hash"></i> ${layout.selector}
+          </span>
+          <div class="canvas-block-controls">
+            <button class="canvas-btn" onclick="openCSSConfigDrawer('${layout.id}')"><i data-lucide="sliders"></i> Edit</button>
+            <button class="canvas-btn delete-btn" onclick="deleteCSSLayout('${layout.id}')"><i data-lucide="trash-2"></i> Delete</button>
+          </div>
+        </div>
+        <div class="canvas-block-content-wrapper" style="padding: 1.25rem; background: rgba(255,255,255,0.01);">
+          <div id="css-layout-desc-${layout.id}">
+            ${getCSSLayoutDescription(layout)}
+          </div>
+        </div>
+      `;
+
+      canvas.appendChild(card);
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  window.openCSSConfigDrawer = function(id) {
+    const layout = cssLayouts.find(l => l.id === id);
+    if (!layout) return;
+
+    activeCssLayoutId = id;
+    const drawer = document.getElementById('builder-drawer');
+    const formContainer = document.getElementById('config-form-container');
+    if (!drawer || !formContainer) return;
+
+    const modalTitle = drawer.querySelector('h3');
+    if (modalTitle) {
+      modalTitle.innerHTML = `<i data-lucide="sliders" style="width: 18px; height: 18px; color: var(--cyan);"></i> CSS Layout Settings`;
+    }
+
+    formContainer.innerHTML = '';
+
+    const selectorWrapper = document.createElement('div');
+    selectorWrapper.className = 'drawer-field';
+    selectorWrapper.innerHTML = `
+      <label>CSS Class Name Selector</label>
+      <input type="text" class="drawer-input" value="${layout.selector}" oninput="updateCSSLayoutConfig('${id}', 'selector', this.value)" placeholder="e.g. .custom-columns" />
+      <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">Must start with a dot (.) and contain only alphanumeric characters, dashes, and underscores.</span>
+    `;
+    formContainer.appendChild(selectorWrapper);
+
+    const typeWrapper = document.createElement('div');
+    typeWrapper.className = 'drawer-field';
+    typeWrapper.innerHTML = `
+      <label>Layout Type</label>
+      <select class="drawer-input" onchange="updateCSSLayoutConfig('${id}', 'type', this.value); openCSSConfigDrawer('${id}');">
+        <option value="flex" ${layout.type === 'flex' ? 'selected' : ''}>Flexbox</option>
+        <option value="grid" ${layout.type === 'grid' ? 'selected' : ''}>CSS Grid</option>
+      </select>
+    `;
+    formContainer.appendChild(typeWrapper);
+
+    const colsWrapper = document.createElement('div');
+    colsWrapper.className = 'drawer-field';
+    let colsOptions = [];
+    if (layout.type === 'flex') {
+      colsOptions = [
+        { value: '1', label: '1 Column (Full Width)' },
+        { value: '2', label: '2 Columns (Equal)' },
+        { value: '3', label: '3 Columns (Equal)' },
+        { value: '4', label: '4 Columns (Equal)' },
+        { value: 'sidebar', label: 'Sidebar Split (1/3 vs 2/3)' }
+      ];
+    } else {
+      colsOptions = [
+        { value: '2', label: '2 Columns (Fixed)' },
+        { value: '3', label: '3 Columns (Fixed)' },
+        { value: '4', label: '4 Columns (Fixed)' },
+        { value: 'auto-250', label: 'Auto Fit (Min 250px)' },
+        { value: 'auto-320', label: 'Auto Fit (Min 320px)' }
+      ];
+    }
+
+    colsWrapper.innerHTML = `
+      <label>Columns / Sizing</label>
+      <select class="drawer-input" onchange="updateCSSLayoutConfig('${id}', 'columns', this.value)">
+        ${colsOptions.map(opt => `<option value="${opt.value}" ${layout.columns === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+      </select>
+    `;
+    formContainer.appendChild(colsWrapper);
+
+    const gapWrapper = document.createElement('div');
+    gapWrapper.className = 'drawer-field';
+    gapWrapper.innerHTML = `
+      <label>Gap Spacing</label>
+      <select class="drawer-input" onchange="updateCSSLayoutConfig('${id}', 'gap', this.value)">
+        <option value="0.5rem" ${layout.gap === '0.5rem' ? 'selected' : ''}>0.5rem (Compact)</option>
+        <option value="1rem" ${layout.gap === '1rem' ? 'selected' : ''}>1rem (Normal)</option>
+        <option value="1.5rem" ${layout.gap === '1.5rem' ? 'selected' : ''}>1.5rem (Spacious)</option>
+        <option value="2rem" ${layout.gap === '2rem' ? 'selected' : ''}>2rem (Wide)</option>
+        <option value="3rem" ${layout.gap === '3rem' ? 'selected' : ''}>3rem (Extra Wide)</option>
+      </select>
+    `;
+    formContainer.appendChild(gapWrapper);
+
+    const alignWrapper = document.createElement('div');
+    alignWrapper.className = 'drawer-field';
+    alignWrapper.innerHTML = `
+      <label>Align Items (Vertical Alignment)</label>
+      <select class="drawer-input" onchange="updateCSSLayoutConfig('${id}', 'align', this.value)">
+        <option value="stretch" ${layout.align === 'stretch' ? 'selected' : ''}>Stretch (Default)</option>
+        <option value="center" ${layout.align === 'center' ? 'selected' : ''}>Center</option>
+        <option value="flex-start" ${layout.align === 'flex-start' ? 'selected' : ''}>Top (Align Start)</option>
+        <option value="flex-end" ${layout.align === 'flex-end' ? 'selected' : ''}>Bottom (Align End)</option>
+      </select>
+    `;
+    formContainer.appendChild(alignWrapper);
+
+    const saveBtn = drawer.querySelector('.btn-primary');
+    if (saveBtn) {
+      saveBtn.setAttribute('onclick', 'closeCSSConfigDrawer()');
+    }
+
+    drawer.style.display = 'flex';
+    if (window.lucide) window.lucide.createIcons();
+  };
+
+  window.updateCSSLayoutConfig = function(id, key, value) {
+    const layout = cssLayouts.find(l => l.id === id);
+    if (!layout) return;
+
+    if (key === 'selector') {
+      let val = value.trim();
+      if (val && !val.startsWith('.')) {
+        val = '.' + val;
+      }
+      val = val.replace(/[^a-zA-Z0-9_-]/g, (match, offset) => {
+        return offset === 0 ? '.' : '';
+      });
+      layout.selector = val;
+    } else {
+      layout[key] = value;
+    }
+
+    const cardContent = document.getElementById(`css-layout-desc-${id}`);
+    if (cardContent) {
+      cardContent.innerHTML = getCSSLayoutDescription(layout);
+    }
+
+    serializeCSSCanvasToCode();
+  };
+
+  window.closeCSSConfigDrawer = function() {
+    const drawer = document.getElementById('builder-drawer');
+    if (drawer) drawer.style.display = 'none';
+    activeCssLayoutId = null;
+    serializeCSSCanvasToCode();
+  };
+
+  function parseCSSToCanvasAndCustomCSS(cssCode, updateCanvas = true) {
+    const layoutRegex = /\/\* LAYOUT: (\.[a-zA-Z0-9_-]+) (\{[^\}]+\}) \*\//g;
+    
+    let match;
+    const foundLayouts = [];
+    let cleanedCSS = cssCode;
+    const matchesToReplace = [];
+
+    while ((match = layoutRegex.exec(cssCode)) !== null) {
+      const selector = match[1];
+      const configStr = match[2];
+      
+      try {
+        const config = JSON.parse(configStr);
+        
+        let layout = {
+          id: 'layout-' + Math.random().toString(36).substr(2, 9),
+          selector: selector,
+          type: config.type || 'flex',
+          gap: config.gap || '1rem',
+          columns: config.columns || '3',
+          align: config.align || 'stretch'
+        };
+
+        const escapedSelector = selector.replace('.', '\\.');
+        const mainBlockRegex = new RegExp(escapedSelector + '(?![a-zA-Z0-9_-])\\s*\\{([^\\}]+)\\}');
+        const mainBlockMatch = cssCode.match(mainBlockRegex);
+        if (mainBlockMatch) {
+          const rulesText = mainBlockMatch[1];
+          
+          const displayMatch = rulesText.match(/display:\s*([^;\s]+)/);
+          if (displayMatch) {
+            const displayVal = displayMatch[1].trim();
+            if (displayVal === 'flex' || displayVal === 'grid') {
+              layout.type = displayVal;
+            }
+          }
+
+          const gapMatch = rulesText.match(/gap:\s*([^;]+)/);
+          if (gapMatch) {
+            layout.gap = gapMatch[1].trim();
+          }
+
+          const alignMatch = rulesText.match(/align-items:\s*([^;]+)/);
+          if (alignMatch) {
+            layout.align = alignMatch[1].trim();
+          }
+
+          if (layout.type === 'grid') {
+            const gridTemplateMatch = rulesText.match(/grid-template-columns:\s*([^;]+)/);
+            if (gridTemplateMatch) {
+              const gtVal = gridTemplateMatch[1].trim();
+              if (gtVal.includes('auto-fit') || gtVal.includes('auto-fill')) {
+                const pxMatch = gtVal.match(/minmax\((\d+)px/);
+                if (pxMatch) {
+                  layout.columns = 'auto-' + pxMatch[1];
+                }
+              } else {
+                const repMatch = gtVal.match(/repeat\((\d+)/);
+                if (repMatch) {
+                  layout.columns = repMatch[1];
+                }
+              }
+            }
+          }
+        }
+
+        if (layout.type === 'flex') {
+          const sidebarRegex = new RegExp(escapedSelector + '(?![a-zA-Z0-9_-])\\s*>\\s*\\*\\:first-child');
+          if (sidebarRegex.test(cssCode)) {
+            layout.columns = 'sidebar';
+          } else {
+            const childBlockRegex = new RegExp(escapedSelector + '(?![a-zA-Z0-9_-])\\s*>\\s*\\*\\s*\\{([^\\}]+)\\}');
+            const childBlockMatch = cssCode.match(childBlockRegex);
+            if (childBlockMatch) {
+              const childRulesText = childBlockMatch[1];
+              const flexMatch = childRulesText.match(/flex:\s*[^;]+/);
+              if (flexMatch) {
+                const flexVal = flexMatch[0];
+                if (flexVal.includes('100%')) {
+                  layout.columns = '1';
+                } else {
+                  const numMatch = flexVal.match(/\/\*\s*(\d+)\s*\*\//) || flexVal.match(/\/\s*(\d+)/);
+                  if (numMatch) {
+                    layout.columns = numMatch[1];
+                  } else {
+                    const calcMatch = flexVal.match(/100%\s*\/\s*(\d+)/);
+                    if (calcMatch) {
+                      layout.columns = calcMatch[1];
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        foundLayouts.push(layout);
+        matchesToReplace.push(match[0]);
+      } catch (e) {
+        console.error('Failed to parse layout config JSON', e);
+      }
+    }
+
+    matchesToReplace.forEach(text => {
+      cleanedCSS = cleanedCSS.replace(text, '');
+    });
+
+    foundLayouts.forEach(layout => {
+      const escapedSelector = layout.selector.replace('.', '\\.');
+      const mainRegex = new RegExp(escapedSelector + '(?![a-zA-Z0-9_-])\\s*\\{[^\\}]*\\}\\s*', 'g');
+      cleanedCSS = cleanedCSS.replace(mainRegex, '');
+      const childRegex = new RegExp(escapedSelector + '(?![a-zA-Z0-9_-])\\s*>\\s*[^\\{]*\\{[^\\}]*\\}\\s*', 'g');
+      cleanedCSS = cleanedCSS.replace(childRegex, '');
+    });
+
+    cleanedCSS = cleanedCSS.replace(/\/\* --- CSS Layout Classes --- \*\//g, '');
+    cleanedCSS = cleanedCSS.trim();
+
+    if (updateCanvas) {
+      cssLayouts = foundLayouts;
+      renderCSSCanvas();
+    }
+
+    return {
+      layouts: foundLayouts,
+      customCSS: cleanedCSS
+    };
+  }
+
+  function parseCSSToCanvas(cssCode) {
+    parseCSSToCanvasAndCustomCSS(cssCode, true);
+  }
+
+  function serializeCSSCanvasToCode() {
+    let rules = [];
+
+    cssLayouts.forEach(layout => {
+      const comment = `/* LAYOUT: ${layout.selector} ${JSON.stringify({
+        type: layout.type,
+        gap: layout.gap,
+        columns: layout.columns,
+        align: layout.align
+      })} */`;
+
+      let cssRule = '';
+      if (layout.type === 'flex') {
+        cssRule += `${layout.selector} {
+  display: flex;
+  gap: ${layout.gap};
+  flex-wrap: wrap;
+  align-items: ${layout.align};
+}`;
+        if (layout.columns === 'sidebar') {
+          cssRule += `\n${layout.selector} > *:first-child {
+  flex: 1 1 300px;
+  box-sizing: border-box;
+}
+${layout.selector} > *:last-child {
+  flex: 2 1 600px;
+  box-sizing: border-box;
+}`;
+        } else {
+          const numCols = parseInt(layout.columns) || 1;
+          const flexBasis = numCols === 1 ? '100%' : `calc((100% / ${numCols}) - ${layout.gap})`;
+          cssRule += `\n${layout.selector} > * {
+  flex: 1 1 ${flexBasis};
+  box-sizing: border-box;
+}`;
+        }
+      } else if (layout.type === 'grid') {
+        let gridTemplate = '';
+        if (layout.columns.startsWith('auto-')) {
+          const minWidth = layout.columns.split('-')[1] || '280';
+          gridTemplate = `repeat(auto-fit, minmax(${minWidth}px, 1fr))`;
+        } else {
+          const numCols = parseInt(layout.columns) || 3;
+          gridTemplate = `repeat(${numCols}, 1fr)`;
+        }
+
+        cssRule += `${layout.selector} {
+  display: grid;
+  grid-template-columns: ${gridTemplate};
+  gap: ${layout.gap};
+  align-items: ${layout.align};
+}`;
+      }
+
+      rules.push(comment + '\n' + cssRule);
+    });
+
+    const newCSSCode = rules.join('\n\n');
+
+    if (cssEditor) {
+      const currentVal = cssEditor.getValue();
+      const parsed = parseCSSToCanvasAndCustomCSS(currentVal, false);
+      const customCSS = parsed.customCSS.trim();
+
+      const separator = '\n\n/* --- CSS Layout Classes --- */\n';
+      const finalCode = customCSS + (newCSSCode ? separator + newCSSCode : '');
+
+      if (currentVal !== finalCode) {
+        cssEditor.setValue(finalCode);
+      }
+    }
+  }
+
+  window.toggleCSSEditorMode = function(mode) {
+    const monacoContainer = document.getElementById('editor-css');
+    const builderContainer = document.getElementById('css-builder-container');
+    
+    const codeTab = document.getElementById('css-mode-code');
+    const visualTab = document.getElementById('css-mode-visual');
+
+    if (mode === 'visual') {
+      isCssVisualActive = true;
+      codeTab.classList.remove('active-mode-btn');
+      visualTab.classList.add('active-mode-btn');
+
+      monacoContainer.style.display = 'none';
+      builderContainer.style.display = 'block';
+
+      try {
+        const cssContent = cssEditor.getValue();
+        parseCSSToCanvas(cssContent);
+      } catch (err) {
+        console.error('Error loading CSS Visual Builder:', err);
+        showToastMsg('Error loading Visual CSS Layouts. Using Code Editor instead.', false);
+        isCssVisualActive = false;
+        codeTab.classList.add('active-mode-btn');
+        visualTab.classList.remove('active-mode-btn');
+        builderContainer.style.display = 'none';
+        monacoContainer.style.display = 'block';
+        if (cssEditor) {
+          setTimeout(() => cssEditor.layout(), 50);
+        }
+      }
+    } else {
+      isCssVisualActive = false;
+      codeTab.classList.add('active-mode-btn');
+      visualTab.classList.remove('active-mode-btn');
+
+      builderContainer.style.display = 'none';
+      monacoContainer.style.display = 'block';
+      closeCSSConfigDrawer();
+      
+      serializeCSSCanvasToCode();
+
+      if (cssEditor) {
+        setTimeout(() => cssEditor.layout(), 50);
+      }
+    }
+  };
 
   // 7. Toggle Mode Wrapper
   function toggleEditorMode(mode) {
@@ -2452,6 +3035,79 @@
     margin: 0 auto;
     padding: 0 1.5rem;
     box-sizing: border-box;
+  }
+
+  /* Mobile Responsiveness for CMS Editor Workspace */
+  @media (max-width: 900px) {
+    .editor-workspace {
+      grid-template-columns: 1fr !important;
+      min-height: auto !important;
+      gap: 1.5rem !important;
+    }
+    
+    /* Make side-by-side grids in settings panel stack vertically */
+    .editor-workspace div[style*="grid-template-columns"] {
+      grid-template-columns: 1fr !important;
+      gap: 1.25rem !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    /* Visual Builder Stacked Layout */
+    #builder-container > div {
+      flex-direction: column !important;
+    }
+    #builder-sidebar {
+      width: 100% !important;
+      border-right: none !important;
+      border-bottom: 1px solid var(--border);
+      max-height: 180px;
+    }
+    #widget-palette {
+      flex-direction: row !important;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      gap: 0.5rem !important;
+    }
+    .widget-palette-item {
+      flex-shrink: 0;
+      padding: 0.5rem 0.75rem !important;
+      font-size: 0.8rem;
+    }
+
+    /* CSS Builder Stacked Layout */
+    #css-builder-container > div {
+      flex-direction: column !important;
+    }
+    #css-builder-sidebar {
+      width: 100% !important;
+      border-right: none !important;
+      border-bottom: 1px solid var(--border);
+      max-height: 180px;
+    }
+    #css-layout-palette {
+      flex-direction: row !important;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      gap: 0.5rem !important;
+    }
+
+    /* Form input font size update for iOS zoom prevention */
+    .form-input, .drawer-input {
+      font-size: 16px !important;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .container {
+      padding-inline: 1rem !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    /* Let Live Preview occupy a smaller portion when stacked below */
+    .editor-workspace > div:last-child {
+      height: 400px;
+    }
   }
 </style>
 
