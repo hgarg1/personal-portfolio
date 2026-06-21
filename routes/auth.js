@@ -787,4 +787,17 @@ router.post('/passkey/delete', isAuthenticated, async (req, res) => {
   }
 });
 
+// GET /auth/api/submissions - Retrieve submissions as JSON (Protected)
+router.get('/api/submissions', isAuthenticated, async (req, res) => {
+  try {
+    const submissions = await prisma.contactSubmission.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ success: true, submissions });
+  } catch (err) {
+    console.error('API submissions fetch error:', err);
+    res.status(500).json({ success: false, error: 'Failed to retrieve submissions.' });
+  }
+});
+
 module.exports = router;

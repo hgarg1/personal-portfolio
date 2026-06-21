@@ -39,52 +39,54 @@
       <div class="submissions-panel animate-on-scroll">
         <h2 class="sub-heading sub-heading-margin">Contact Form Submissions</h2>
 
-        <% if (submissions && submissions.length > 0) { %>
-          <div class="submissions-list">
-            <% submissions.forEach(function(sub) { %>
-              <div class="submission-card">
-                <div class="submission-meta">
-                  <div class="submission-sender">
-                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                      <span class="submission-name"><%= sub.name %></span>
-                      <% if (sub.replied) { %>
-                        <span class="replied-badge">✓ Replied</span>
-                      <% } %>
+        <div id="submissions-container">
+          <% if (submissions && submissions.length > 0) { %>
+            <div class="submissions-list">
+              <% submissions.forEach(function(sub) { %>
+                <div class="submission-card" data-sub-id="<%= sub.id %>">
+                  <div class="submission-meta">
+                    <div class="submission-sender">
+                      <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                        <span class="submission-name"><%= sub.name %></span>
+                        <% if (sub.replied) { %>
+                          <span class="replied-badge">✓ Replied</span>
+                        <% } %>
+                      </div>
+                      <a href="mailto:<%= sub.email %>" class="submission-email"><%= sub.email %></a>
                     </div>
-                    <a href="mailto:<%= sub.email %>" class="submission-email"><%= sub.email %></a>
+                    <span class="submission-date">
+                      <%= new Date(sub.createdAt).toLocaleString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) %>
+                    </span>
                   </div>
-                  <span class="submission-date">
-                    <%= new Date(sub.createdAt).toLocaleString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric', 
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
-                  </span>
+                  <p class="submission-message"><%= sub.message %></p>
+                  <% if (sub.email) { %>
+                    <div class="submission-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                      <button type="button" class="btn btn-ghost btn-reply-ai" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: rgba(255,255,255,0.15);" 
+                              data-id="<%= sub.id %>"
+                              data-name="<%= sub.name %>"
+                              data-email="<%= sub.email %>"
+                              data-message="<%= sub.message %>"
+                              onclick="handleReplyClick(this)">
+                        Reply with AI 🤖
+                      </button>
+                    </div>
+                  <% } %>
                 </div>
-                <p class="submission-message"><%= sub.message %></p>
-                <% if (sub.email) { %>
-                  <div class="submission-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
-                    <button type="button" class="btn btn-ghost btn-reply-ai" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: rgba(255,255,255,0.15);" 
-                            data-id="<%= sub.id %>"
-                            data-name="<%= sub.name %>"
-                            data-email="<%= sub.email %>"
-                            data-message="<%= sub.message %>"
-                            onclick="handleReplyClick(this)">
-                      Reply with AI 🤖
-                    </button>
-                  </div>
-                <% } %>
-              </div>
-            <% }); %>
-          </div>
-        <% } else { %>
-          <div class="no-submissions">
-            <span class="no-submissions-icon">📥</span>
-            <p class="no-submissions-text">No contact form submissions received yet.</p>
-          </div>
-        <% } %>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="no-submissions">
+              <span class="no-submissions-icon">📥</span>
+              <p class="no-submissions-text">No contact form submissions received yet.</p>
+            </div>
+          <% } %>
+        </div>
       </div>
 
       <!-- Passkeys & Biometrics Panel -->
@@ -460,6 +462,118 @@
         }
       }
     });
+
+    // Dynamic polling of contact submissions
+    async function pollSubmissions() {
+      try {
+        const res = await fetch('/auth/api/submissions');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.submissions) {
+          updateSubmissionsUI(data.submissions);
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }
+
+    function updateSubmissionsUI(submissions) {
+      const container = document.getElementById('submissions-container');
+      if (!container) return;
+
+      if (submissions.length === 0) {
+        container.innerHTML = `
+          <div class="no-submissions">
+            <span class="no-submissions-icon">📥</span>
+            <p class="no-submissions-text">No contact form submissions received yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let list = container.querySelector('.submissions-list');
+      if (!list) {
+        container.innerHTML = '<div class="submissions-list"></div>';
+        list = container.querySelector('.submissions-list');
+      }
+
+      for (let i = submissions.length - 1; i >= 0; i--) {
+        const sub = submissions[i];
+        let card = list.querySelector(`[data-sub-id="${sub.id}"]`);
+        
+        if (!card) {
+          card = document.createElement('div');
+          card.className = 'submission-card new-submission';
+          card.setAttribute('data-sub-id', sub.id);
+          
+          const formattedDate = new Date(sub.createdAt).toLocaleString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          let actionHtml = '';
+          if (sub.email) {
+            actionHtml = `
+              <div class="submission-actions" style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-ghost btn-reply-ai" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: rgba(255,255,255,0.15);" 
+                        data-id="${sub.id}"
+                        data-name="${escapeHtml(sub.name)}"
+                        data-email="${escapeHtml(sub.email)}"
+                        data-message="${escapeHtml(sub.message)}"
+                        onclick="handleReplyClick(this)">
+                  Reply with AI 🤖
+                </button>
+              </div>
+            `;
+          }
+
+          card.innerHTML = `
+            <div class="submission-meta">
+              <div class="submission-sender">
+                <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                  <span class="submission-name">${escapeHtml(sub.name)}</span>
+                  ${sub.replied ? '<span class="replied-badge animate-fade-in">✓ Replied</span>' : ''}
+                </div>
+                <a href="mailto:${escapeHtml(sub.email)}" class="submission-email">${escapeHtml(sub.email)}</a>
+              </div>
+              <span class="submission-date">${formattedDate}</span>
+            </div>
+            <p class="submission-message">${escapeHtml(sub.message)}</p>
+            ${actionHtml}
+          `;
+
+          list.prepend(card);
+        } else {
+          // Sync Replied badge if it was updated on another client/session
+          const senderDiv = card.querySelector('.submission-sender > div');
+          if (senderDiv) {
+            const hasBadge = senderDiv.querySelector('.replied-badge');
+            if (sub.replied && !hasBadge) {
+              const badgeSpan = document.createElement('span');
+              badgeSpan.className = 'replied-badge animate-fade-in';
+              badgeSpan.textContent = '✓ Replied';
+              senderDiv.appendChild(badgeSpan);
+            }
+          }
+        }
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Start polling every 7 seconds
+    setInterval(pollSubmissions, 7000);
   });
 </script>
 
@@ -639,6 +753,44 @@
     display: inline-flex !important;
     align-items: center !important;
     line-height: 1 !important;
+  }
+
+  /* Fancy animation on new submission cards */
+  @keyframes slideInFromTop {
+    0% {
+      opacity: 0;
+      transform: translateY(-30px) scale(0.95);
+      background: rgba(139, 92, 246, 0.2) !important;
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.4) !important;
+      border-color: rgba(139, 92, 246, 0.5) !important;
+    }
+    30% {
+      opacity: 0.8;
+      transform: translateY(5px) scale(1.02);
+      background: rgba(139, 92, 246, 0.1) !important;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.2) !important;
+      border-color: rgba(139, 92, 246, 0.3) !important;
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      background: rgba(255, 255, 255, 0.02) !important;
+      box-shadow: none !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+  }
+
+  .submission-card.new-submission {
+    animation: slideInFromTop 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+
+  @keyframes badgeFadeIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-fade-in {
+    animation: badgeFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   }
 </style>
   </div>
