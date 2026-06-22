@@ -27,38 +27,6 @@ if (!fs.existsSync(confPath)) {
   fs.writeFileSync(confPath, fontsConfContent);
 }
 
-// Download fonts asynchronously but set a global promise to block rendering if needed
-async function downloadFonts() {
-  const boldFontPath = path.join(fontDir, 'LiberationSans-Bold.ttf');
-  const regularFontPath = path.join(fontDir, 'LiberationSans-Regular.ttf');
-
-  if (!fs.existsSync(boldFontPath)) {
-    try {
-      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Bold.ttf');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buffer = await res.arrayBuffer();
-      fs.writeFileSync(boldFontPath, Buffer.from(buffer));
-      console.log('✅ Bold font downloaded successfully.');
-    } catch (err) {
-      console.error('❌ Failed to download bold font:', err);
-    }
-  }
-
-  if (!fs.existsSync(regularFontPath)) {
-    try {
-      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Regular.ttf');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buffer = await res.arrayBuffer();
-      fs.writeFileSync(regularFontPath, Buffer.from(buffer));
-      console.log('✅ Regular font downloaded successfully.');
-    } catch (err) {
-      console.error('❌ Failed to download regular font:', err);
-    }
-  }
-}
-
-global.fontsLoadedPromise = downloadFonts().catch(console.error);
-
 const express = require('express');
 const morgan = require('morgan');
 const cookieSession = require('cookie-session');
