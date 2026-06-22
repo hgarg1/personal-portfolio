@@ -2,64 +2,6 @@ const express  = require('express');
 const router   = express.Router();
 const portfolio = require('../data/portfolio');
 const sharp     = require('sharp');
-const os        = require('os');
-const fs        = require('fs');
-const path      = require('path');
-
-// Ensure fonts are downloaded and configured for sharp on Vercel / serverless envs
-async function ensureFonts() {
-  const fontDir = path.join(os.tmpdir(), 'portfolio-fonts');
-  const boldFontPath = path.join(fontDir, 'LiberationSans-Bold.ttf');
-  const regularFontPath = path.join(fontDir, 'LiberationSans-Regular.ttf');
-  const confPath = path.join(fontDir, 'fonts.conf');
-  
-  if (!fs.existsSync(fontDir)) {
-    fs.mkdirSync(fontDir, { recursive: true });
-  }
-
-  // 1. Download Bold Font
-  if (!fs.existsSync(boldFontPath)) {
-    try {
-      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Bold.ttf');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buffer = await res.arrayBuffer();
-      fs.writeFileSync(boldFontPath, Buffer.from(buffer));
-      console.log('✅ Bold font downloaded successfully.');
-    } catch (err) {
-      console.error('❌ Failed to download bold font:', err);
-    }
-  }
-
-  // 2. Download Regular Font
-  if (!fs.existsSync(regularFontPath)) {
-    try {
-      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Regular.ttf');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buffer = await res.arrayBuffer();
-      fs.writeFileSync(regularFontPath, Buffer.from(buffer));
-      console.log('✅ Regular font downloaded successfully.');
-    } catch (err) {
-      console.error('❌ Failed to download regular font:', err);
-    }
-  }
-
-  // 3. Write fonts.conf pointing to the temp directory
-  if (!fs.existsSync(confPath)) {
-    const fontDirFormatted = fontDir.replace(/\\/g, '/');
-    const cacheDir = path.join(os.tmpdir(), 'portfolio-fonts-cache').replace(/\\/g, '/');
-    const fontsConfContent = `<?xml version="1.0"?>
-<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-<fontconfig>
-  <dir>${fontDirFormatted}</dir>
-  <cachedir>${cacheDir}</cachedir>
-  <config></config>
-</fontconfig>`;
-    fs.writeFileSync(confPath, fontsConfContent);
-  }
-
-  process.env.FONTCONFIG_PATH = fontDir;
-}
-
 router.get('/', (req, res) => {
   res.render('index', {
     title: `${portfolio.name} — AI Systems Architect & Full-Stack Engineer`,
@@ -70,8 +12,10 @@ router.get('/', (req, res) => {
 // GET /api/og - Dynamically generate OG preview images based on page context
 router.get('/api/og', async (req, res) => {
   try {
-    // Warm up the fonts before sharp runs
-    await ensureFonts();
+    // Wait for the fonts to finish downloading from the startup hook
+    if (global.fontsLoadedPromise) {
+      await global.fontsLoadedPromise;
+    }
 
     const title = req.query.title || 'Harshit Garg';
     const desc = req.query.desc || 'AI Systems Architect, Full-Stack Engineer, and Platform Builder.';

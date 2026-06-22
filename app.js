@@ -1,5 +1,64 @@
 require('dotenv').config();
 require('dotenv').config({ path: '.env.local' });
+
+// ─── FontConfig Setup for Sharp (Vercel Serverless) ──────────────────────────
+const os = require('os');
+const fs = require('fs');
+const path = require('path');
+
+const fontDir = path.join(os.tmpdir(), 'portfolio-fonts');
+process.env.FONTCONFIG_PATH = fontDir; // Set synchronously before sharp is required anywhere
+
+if (!fs.existsSync(fontDir)) {
+  fs.mkdirSync(fontDir, { recursive: true });
+}
+
+const confPath = path.join(fontDir, 'fonts.conf');
+if (!fs.existsSync(confPath)) {
+  const fontDirFormatted = fontDir.replace(/\\/g, '/');
+  const cacheDir = path.join(os.tmpdir(), 'portfolio-fonts-cache').replace(/\\/g, '/');
+  const fontsConfContent = `<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>${fontDirFormatted}</dir>
+  <cachedir>${cacheDir}</cachedir>
+  <config></config>
+</fontconfig>`;
+  fs.writeFileSync(confPath, fontsConfContent);
+}
+
+// Download fonts asynchronously but set a global promise to block rendering if needed
+async function downloadFonts() {
+  const boldFontPath = path.join(fontDir, 'LiberationSans-Bold.ttf');
+  const regularFontPath = path.join(fontDir, 'LiberationSans-Regular.ttf');
+
+  if (!fs.existsSync(boldFontPath)) {
+    try {
+      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Bold.ttf');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const buffer = await res.arrayBuffer();
+      fs.writeFileSync(boldFontPath, Buffer.from(buffer));
+      console.log('✅ Bold font downloaded successfully.');
+    } catch (err) {
+      console.error('❌ Failed to download bold font:', err);
+    }
+  }
+
+  if (!fs.existsSync(regularFontPath)) {
+    try {
+      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Regular.ttf');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const buffer = await res.arrayBuffer();
+      fs.writeFileSync(regularFontPath, Buffer.from(buffer));
+      console.log('✅ Regular font downloaded successfully.');
+    } catch (err) {
+      console.error('❌ Failed to download regular font:', err);
+    }
+  }
+}
+
+global.fontsLoadedPromise = downloadFonts().catch(console.error);
+
 const express = require('express');
 const morgan = require('morgan');
 const path = require('path');
