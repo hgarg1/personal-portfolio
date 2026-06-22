@@ -3,27 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Harshit Garg — AI Systems Architect, Full-Stack Engineer, and Platform Builder based in Gaithersburg, MD." />
+  <%
+    const ogTitle = (typeof title !== 'undefined' && title) ? title : 'Harshit Garg';
+    
+    // Clean description fallback
+    let ogDesc = 'Harshit Garg — AI Systems Architect, Full-Stack Engineer, and Platform Builder based in Gaithersburg, MD.';
+    if (typeof commit !== 'undefined' && commit && commit.content) {
+      // Extract a brief text snippet from CMS content if present
+      const rawContent = commit.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+      if (rawContent) {
+        ogDesc = rawContent.substring(0, 150) + (rawContent.length > 150 ? '...' : '');
+      }
+    } else if (typeof description !== 'undefined' && description) {
+      ogDesc = description;
+    }
+    
+    const ogImageUrl = `https://archie-garg.com/api/og?title=${encodeURIComponent(ogTitle)}&desc=${encodeURIComponent(ogDesc)}`;
+  %>
+
+  <meta name="description" content="<%= ogDesc %>" />
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://archie-garg.com" />
-  <meta property="og:title" content="<%= title %> | Harshit Garg" />
-  <meta property="og:description" content="Harshit Garg — AI Systems Architect, Full-Stack Engineer, and Platform Builder based in Gaithersburg, MD." />
-  <meta property="og:image" content="https://archie-garg.com/images/og-preview.png" />
+  <meta property="og:title" content="<%= ogTitle %>" />
+  <meta property="og:description" content="<%= ogDesc %>" />
+  <meta property="og:image" content="<%= ogImageUrl %>" />
   <meta property="og:site_name" content="Harshit Garg Portfolio" />
 
   <!-- Twitter / Discord Summary Large Image -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="https://archie-garg.com" />
-  <meta name="twitter:title" content="<%= title %> | Harshit Garg" />
-  <meta name="twitter:description" content="Harshit Garg — AI Systems Architect, Full-Stack Engineer, and Platform Builder based in Gaithersburg, MD." />
-  <meta name="twitter:image" content="https://archie-garg.com/images/og-preview.png" />
+  <meta name="twitter:title" content="<%= ogTitle %>" />
+  <meta name="twitter:description" content="<%= ogDesc %>" />
+  <meta name="twitter:image" content="<%= ogImageUrl %>" />
 
   <!-- Theme Color (Border color in Discord / browser tab styling) -->
   <meta name="theme-color" content="#8b5cf6" />
 
-  <title><%= title %> | Harshit Garg</title>
+  <title><%= ogTitle %></title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
