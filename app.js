@@ -6,26 +6,27 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 
-const fontDir = path.join(os.tmpdir(), 'portfolio-fonts');
-process.env.FONTCONFIG_PATH = fontDir; // Set synchronously before sharp is required anywhere
+const bundledFontsDir = path.join(__dirname, 'fonts');
+const fontconfigDir = path.join(os.tmpdir(), 'portfolio-fontconfig');
+const cacheDir = path.join(os.tmpdir(), 'portfolio-fonts-cache');
 
-if (!fs.existsSync(fontDir)) {
-  fs.mkdirSync(fontDir, { recursive: true });
+// Set FONTCONFIG_PATH synchronously before sharp is required anywhere
+process.env.FONTCONFIG_PATH = fontconfigDir;
+
+if (!fs.existsSync(fontconfigDir)) {
+  fs.mkdirSync(fontconfigDir, { recursive: true });
 }
 
-const confPath = path.join(fontDir, 'fonts.conf');
-if (!fs.existsSync(confPath)) {
-  const fontDirFormatted = fontDir.replace(/\\/g, '/');
-  const cacheDir = path.join(os.tmpdir(), 'portfolio-fonts-cache').replace(/\\/g, '/');
-  const fontsConfContent = `<?xml version="1.0"?>
+const confPath = path.join(fontconfigDir, 'fonts.conf');
+const fontsConfContent = `<?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
 <fontconfig>
-  <dir>${fontDirFormatted}</dir>
-  <cachedir>${cacheDir}</cachedir>
+  <dir>${bundledFontsDir.replace(/\\/g, '/')}</dir>
+  <cachedir>${cacheDir.replace(/\\/g, '/')}</cachedir>
   <config></config>
 </fontconfig>`;
-  fs.writeFileSync(confPath, fontsConfContent);
-}
+
+fs.writeFileSync(confPath, fontsConfContent);
 
 const express = require('express');
 const morgan = require('morgan');

@@ -6,3 +6,6 @@ Thumbs.db
 
 .vercel
 .env.local
+
+public/fonts/
+public/images/test-font*

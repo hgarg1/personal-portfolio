@@ -6,45 +6,6 @@ const os        = require('os');
 const fs        = require('fs');
 const path      = require('path');
 
-// Lazy request-time fonts downloader to ensure active network on Vercel
-async function downloadFonts() {
-  const fontDir = path.join(os.tmpdir(), 'portfolio-fonts');
-  const boldFontPath = path.join(fontDir, 'LiberationSans-Bold.ttf');
-  const regularFontPath = path.join(fontDir, 'LiberationSans-Regular.ttf');
-
-  if (!fs.existsSync(fontDir)) {
-    fs.mkdirSync(fontDir, { recursive: true });
-  }
-
-  // 1. Download Bold Font
-  if (!fs.existsSync(boldFontPath)) {
-    try {
-      console.log('📥 Request-time: Downloading bold font from CDN...');
-      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Bold.ttf');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buffer = await res.arrayBuffer();
-      fs.writeFileSync(boldFontPath, Buffer.from(buffer));
-      console.log('✅ Bold font downloaded successfully.');
-    } catch (err) {
-      console.error('❌ Failed to download bold font:', err);
-    }
-  }
-
-  // 2. Download Regular Font
-  if (!fs.existsSync(regularFontPath)) {
-    try {
-      console.log('📥 Request-time: Downloading regular font from CDN...');
-      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Regular.ttf');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buffer = await res.arrayBuffer();
-      fs.writeFileSync(regularFontPath, Buffer.from(buffer));
-      console.log('✅ Regular font downloaded successfully.');
-    } catch (err) {
-      console.error('❌ Failed to download regular font:', err);
-    }
-  }
-}
-
 router.get('/', (req, res) => {
   res.render('index', {
     title: `${portfolio.name} — AI Systems Architect & Full-Stack Engineer`,
@@ -55,9 +16,6 @@ router.get('/', (req, res) => {
 // GET /api/og - Dynamically generate OG preview images based on page context
 router.get('/api/og', async (req, res) => {
   try {
-    // Wait for the fonts to finish downloading (network is active now)
-    await downloadFonts();
-
     const title = req.query.title || 'Harshit Garg';
     const desc = req.query.desc || 'AI Systems Architect, Full-Stack Engineer, and Platform Builder.';
 
