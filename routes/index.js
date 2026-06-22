@@ -2,6 +2,63 @@ const express  = require('express');
 const router   = express.Router();
 const portfolio = require('../data/portfolio');
 const sharp     = require('sharp');
+const os        = require('os');
+const fs        = require('fs');
+const path      = require('path');
+
+// Ensure fonts are downloaded and configured for sharp on Vercel / serverless envs
+async function ensureFonts() {
+  const fontDir = path.join(os.tmpdir(), 'portfolio-fonts');
+  const boldFontPath = path.join(fontDir, 'LiberationSans-Bold.ttf');
+  const regularFontPath = path.join(fontDir, 'LiberationSans-Regular.ttf');
+  const confPath = path.join(fontDir, 'fonts.conf');
+  
+  if (!fs.existsSync(fontDir)) {
+    fs.mkdirSync(fontDir, { recursive: true });
+  }
+
+  // 1. Download Bold Font
+  if (!fs.existsSync(boldFontPath)) {
+    try {
+      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Bold.ttf');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const buffer = await res.arrayBuffer();
+      fs.writeFileSync(boldFontPath, Buffer.from(buffer));
+      console.log('✅ Bold font downloaded successfully.');
+    } catch (err) {
+      console.error('❌ Failed to download bold font:', err);
+    }
+  }
+
+  // 2. Download Regular Font
+  if (!fs.existsSync(regularFontPath)) {
+    try {
+      const res = await fetch('https://unpkg.com/pdfjs-dist@2.16.105/standard_fonts/LiberationSans-Regular.ttf');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const buffer = await res.arrayBuffer();
+      fs.writeFileSync(regularFontPath, Buffer.from(buffer));
+      console.log('✅ Regular font downloaded successfully.');
+    } catch (err) {
+      console.error('❌ Failed to download regular font:', err);
+    }
+  }
+
+  // 3. Write fonts.conf pointing to the temp directory
+  if (!fs.existsSync(confPath)) {
+    const fontDirFormatted = fontDir.replace(/\\/g, '/');
+    const cacheDir = path.join(os.tmpdir(), 'portfolio-fonts-cache').replace(/\\/g, '/');
+    const fontsConfContent = `<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>${fontDirFormatted}</dir>
+  <cachedir>${cacheDir}</cachedir>
+  <config></config>
+</fontconfig>`;
+    fs.writeFileSync(confPath, fontsConfContent);
+  }
+
+  process.env.FONTCONFIG_PATH = fontDir;
+}
 
 router.get('/', (req, res) => {
   res.render('index', {
@@ -13,6 +70,9 @@ router.get('/', (req, res) => {
 // GET /api/og - Dynamically generate OG preview images based on page context
 router.get('/api/og', async (req, res) => {
   try {
+    // Warm up the fonts before sharp runs
+    await ensureFonts();
+
     const title = req.query.title || 'Harshit Garg';
     const desc = req.query.desc || 'AI Systems Architect, Full-Stack Engineer, and Platform Builder.';
 
@@ -103,7 +163,7 @@ router.get('/api/og', async (req, res) => {
   <path d="M 1080,25 L 1155,25 A 20,20 0 0,1 1175,45 L 1175,120" fill="none" stroke="url(#accent-grad)" stroke-width="4" stroke-linecap="round" />
   
   <!-- Branding Header -->
-  <text x="120" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" fill="#a78bfa" letter-spacing="3">
+  <text x="120" y="130" font-family="'Liberation Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" fill="#a78bfa" letter-spacing="3">
     HARSHIT GARG // PLATFORM ENGINE
   </text>
 
@@ -111,21 +171,21 @@ router.get('/api/og', async (req, res) => {
   <circle cx="430" cy="125" r="4" fill="#22d3ee" />
 
   <!-- Dynamic Page Title (Gradient Text) -->
-  <text x="120" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="58" font-weight="900" fill="url(#accent-grad)" letter-spacing="-1">
+  <text x="120" y="220" font-family="'Liberation Sans', system-ui, -apple-system, sans-serif" font-size="58" font-weight="900" fill="url(#accent-grad)" letter-spacing="-1">
     ${titleTspans}
   </text>
 
   <!-- Dynamic Description -->
-  <text x="120" y="${descY}" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="400" fill="#9ca3af" line-height="1.6">
+  <text x="120" y="${descY}" font-family="'Liberation Sans', system-ui, -apple-system, sans-serif" font-size="22" font-weight="400" fill="#9ca3af" line-height="1.6">
     ${descTspans}
   </text>
 
   <!-- Footer Branding -->
-  <text x="120" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#4b5563" letter-spacing="1">
+  <text x="120" y="540" font-family="'Liberation Sans', system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#4b5563" letter-spacing="1">
     ARCHIE-GARG.COM
   </text>
 
-  <text x="1080" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" fill="rgba(34, 211, 238, 0.4)" text-anchor="end" letter-spacing="2">
+  <text x="1080" y="540" font-family="'Liberation Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" fill="rgba(34, 211, 238, 0.4)" text-anchor="end" letter-spacing="2">
     STATUS: ACTIVE
   </text>
 </svg>
@@ -159,4 +219,5 @@ function escapeXml(unsafe) {
 }
 
 module.exports = router;
+
 
