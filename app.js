@@ -61,7 +61,6 @@ global.fontsLoadedPromise = downloadFonts().catch(console.error);
 
 const express = require('express');
 const morgan = require('morgan');
-const path = require('path');
 const cookieSession = require('cookie-session');
 
 const app = express();
