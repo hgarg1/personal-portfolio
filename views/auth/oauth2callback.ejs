@@ -1,32 +1,44 @@
 <%- include('../partials/head') %>
 
-<section class="section auth-section">
-  <div class="container">
-    <div class="auth-box animate-on-scroll">
-      <div class="auth-header auth-header-sm">
-        <span class="auth-label auth-label-success">// authorization success</span>
-        <h1 class="auth-title">Setup <span class="gradient-text">Complete</span></h1>
-        <p class="auth-subtitle">Google OAuth2 credentials have been successfully exchanged and configured.</p>
+<section class="auth-section" aria-labelledby="authHeading">
+  <div class="auth-shell">
+    <aside class="auth-brand" aria-hidden="true">
+      <div class="auth-brand-grid"></div>
+      <div class="auth-brand-inner">
+        <span class="auth-brand-mark">HG</span>
+        <p class="auth-brand-title">Harshit Garg</p>
+        <p class="auth-brand-desc">Gmail sending is configured for this environment.</p>
       </div>
+    </aside>
 
-      <div class="auth-success-info">
-        <div class="auth-success-row">
-          <span class="auth-success-label">Gmail Account:</span>
-          <span class="auth-success-val"><%= email %></span>
+    <div class="auth-panel">
+      <div class="auth-box">
+        <header class="auth-header auth-header-sm">
+          <p class="auth-label auth-label-success">Setup complete</p>
+          <h1 class="auth-title" id="authHeading">Email connected</h1>
+          <p class="auth-subtitle">OAuth credentials were saved. Verification emails can now be sent.</p>
+        </header>
+
+        <div class="auth-success-info">
+          <div class="auth-success-row">
+            <span class="auth-success-label">Gmail account</span>
+            <span class="auth-success-val"><%= email %></span>
+          </div>
+          <div class="auth-success-col">
+            <span class="auth-success-label">Refresh token</span>
+            <code class="auth-success-code"><%= refreshToken %></code>
+          </div>
         </div>
-        <div class="auth-success-col">
-          <span class="auth-success-label">OAuth2 Refresh Token:</span>
-          <code class="auth-success-code"><%= refreshToken %></code>
+
+        <div class="auth-config-note">
+          <strong>Saved to environment:</strong>
+          <code>GMAIL_USER</code>, <code>GMAIL_CLIENT_ID</code>, <code>GMAIL_CLIENT_SECRET</code>, and <code>GMAIL_REFRESH_TOKEN</code>.
         </div>
-      </div>
 
-      <div class="auth-config-note">
-        <strong>Configuration Update:</strong> The environment variables <code>GMAIL_USER</code>, <code>GMAIL_CLIENT_ID</code>, <code>GMAIL_CLIENT_SECRET</code>, and <code>GMAIL_REFRESH_TOKEN</code> have been successfully written to your <code>.env</code> file.
+        <a href="/auth" class="btn btn-primary btn-full btn-auth-link">
+          Continue to sign in
+        </a>
       </div>
-
-      <a href="/auth" class="btn btn-primary btn-full btn-auth-link">
-        Proceed to Portal &nbsp;&#10022;
-      </a>
     </div>
   </div>
 </section>

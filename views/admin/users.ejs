@@ -400,65 +400,128 @@
 <!-- ========================================== -->
 <!-- 3. RESET PASSWORD MODAL                    -->
 <!-- ========================================== -->
-<div id="reset-modal" class="vcs-modal-backdrop" style="display: none;">
-  <div class="vcs-modal-container" style="max-width: 500px; width: 95%;">
-    <div class="vcs-modal-header">
-      <h3 id="reset-modal-title">Reset User Password</h3>
-      <button onclick="closeResetPasswordModal()">✕</button>
+<div id="reset-modal" class="vcs-modal-backdrop rp-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+  <div class="vcs-modal-container rp-modal">
+    <div class="rp-modal-glow" aria-hidden="true"></div>
+
+    <div class="vcs-modal-header rp-header">
+      <div class="rp-header-copy">
+        <p class="rp-eyebrow">Credential reset</p>
+        <h3 id="reset-modal-title">Reset Password</h3>
+      </div>
+      <button type="button" class="rp-close" onclick="closeResetPasswordModal()" aria-label="Close">✕</button>
     </div>
-    <div class="vcs-modal-body" style="padding: 1.5rem;">
+
+    <div class="vcs-modal-body rp-body">
       <input type="hidden" id="reset-user-id">
-      
-      <div style="margin-bottom: 1.25rem;">
-        <label class="form-label">Password Mode</label>
-        <div style="display: flex; gap: 1rem;">
-          <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem;">
-            <input type="radio" name="reset-pwd-mode" value="auto" checked onchange="toggleResetPwdMode(this.value)"> Auto-Generate Strong Password
+
+      <div class="rp-user-chip" id="reset-user-chip">
+        <span class="rp-user-avatar" id="reset-user-avatar" aria-hidden="true">?</span>
+        <div class="rp-user-meta">
+          <strong id="reset-user-name">User</strong>
+          <span id="reset-user-email" class="rp-user-email">email@example.com</span>
+        </div>
+        <span class="rp-user-badge">Secure action</span>
+      </div>
+
+      <div class="rp-section">
+        <label class="rp-section-label" id="reset-mode-label">Password mode</label>
+        <div class="rp-segment" role="radiogroup" aria-labelledby="reset-mode-label">
+          <label class="rp-segment-option">
+            <input type="radio" name="reset-pwd-mode" value="auto" checked onchange="toggleResetPwdMode(this.value)">
+            <span class="rp-segment-face">
+              <span class="rp-segment-title">Auto-generate</span>
+              <span class="rp-segment-desc">Cryptographically strong</span>
+            </span>
           </label>
-          <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem;">
-            <input type="radio" name="reset-pwd-mode" value="custom" onchange="toggleResetPwdMode(this.value)"> Custom Password
+          <label class="rp-segment-option">
+            <input type="radio" name="reset-pwd-mode" value="custom" onchange="toggleResetPwdMode(this.value)">
+            <span class="rp-segment-face">
+              <span class="rp-segment-title">Custom</span>
+              <span class="rp-segment-desc">Set it yourself</span>
+            </span>
           </label>
         </div>
       </div>
 
-      <!-- Auto-generate layout -->
-      <div id="reset-pwd-auto-block" style="background: rgba(245, 158, 11, 0.03); border: 1px dashed rgba(245, 158, 11, 0.2); border-radius: var(--r-md); padding: 1.25rem; text-align: center; margin-bottom: 1.25rem;">
-        <div style="font-family: var(--font-mono); font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; color: #fbbf24;" id="reset-generated-pwd-text">Generating...</div>
-        <button onclick="regenResetPassword()" class="btn btn-ghost" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; margin-top: 0.75rem; border-color: rgba(245,158,11,0.1); color: #fbbf24;">Regenerate</button>
-      </div>
-
-      <!-- Custom layout -->
-      <div id="reset-pwd-custom-block" style="display: none; margin-bottom: 1.25rem;">
-        <label class="form-label">New Custom Password *</label>
-        <div style="position: relative;">
-          <input type="password" id="reset-user-pwd" placeholder="Enter new password (min 6 chars)" class="form-input">
-          <button onclick="togglePasswordVisibility('reset-user-pwd', this)" type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem;">👁️</button>
+      <div id="reset-pwd-auto-block" class="rp-vault">
+        <div class="rp-vault-top">
+          <span class="rp-vault-label">Generated secret</span>
+          <span class="rp-vault-strength" aria-label="Strength: strong">
+            <i></i><i></i><i></i><i></i>
+            <em>Strong</em>
+          </span>
+        </div>
+        <div class="rp-secret-row">
+          <input
+            type="text"
+            id="reset-generated-pwd-text"
+            class="rp-vault-secret"
+            value=""
+            readonly
+            spellcheck="false"
+            aria-label="Generated password"
+          />
+          <button type="button" class="rp-vault-btn" onclick="copyResetPassword()" id="reset-copy-btn" title="Copy password">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button type="button" class="rp-vault-btn rp-vault-btn-accent" onclick="regenResetPassword()" title="Regenerate password">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            New
+          </button>
         </div>
       </div>
 
-      <!-- Notification Option -->
-      <div style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-top: 1.5rem;">
-        <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text); font-size: 0.9rem; font-weight: 600;">
-          <input type="checkbox" id="reset-send-email" checked onchange="toggleResetEmailInputs(this.checked)"> Email New Password to User
+      <div id="reset-pwd-custom-block" class="rp-custom" hidden>
+        <label class="form-label" for="reset-user-pwd">New password</label>
+        <div class="rp-input-wrap">
+          <input type="password" id="reset-user-pwd" class="form-input rp-input" placeholder="Min. 6 characters" autocomplete="new-password">
+          <button type="button" class="rp-eye" onclick="togglePasswordVisibility('reset-user-pwd', this)" aria-label="Show password">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="rp-strength" aria-live="polite">
+          <div class="rp-strength-bars" id="reset-strength-bars">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <span class="rp-strength-label" id="reset-strength-label">Enter a password</span>
+        </div>
+      </div>
+
+      <div class="rp-notify">
+        <label class="rp-switch" for="reset-send-email">
+          <input type="checkbox" id="reset-send-email" checked onchange="toggleResetEmailInputs(this.checked)">
+          <span class="rp-switch-track" aria-hidden="true"><span class="rp-switch-thumb"></span></span>
+          <span class="rp-switch-copy">
+            <strong>Email new credentials</strong>
+            <span>Deliver the temporary password to the user</span>
+          </span>
         </label>
       </div>
 
-      <div id="reset-email-inputs-block">
-        <div style="margin-bottom: 1.25rem;">
-          <label class="form-label">Email Subject</label>
+      <div id="reset-email-inputs-block" class="rp-email-panel">
+        <div class="form-group">
+          <label class="form-label" for="reset-email-sub">Subject</label>
           <input type="text" id="reset-email-sub" value="Your Account Password Has Been Reset" class="form-input">
         </div>
-        <div>
-          <label class="form-label">Email Body (Custom Message)</label>
-          <textarea id="reset-email-body" class="form-input" style="height: 100px; font-family: var(--font-body); font-size: 0.88rem; line-height: 1.5; resize: none;"></textarea>
+        <div class="form-group">
+          <div class="rp-preview-head">
+            <label class="form-label" for="reset-email-body">Email preview</label>
+            <span class="rp-preview-live">Live · macros filled</span>
+          </div>
+          <textarea id="reset-email-body" class="form-input rp-email-body" rows="7" spellcheck="false"></textarea>
         </div>
-        <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; display: block;">Macros [NAME], [EMAIL], and [PASSWORD] will be auto-replaced with actual details before delivery.</span>
+        <p class="rp-macros"><code>[NAME]</code>, <code>[EMAIL]</code>, and <code>[PASSWORD]</code> update automatically as you change the password.</p>
       </div>
-
     </div>
-    <div class="vcs-modal-footer">
-      <button onclick="closeResetPasswordModal()" class="btn btn-ghost" style="padding: 0.4rem 1.2rem; font-size: 0.85rem;">Cancel</button>
-      <button onclick="submitResetPassword()" class="btn btn-primary" style="padding: 0.4rem 1.5rem; font-size: 0.85rem; box-shadow: none;">Reset Password</button>
+
+    <div class="vcs-modal-footer rp-footer">
+      <button type="button" onclick="closeResetPasswordModal()" class="btn btn-ghost rp-btn-cancel">Cancel</button>
+      <button type="button" onclick="submitResetPassword()" class="btn btn-primary rp-btn-submit" id="reset-submit-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span id="reset-submit-label">Reset Password</span>
+      </button>
     </div>
   </div>
 </div>
@@ -637,12 +700,13 @@
   // Helper: Toggle Password Visibility
   function togglePasswordVisibility(fieldId, btn) {
     const input = document.getElementById(fieldId);
-    if (input.type === 'password') {
-      input.type = 'text';
-      btn.textContent = '🙈';
+    const showing = input.type === 'password';
+    input.type = showing ? 'text' : 'password';
+    if (btn.querySelector('svg')) {
+      btn.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+      btn.classList.toggle('is-revealed', showing);
     } else {
-      input.type = 'password';
-      btn.textContent = '👁️';
+      btn.textContent = showing ? '🙈' : '👁️';
     }
   }
 
@@ -917,7 +981,14 @@ Harshit Garg System Portal`;
       const result = await response.json();
 
       if (response.ok && result.success) {
-        showToast('User account created successfully!', true);
+        const wantedEmail = document.getElementById('add-user-send-email').checked;
+        if (wantedEmail && result.emailSent === false) {
+          showToast('User created, but email failed to send. Check Gmail OAuth settings.', false);
+        } else if (wantedEmail && result.emailSent) {
+          showToast('User created and email sent!', true);
+        } else {
+          showToast('User account created successfully!', true);
+        }
         closeAddUserModal();
         setTimeout(() => {
           location.reload();
@@ -986,78 +1057,192 @@ Harshit Garg System Portal`;
   // ==========================================
   let resetPwdMode = 'auto';
   let resetGeneratedPwd = '';
+  let resetBusy = false;
+  let resetTargetName = '';
+  let resetTargetEmail = '';
+  let resetEmailDirty = false;
+
+  function resetUserInitials(name, email) {
+    const source = (name || email || '?').trim();
+    const parts = source.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return source.slice(0, 2).toUpperCase();
+  }
+
+  function scorePasswordStrength(pwd) {
+    if (!pwd) return { level: 0, label: 'Enter a password' };
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 10) score++;
+    if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+    if (/\d/.test(pwd) && /[^A-Za-z0-9]/.test(pwd)) score++;
+    const labels = ['Too weak', 'Weak', 'Fair', 'Good', 'Strong'];
+    return { level: Math.min(score, 4), label: labels[Math.min(score, 4)] };
+  }
+
+  function updateResetStrengthMeter() {
+    const pwd = document.getElementById('reset-user-pwd').value;
+    const { level, label } = scorePasswordStrength(pwd);
+    const bars = document.getElementById('reset-strength-bars');
+    const text = document.getElementById('reset-strength-label');
+    bars.dataset.level = String(level);
+    text.textContent = label;
+  }
+
+  function getResetPasswordValue() {
+    if (resetPwdMode === 'auto') return resetGeneratedPwd;
+    return document.getElementById('reset-user-pwd').value.trim();
+  }
+
+  function fillResetMacros(text, password) {
+    const name = resetTargetName || 'User';
+    const email = resetTargetEmail || '';
+    const pwd = password || '(set a password above)';
+    return text
+      .replace(/\[NAME\]/g, name)
+      .replace(/\[EMAIL\]/g, email)
+      .replace(/\[PASSWORD\]/g, pwd);
+  }
 
   function openResetPasswordModal(id, name, email) {
+    resetTargetName = name || '';
+    resetTargetEmail = email || '';
+    resetEmailDirty = false;
+
     document.getElementById('reset-user-id').value = id;
-    document.getElementById('reset-modal-title').textContent = `Reset Password: ${name || email}`;
-    
-    // Reset inputs
+    document.getElementById('reset-modal-title').textContent = 'Reset password';
+    document.getElementById('reset-user-name').textContent = name || 'Unnamed user';
+    document.getElementById('reset-user-email').textContent = email;
+    document.getElementById('reset-user-avatar').textContent = resetUserInitials(name, email);
+
     document.querySelectorAll('input[name="reset-pwd-mode"]').forEach(r => {
       r.checked = r.value === 'auto';
     });
     document.getElementById('reset-user-pwd').value = '';
     document.getElementById('reset-send-email').checked = true;
     document.getElementById('reset-email-sub').value = 'Your Account Password Has Been Reset';
+    document.getElementById('reset-copy-btn').classList.remove('is-copied');
+    document.getElementById('reset-copy-btn').innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy`;
 
+    setResetSubmitBusy(false);
     regenResetPassword();
     toggleResetPwdMode('auto');
     toggleResetEmailInputs(true);
+    updateResetStrengthMeter();
     document.getElementById('reset-modal').style.display = 'flex';
   }
 
   function closeResetPasswordModal() {
+    if (resetBusy) return;
     document.getElementById('reset-modal').style.display = 'none';
   }
 
   function toggleResetPwdMode(mode) {
     resetPwdMode = mode;
+    const autoBlock = document.getElementById('reset-pwd-auto-block');
+    const customBlock = document.getElementById('reset-pwd-custom-block');
     if (mode === 'auto') {
-      document.getElementById('reset-pwd-auto-block').style.display = 'block';
-      document.getElementById('reset-pwd-custom-block').style.display = 'none';
+      autoBlock.hidden = false;
+      customBlock.hidden = true;
     } else {
-      document.getElementById('reset-pwd-auto-block').style.display = 'none';
-      document.getElementById('reset-pwd-custom-block').style.display = 'block';
+      autoBlock.hidden = true;
+      customBlock.hidden = false;
       document.getElementById('reset-user-pwd').focus();
     }
-    updateResetEmailBody();
+    updateResetEmailBody(true);
   }
 
   function regenResetPassword() {
     resetGeneratedPwd = generateStrongPassword();
-    document.getElementById('reset-generated-pwd-text').textContent = resetGeneratedPwd;
-    updateResetEmailBody();
+    const el = document.getElementById('reset-generated-pwd-text');
+    el.value = resetGeneratedPwd;
+    el.classList.remove('is-regen');
+    void el.offsetWidth;
+    el.classList.add('is-regen');
+    const copyBtn = document.getElementById('reset-copy-btn');
+    copyBtn.classList.remove('is-copied');
+    copyBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy`;
+    updateResetEmailBody(true);
+  }
+
+  async function copyResetPassword() {
+    if (!resetGeneratedPwd) return;
+    try {
+      await navigator.clipboard.writeText(resetGeneratedPwd);
+      const btn = document.getElementById('reset-copy-btn');
+      btn.classList.add('is-copied');
+      btn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        Copied`;
+      showToast('Password copied to clipboard.', true);
+    } catch (err) {
+      console.error(err);
+      showToast('Could not copy password.', false);
+    }
   }
 
   function toggleResetEmailInputs(checked) {
-    document.getElementById('reset-email-inputs-block').style.display = checked ? 'block' : 'none';
+    document.getElementById('reset-email-inputs-block').hidden = !checked;
   }
 
-  function updateResetEmailBody() {
-    const pwd = resetPwdMode === 'auto' ? resetGeneratedPwd : document.getElementById('reset-user-pwd').value || '[Custom Password]';
-    const body = `Hello [NAME],
+  function getResetEmailTemplate() {
+    return `Hello [NAME],
 
 Your portal account password has been reset by the administrator.
 
-Your new temporary password is:
-- Password: [PASSWORD]
+Account: [EMAIL]
+Temporary password: [PASSWORD]
 
 Please log in and update your password immediately.
 URL: ${window.location.origin}/auth/login
 
 Best regards,
 Harshit Garg System Portal`;
-
-    document.getElementById('reset-email-body').value = body;
   }
 
-  // Bind change handler on custom reset input to update body
+  function updateResetEmailBody(force = false) {
+    if (resetEmailDirty && !force) return;
+    const password = getResetPasswordValue();
+    document.getElementById('reset-email-body').value = fillResetMacros(getResetEmailTemplate(), password);
+    if (force) resetEmailDirty = false;
+  }
+
+  function setResetSubmitBusy(busy) {
+    resetBusy = busy;
+    const btn = document.getElementById('reset-submit-btn');
+    const label = document.getElementById('reset-submit-label');
+    btn.disabled = busy;
+    label.textContent = busy ? 'Resetting…' : 'Reset Password';
+  }
+
   document.getElementById('reset-user-pwd').addEventListener('input', () => {
-    updateResetEmailBody();
+    updateResetEmailBody(true);
+    updateResetStrengthMeter();
+  });
+
+  document.getElementById('reset-email-body').addEventListener('input', () => {
+    resetEmailDirty = true;
+  });
+
+  document.getElementById('reset-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'reset-modal') closeResetPasswordModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('reset-modal').style.display === 'flex') {
+      closeResetPasswordModal();
+    }
   });
 
   async function submitResetPassword() {
+    if (resetBusy) return;
+
     const id = document.getElementById('reset-user-id').value;
-    const password = resetPwdMode === 'auto' ? resetGeneratedPwd : document.getElementById('reset-user-pwd').value;
+    const password = getResetPasswordValue();
     const sendEmail = document.getElementById('reset-send-email').checked;
 
     if (resetPwdMode === 'custom' && (!password || password.length < 6)) {
@@ -1069,11 +1254,10 @@ Harshit Garg System Portal`;
     let emailBody = '';
     if (sendEmail) {
       emailSubject = document.getElementById('reset-email-sub').value;
-      emailBody = document.getElementById('reset-email-body').value;
-
-      // Replace password macro
-      emailBody = emailBody.replace(/\[PASSWORD\]/g, password);
+      emailBody = fillResetMacros(document.getElementById('reset-email-body').value, password);
     }
+
+    setResetSubmitBusy(true);
 
     try {
       const response = await fetch(`/admin/users/reset-password/${id}`, {
@@ -1084,16 +1268,26 @@ Harshit Garg System Portal`;
       const result = await response.json();
 
       if (response.ok && result.success) {
-        showToast('Password reset successfully!', true);
+        const wantedEmail = document.getElementById('reset-send-email').checked;
+        if (wantedEmail && result.emailSent === false) {
+          showToast('Password reset, but email failed to send. Check Gmail OAuth settings.', false);
+        } else if (wantedEmail && result.emailSent) {
+          showToast('Password reset and email sent!', true);
+        } else {
+          showToast('Password reset successfully!', true);
+        }
+        setResetSubmitBusy(false);
         closeResetPasswordModal();
         setTimeout(() => {
           location.reload();
         }, 1200);
       } else {
+        setResetSubmitBusy(false);
         showToast(result.error || 'Failed to reset password.', false);
       }
     } catch (err) {
       console.error(err);
+      setResetSubmitBusy(false);
       showToast('Network error resetting password.', false);
     }
   }

@@ -1,44 +1,55 @@
 <%- include('../partials/head') %>
 
-<section class="section auth-section">
-  <div class="container">
-    <div class="auth-box animate-on-scroll">
-      <div class="auth-header">
-        <span class="auth-label">// registration</span>
-        <h1 class="auth-title">Sign <span class="gradient-text">Up</span></h1>
-        <p class="auth-subtitle">Create a new admin credential to access the dashboard.</p>
+<section class="auth-section" aria-labelledby="authHeading">
+  <div class="auth-shell">
+    <aside class="auth-brand" aria-hidden="true">
+      <div class="auth-brand-grid"></div>
+      <div class="auth-brand-inner">
+        <span class="auth-brand-mark">HG</span>
+        <p class="auth-brand-title">Harshit Garg</p>
+        <p class="auth-brand-desc">Create an account to access site administration.</p>
       </div>
+    </aside>
 
-      <% if (error) { %>
-      <div class="auth-error-alert">
-        <span class="error-icon">⚠️</span>
-        <span class="error-message"><%= error %></span>
-      </div>
-      <% } %>
+    <div class="auth-panel">
+      <div class="auth-box">
+        <header class="auth-header">
+          <p class="auth-label">Administration</p>
+          <h1 class="auth-title" id="authHeading">Create account</h1>
+          <p class="auth-subtitle">Register with your name, email, and a password.</p>
+        </header>
 
-      <form action="/auth/signup" method="POST" class="auth-form">
-        <div class="form-group">
-          <label for="name" class="form-label">Full Name</label>
-          <input type="text" id="name" name="name" class="form-input" placeholder="Harshit Garg" required autofocus />
+        <% if (error) { %>
+        <div class="auth-error-alert" role="alert">
+          <svg class="auth-alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span class="error-message"><%= error %></span>
         </div>
+        <% } %>
 
-        <div class="form-group">
-          <label for="email" class="form-label">Email Address</label>
-          <input type="email" id="email" name="email" class="form-input" placeholder="garg.archie@gmail.com" required />
-        </div>
+        <form action="/auth/signup" method="POST" class="auth-form">
+          <div class="form-group">
+            <label for="name" class="form-label">Full name</label>
+            <input type="text" id="name" name="name" class="form-input" placeholder="Your name" autocomplete="name" required autofocus />
+          </div>
 
-        <div class="form-group">
-          <label for="password" class="form-label">Password</label>
-          <input type="password" id="password" name="password" class="form-input" placeholder="••••••••••••" required />
-        </div>
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com" autocomplete="email" required />
+          </div>
 
-        <button type="submit" class="btn btn-primary btn-full">
-          Register &nbsp;&#10022;
-        </button>
-      </form>
+          <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" id="password" name="password" class="form-input" placeholder="Choose a password" autocomplete="new-password" required />
+          </div>
 
-      <div class="auth-signup-prompt">
-        Already have an account? <a href="/auth">Log In</a>
+          <button type="submit" class="btn btn-primary btn-full">
+            Create account
+          </button>
+        </form>
+
+        <p class="auth-signup-prompt">
+          Already registered? <a href="/auth">Sign in</a>
+        </p>
       </div>
     </div>
   </div>

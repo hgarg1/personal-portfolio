@@ -45,7 +45,7 @@ router.get('/', (req, res) => {
   if (req.session && req.session.user) {
     return res.redirect('/auth/dashboard');
   }
-  res.render('auth/login', { title: 'Admin Login', error: null });
+  res.render('auth/login', { title: 'Sign in', error: null });
 });
 
 // POST /auth/login - Process Login
@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
 
   if (!email || !password) {
     return res.render('auth/login', { 
-      title: 'Admin Login', 
+      title: 'Sign in', 
       error: 'Please fill in all fields.' 
     });
   }
@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
 
     if (!user) {
       return res.render('auth/login', { 
-        title: 'Admin Login', 
+        title: 'Sign in', 
         error: 'Invalid email or password.' 
       });
     }
@@ -76,7 +76,7 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.render('auth/login', { 
-        title: 'Admin Login', 
+        title: 'Sign in', 
         error: 'Invalid email or password.' 
       });
     }
@@ -116,7 +116,7 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.render('auth/login', { 
-      title: 'Admin Login', 
+      title: 'Sign in', 
       error: 'An internal server error occurred.' 
     });
   }
@@ -127,7 +127,7 @@ router.get('/signup', (req, res) => {
   if (req.session && req.session.user) {
     return res.redirect('/auth/dashboard');
   }
-  res.render('auth/signup', { title: 'Create Admin Account', error: null });
+  res.render('auth/signup', { title: 'Create account', error: null });
 });
 
 // POST /auth/signup - Process Sign Up
@@ -136,7 +136,7 @@ router.post('/signup', async (req, res) => {
 
   if (!name || !email || !password) {
     return res.render('auth/signup', {
-      title: 'Create Admin Account',
+      title: 'Create account',
       error: 'All fields are required.',
     });
   }
@@ -152,7 +152,7 @@ router.post('/signup', async (req, res) => {
     if (existingUser) {
       if (existingUser.emailVerified) {
         return res.render('auth/signup', {
-          title: 'Create Admin Account',
+          title: 'Create account',
           error: 'An account with this email address already exists and is verified.',
         });
       } else {
@@ -196,7 +196,7 @@ router.post('/signup', async (req, res) => {
   } catch (err) {
     console.error('Signup error:', err);
     res.render('auth/signup', {
-      title: 'Create Admin Account',
+      title: 'Create account',
       error: 'An error occurred during account creation.',
     });
   }
@@ -229,7 +229,7 @@ router.get('/verify', async (req, res) => {
     const devCode = isDev ? user.verificationCode : null;
 
     res.render('auth/verify', {
-      title: 'Verify Your Account',
+      title: 'Verify email',
       email: user.email,
       error: error || null,
       success: success || null,
@@ -339,7 +339,7 @@ router.post('/resend', async (req, res) => {
 
 // GET /auth/email-setup - Enter Google OAuth2 details
 router.get('/email-setup', (req, res) => {
-  res.render('auth/email-setup', { title: 'Gmail OAuth2 Setup', error: null });
+  res.render('auth/email-setup', { title: 'Email setup', error: null });
 });
 
 // POST /auth/email-setup - Trigger Google OAuth2 flow
@@ -348,7 +348,7 @@ router.post('/email-setup', (req, res) => {
 
   if (!email || !clientId || !clientSecret) {
     return res.render('auth/email-setup', {
-      title: 'Gmail OAuth2 Setup',
+      title: 'Email setup',
       error: 'All fields are required.',
     });
   }
@@ -378,7 +378,7 @@ router.get('/oauth2callback', async (req, res) => {
 
   if (!code || !clientId || !clientSecret || !email) {
     return res.render('auth/login', {
-      title: 'Admin Login',
+      title: 'Sign in',
       error: 'Google OAuth2 flow was interrupted or session expired. Please try again.',
     });
   }
@@ -405,7 +405,7 @@ router.get('/oauth2callback', async (req, res) => {
     if (!response.ok || !data.refresh_token) {
       console.error('OAuth2 token exchange error:', data);
       return res.render('auth/login', {
-        title: 'Admin Login',
+        title: 'Sign in',
         error: `OAuth2 token exchange failed: ${data.error_description || data.error || 'No refresh token returned'}`,
       });
     }
@@ -430,7 +430,7 @@ router.get('/oauth2callback', async (req, res) => {
     delete req.session.gmailSetup;
 
     res.render('auth/oauth2callback', {
-      title: 'Email Setup Successful',
+      title: 'Email connected',
       email,
       clientId,
       refreshToken,
@@ -438,7 +438,7 @@ router.get('/oauth2callback', async (req, res) => {
   } catch (error) {
     console.error('OAuth2 callback error:', error);
     res.render('auth/login', {
-      title: 'Admin Login',
+      title: 'Sign in',
       error: 'An error occurred during Google OAuth2 token exchange.',
     });
   }

@@ -65,7 +65,9 @@ router.get('/', async (req, res) => {
     });
 
     const assets = await prisma.cMSAsset.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      // Never ship raw file bytes to the dashboard HTML payload
+      omit: { data: true }
     });
 
     const mergeRequests = await prisma.cMSMergeRequest.findMany({
@@ -149,6 +151,8 @@ router.get('/pages/edit/:id', async (req, res) => {
       htmlContent: headCommit ? headCommit.htmlContent : '',
       cssContent: headCommit ? headCommit.cssContent : '',
       jsContent: headCommit ? headCommit.jsContent : '',
+      blocksJson: headCommit ? headCommit.blocksJson : null,
+      cssLayoutsJson: headCommit ? headCommit.cssLayoutsJson : null,
       status: headCommit ? headCommit.status : 'DRAFT',
       metaRobots: headCommit ? headCommit.metaRobots : 'index, follow',
       canonicalUrl: headCommit ? headCommit.canonicalUrl : '',
@@ -180,6 +184,8 @@ router.post('/pages', async (req, res) => {
     htmlContent,
     cssContent,
     jsContent,
+    blocksJson,
+    cssLayoutsJson,
     status,
     metaRobots,
     canonicalUrl,
@@ -238,6 +244,8 @@ router.post('/pages', async (req, res) => {
         htmlContent,
         cssContent,
         jsContent,
+        blocksJson,
+        cssLayoutsJson,
         status,
         metaRobots,
         canonicalUrl,
@@ -268,6 +276,8 @@ router.post('/pages/edit/:id', async (req, res) => {
     htmlContent,
     cssContent,
     jsContent,
+    blocksJson,
+    cssLayoutsJson,
     status,
     metaRobots,
     canonicalUrl,
@@ -348,6 +358,8 @@ router.post('/pages/edit/:id', async (req, res) => {
         htmlContent,
         cssContent,
         jsContent,
+        blocksJson,
+        cssLayoutsJson,
         status,
         metaRobots,
         canonicalUrl,
@@ -404,6 +416,8 @@ router.post('/pages/edit/:id/restore', async (req, res) => {
         htmlContent: targetCommit.htmlContent,
         cssContent: targetCommit.cssContent,
         jsContent: targetCommit.jsContent,
+        blocksJson: targetCommit.blocksJson,
+        cssLayoutsJson: targetCommit.cssLayoutsJson,
         status: targetCommit.status,
         metaRobots: targetCommit.metaRobots,
         canonicalUrl: targetCommit.canonicalUrl,
@@ -625,6 +639,8 @@ router.post('/assets/upload', upload.single('file'), async (req, res) => {
     }
 
     const assetUrl = '/uploads/' + req.file.filename;
+    const filePath = path.join(uploadDir, req.file.filename);
+    const fileData = fs.readFileSync(filePath);
 
     const asset = await prisma.cMSAsset.create({
       data: {
@@ -633,11 +649,14 @@ router.post('/assets/upload', upload.single('file'), async (req, res) => {
         mimeType: req.file.mimetype,
         size: req.file.size,
         url: assetUrl,
+        data: fileData,
         uploadedById: req.session.user.id
       }
     });
 
-    res.json({ success: true, asset });
+    // Strip bytes from API response
+    const { data: _bytes, ...safeAsset } = asset;
+    res.json({ success: true, asset: safeAsset });
   } catch (err) {
     console.error('Error saving asset record:', err);
     if (req.file && fs.existsSync(req.file.path)) {
@@ -678,32 +697,35 @@ router.post('/assets/delete/:id', async (req, res) => {
 // GET /admin/cms/assets/content/:filename - Fetch plain text content
 router.get('/assets/content/:filename', async (req, res) => {
   try {
-    const { filename } = req.params;
-    const filePath = path.join(uploadDir, filename);
+    const filename = path.basename(req.params.filename);
+    const maxBytes = 50 * 1024;
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).send('File not found');
+    // Prefer durable DB bytes (survives Vercel cold starts); fall back to disk
+    const asset = await prisma.cMSAsset.findUnique({
+      where: { filename },
+      select: { data: true, size: true }
+    });
+
+    let buffer = null;
+    let totalSize = 0;
+
+    if (asset && asset.data) {
+      buffer = Buffer.from(asset.data);
+      totalSize = asset.size || buffer.length;
+    } else {
+      const filePath = path.join(uploadDir, filename);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).send('File not found');
+      }
+      totalSize = fs.statSync(filePath).size;
+      buffer = fs.readFileSync(filePath, { encoding: null, flag: 'r' }).subarray(0, maxBytes + 1);
     }
 
-    const stats = fs.statSync(filePath);
-    const stream = fs.createReadStream(filePath, { encoding: 'utf8', start: 0, end: 50 * 1024 });
-    let content = '';
-
-    stream.on('data', chunk => {
-      content += chunk;
-    });
-
-    stream.on('end', () => {
-      if (stats.size > 50 * 1024) {
-        content += '\n\n... [Content truncated due to size limits] ...';
-      }
-      res.type('text/plain').send(content);
-    });
-
-    stream.on('error', err => {
-      console.error('Stream read error:', err);
-      res.status(500).send('Error reading file content');
-    });
+    let content = buffer.subarray(0, maxBytes).toString('utf8');
+    if (totalSize > maxBytes) {
+      content += '\n\n... [Content truncated due to size limits] ...';
+    }
+    res.type('text/plain').send(content);
   } catch (err) {
     console.error('Error fetching file content:', err);
     res.status(500).send('Error fetching file content');

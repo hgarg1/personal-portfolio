@@ -42,12 +42,35 @@ model Passkey {
 }
 
 model ContactSubmission {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  message   String
-  replied   Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String
+  message    String
+  replied    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  // Abuse-control keys. Raw IPs are not stored.
+  ipHash     String?
+  emailKey   String?
+  nameKey    String?
+  messageKey String?
+
+  @@index([ipHash, createdAt])
+  @@index([emailKey, createdAt])
+  @@index([nameKey, createdAt])
+  @@index([messageKey])
+}
+
+// Every contact POST, including rejects, so limits survive new serverless instances.
+model ContactAttempt {
+  id         Int      @id @default(autoincrement())
+  ipHash     String
+  emailKey   String?
+  outcome    String
+  createdAt  DateTime @default(now())
+
+  @@index([ipHash, createdAt])
+  @@index([emailKey, createdAt])
+  @@index([createdAt])
 }
 
 model CMSPage {
@@ -70,6 +93,8 @@ model CMSAsset {
   mimeType     String
   size         Int
   url          String
+  // Durable file bytes — required on Vercel where /tmp uploads are ephemeral
+  data         Bytes?
   createdAt    DateTime       @default(now())
   uploadedById Int?
   uploadedBy   PortfolioUser? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
@@ -105,6 +130,9 @@ model CMSCommit {
   htmlContent  String        @db.Text
   cssContent   String        @db.Text
   jsContent    String        @db.Text
+  // Canonical visual builder state (HTML/CSS layout code is a projection)
+  blocksJson      String?    @db.Text
+  cssLayoutsJson  String?    @db.Text
   status       String        @default("DRAFT") // "DRAFT", "STAGED", "PUBLISHED"
   metaRobots   String        @default("index, follow")
   canonicalUrl String?

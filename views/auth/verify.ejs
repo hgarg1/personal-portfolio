@@ -1,62 +1,72 @@
 <%- include('../partials/head') %>
 
-
-<section class="section auth-section">
-  <div class="container">
-    <div class="auth-box animate-on-scroll">
-      <div class="auth-header">
-        <span class="auth-label">// email verification</span>
-        <h1 class="auth-title">Verify <span class="gradient-text">Identity</span></h1>
-        <p class="auth-subtitle">We sent a 6-digit code to <strong style="color: var(--text);"><%= email %></strong>. Enter it below to verify.</p>
+<section class="auth-section" aria-labelledby="authHeading">
+  <div class="auth-shell">
+    <aside class="auth-brand" aria-hidden="true">
+      <div class="auth-brand-grid"></div>
+      <div class="auth-brand-inner">
+        <span class="auth-brand-mark">HG</span>
+        <p class="auth-brand-title">Harshit Garg</p>
+        <p class="auth-brand-desc">Confirm your email to finish setting up access.</p>
       </div>
+    </aside>
 
-      <% if (error) { %>
-      <div class="auth-error-alert" id="authErrorAlert">
-        <span class="error-icon">⚠️</span>
-        <span class="error-message"><%= error %></span>
-      </div>
-      <% } %>
+    <div class="auth-panel">
+      <div class="auth-box">
+        <header class="auth-header">
+          <p class="auth-label">Verification</p>
+          <h1 class="auth-title" id="authHeading">Check your email</h1>
+          <p class="auth-subtitle">Enter the 6-digit code sent to <strong class="auth-email-strong"><%= email %></strong>.</p>
+        </header>
 
-      <% if (success) { %>
-      <div class="auth-success-alert" id="authSuccessAlert">
-        <span class="success-icon">✓</span>
-        <span class="success-message"><%= success %></span>
-      </div>
-      <% } %>
+        <% if (error) { %>
+        <div class="auth-error-alert" id="authErrorAlert" role="alert">
+          <svg class="auth-alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span class="error-message"><%= error %></span>
+        </div>
+        <% } %>
 
-      <form action="/auth/verify" method="POST" class="auth-form" id="otpForm">
-        <input type="hidden" name="email" value="<%= email %>" />
-        <input type="hidden" id="fullOtpCode" name="code" value="" />
+        <% if (success) { %>
+        <div class="auth-success-alert" id="authSuccessAlert" role="status">
+          <svg class="auth-alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span class="success-message"><%= success %></span>
+        </div>
+        <% } %>
 
-        <div class="otp-container">
-          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
-          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
-          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
-          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
-          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
-          <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required />
+        <form action="/auth/verify" method="POST" class="auth-form" id="otpForm">
+          <input type="hidden" name="email" value="<%= email %>" />
+          <input type="hidden" id="fullOtpCode" name="code" value="" />
+
+          <div class="otp-container" role="group" aria-label="Verification code">
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code" required aria-label="Digit 1" />
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required aria-label="Digit 2" />
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required aria-label="Digit 3" />
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required aria-label="Digit 4" />
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required aria-label="Digit 5" />
+            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" required aria-label="Digit 6" />
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" id="verifyBtn">
+            Verify email
+          </button>
+        </form>
+
+        <div class="resend-container">
+          <span class="resend-text">Didn’t receive a code?</span>
+          <button type="button" class="resend-btn" id="resendBtn">Resend</button>
+          <span class="resend-timer" id="resendTimer">(60s)</span>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full" id="verifyBtn">
-          Verify &nbsp;&#10022;
-        </button>
-      </form>
+        <% if (devCode) { %>
+        <div class="dev-banner">
+          <div class="dev-banner-badge">Development</div>
+          <div class="dev-banner-text">Code: <span class="dev-code-val"><%= devCode %></span></div>
+        </div>
+        <% } %>
 
-      <div class="resend-container">
-        <span class="resend-text">Didn't receive the email?</span>
-        <button type="button" class="resend-btn" id="resendBtn">Resend Code</button>
-        <span class="resend-timer" id="resendTimer">(60s)</span>
-      </div>
-
-      <% if (devCode) { %>
-      <div class="dev-banner">
-        <div class="dev-banner-badge">// DEV MODE ACTIVE</div>
-        <div class="dev-banner-text">Verification Code: <span class="dev-code-val"><%= devCode %></span></div>
-      </div>
-      <% } %>
-      
-      <div class="auth-back-container">
-        <a href="/auth" class="auth-back-link">&larr; Back to Login</a>
+        <div class="auth-back-container">
+          <a href="/auth" class="auth-back-link">Back to sign in</a>
+        </div>
       </div>
     </div>
   </div>
@@ -69,30 +79,26 @@
     const fullOtpInput = document.getElementById('fullOtpCode');
     const resendBtn = document.getElementById('resendBtn');
     const resendTimer = document.getElementById('resendTimer');
+    const verifyBtn = document.getElementById('verifyBtn');
     const email = '<%= email %>';
 
-    // Auto-focus first input
     if (inputs[0]) inputs[0].focus();
 
     inputs.forEach((input, index) => {
-      // Move to next input on input (more reliable on mobile keyboards)
       input.addEventListener('input', () => {
-        const value = input.value;
+        const value = input.value.replace(/\D/g, '');
+        input.value = value.slice(0, 1);
         if (value.length === 1 && index < inputs.length - 1) {
           inputs[index + 1].focus();
         }
       });
 
-      // Move to previous input on backspace
       input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace') {
-          if (input.value.length === 0 && index > 0) {
-            inputs[index - 1].focus();
-          }
+        if (e.key === 'Backspace' && input.value.length === 0 && index > 0) {
+          inputs[index - 1].focus();
         }
       });
 
-      // Paste handler
       input.addEventListener('paste', (e) => {
         e.preventDefault();
         const clipboardData = e.clipboardData || window.clipboardData;
@@ -107,21 +113,20 @@
       });
     });
 
-    // Form submission helper
     form.addEventListener('submit', (e) => {
       let code = '';
-      inputs.forEach(input => {
-        code += input.value;
-      });
+      inputs.forEach(input => { code += input.value; });
       fullOtpInput.value = code;
 
       if (code.length !== 6) {
         e.preventDefault();
-        alert('Please enter a 6-digit code.');
+        alert('Please enter the full 6-digit code.');
+        return;
       }
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = 'Verifying…';
     });
 
-    // Resend Code Cooldown Timer
     let cooldown = 60;
     let timerInterval;
 
@@ -156,17 +161,16 @@
         const data = await response.json();
 
         if (data.success) {
-          // If in dev mode, reload page to refresh the dev banner code
           const isDev = <%= devCode !== null %>;
           if (isDev) {
-            window.location.href = `/auth/verify?email=${encodeURIComponent(email)}&success=${encodeURIComponent('A new code has been generated.')}`;
+            window.location.href = `/auth/verify?email=${encodeURIComponent(email)}&success=${encodeURIComponent('A new code has been sent.')}`;
           } else {
-            // Show custom success message
             const successAlert = document.getElementById('authSuccessAlert') || document.createElement('div');
             successAlert.className = 'auth-success-alert';
             successAlert.id = 'authSuccessAlert';
-            successAlert.innerHTML = `<span class="success-icon">✓</span><span class="success-message">${data.message}</span>`;
-            
+            successAlert.setAttribute('role', 'status');
+            successAlert.innerHTML = `<svg class="auth-alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="success-message">${data.message}</span>`;
+
             const errorAlert = document.getElementById('authErrorAlert');
             if (errorAlert) errorAlert.remove();
 
@@ -174,11 +178,11 @@
             startTimer();
           }
         } else {
-          alert(data.error || 'Failed to resend verification code.');
+          alert(data.error || 'Unable to resend the code. Please try again.');
         }
       } catch (err) {
         console.error('Resend error:', err);
-        alert('Failed to resend verification code. Please try again.');
+        alert('Unable to resend the code. Please try again.');
       }
     });
   });

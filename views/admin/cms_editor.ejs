@@ -290,9 +290,13 @@
           <!-- HTML PANEL -->
           <div id="panel-html" class="workspace-panel" style="height: 100%; display: none; flex-direction: column;">
             <!-- Editor Mode Selector -->
-            <div style="display: flex; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border);">
+            <div style="display: flex; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap;">
               <button onclick="toggleEditorMode('code')" id="editor-mode-code" class="editor-mode-btn active-mode-btn">Code Editor (Monaco)</button>
               <button onclick="toggleEditorMode('visual')" id="editor-mode-visual" class="editor-mode-btn">Visual Builder (Blocks)</button>
+              <span id="html-derived-banner" style="display: none; margin-left: auto; font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); align-items: center; gap: 0.5rem;">
+                HTML is generated from blocks
+                <button type="button" onclick="unlockRawHtmlEditing()" class="editor-mode-btn" style="padding: 0.2rem 0.55rem; font-size: 0.72rem;">Unlock raw HTML</button>
+              </span>
             </div>
             <div id="editor-html" style="width: 100%; flex: 1;"></div>
             <div id="builder-container" style="width: 100%; flex: 1; display: none; background: var(--bg-card); color: var(--text); overflow: hidden; position: relative;">
@@ -456,16 +460,49 @@
   let activeCssLayoutId = null;
   let isCssVisualActive = false;
 
-  const defaultHtml = `<div class="container section">
-  <div class="section-header text-center">
-    <div class="section-label">Welcome To My Custom Layout</div>
-    <h2 class="section-title">Hello <span class="gradient-text">World</span></h2>
-    <p class="section-subtitle">This page was created dynamically using our advanced Git VCS-integrated CMS.</p>
+  const defaultHtml = (() => {
+    const heroConfig = {
+      title: 'Hello World',
+      titleColor: '#ffffff',
+      subtitle: 'This page was created dynamically using our advanced Git VCS-integrated CMS.',
+      subtitleColor: '#a1a1aa',
+      bgColor: '#111827',
+      alignment: 'center',
+      primaryBtnText: 'Click Me',
+      primaryBtnUrl: '#',
+      secondaryBtnText: '',
+      secondaryBtnUrl: '#contact'
+    };
+    const encoded = encodeURIComponent(JSON.stringify(heroConfig));
+    return `<section data-widget="hero" data-config="${encoded}" class="widget-rendered-section" style="background-color: ${heroConfig.bgColor}; padding: 5rem 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 350px;">
+  <div class="widget-rendered-container" style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+    <h1 style="color: ${heroConfig.titleColor}; font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 700; margin: 0; line-height: 1.1;">${heroConfig.title}</h1>
+    <p style="color: ${heroConfig.subtitleColor}; font-family: 'Inter', sans-serif; font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 400; max-width: 700px; margin: 0 auto; line-height: 1.6;">${heroConfig.subtitle}</p>
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
+      <a href="${heroConfig.primaryBtnUrl}" style="display: inline-block; background: linear-gradient(135deg, #9d5cff 0%, #00d4ff 100%); color: #fff; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; text-decoration: none;">${heroConfig.primaryBtnText}</a>
+    </div>
   </div>
-  <div class="text-center" style="margin-top: 3rem;">
-    <button onclick="triggerAnimation()" class="btn btn-primary">Click Me</button>
-  </div>
-</div>`;
+</section>`;
+  })();
+
+  const defaultBlocksJson = JSON.stringify([
+    {
+      id: 'block-default-hero',
+      type: 'hero',
+      config: {
+        title: 'Hello World',
+        titleColor: '#ffffff',
+        subtitle: 'This page was created dynamically using our advanced Git VCS-integrated CMS.',
+        subtitleColor: '#a1a1aa',
+        bgColor: '#111827',
+        alignment: 'center',
+        primaryBtnText: 'Click Me',
+        primaryBtnUrl: '#',
+        secondaryBtnText: '',
+        secondaryBtnUrl: '#contact'
+      }
+    }
+  ]);
 
   const defaultCss = `.gradient-text {
   background: var(--theme-gradient);
@@ -487,6 +524,12 @@
   const htmlVal = isEdit ? `<%- page ? page.htmlContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultHtml;
   const cssVal = isEdit ? `<%- page ? page.cssContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultCss;
   const jsVal = isEdit ? `<%- page ? page.jsContent.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultJs;
+  const savedBlocksJson = isEdit ? `<%- page && page.blocksJson ? page.blocksJson.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : defaultBlocksJson;
+  const savedCssLayoutsJson = isEdit ? `<%- page && page.cssLayoutsJson ? page.cssLayoutsJson.replace(/\\/g, '\\\\').replace(/\`/g, '\\\`').replace(/\$/g, '\\\$') : '' %>` : '[]';
+
+  let htmlCodeUnlocked = false;
+  let lastParseWrappedCustomHtml = 0;
+  let customCSS = '';
 
   // Initialize Monaco Editors
   require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.43.0/min/vs' } });
@@ -555,29 +598,26 @@
     jsEditor.onDidChangeModelContent(debounce(triggerPreviewUpdate, 1500));
 
     triggerPreviewUpdate();
-    
-    // Initialize custom layout builder elements
-    if (typeof initWidgetPalette === 'function') {
-      initWidgetPalette();
-    }
-    if (typeof initCanvasSortable === 'function') {
-      initCanvasSortable();
-    }
-    if (typeof initCSSLayoutPalette === 'function') {
-      initCSSLayoutPalette();
-    }
-    if (typeof renderCSSCanvas === 'function') {
-      renderCSSCanvas();
-    }
-    if (window.Coloris) {
-      window.Coloris({
-        el: '[data-coloris]',
-        theme: 'dark',
-        themeMode: 'dark',
-        format: 'hex',
-        clearButton: false
-      });
-    }
+
+    // Defer until WIDGET_REGISTRY / builders below this require() call are initialized
+    setTimeout(function() {
+      if (typeof hydrateCanonicalBuilderState === 'function') {
+        hydrateCanonicalBuilderState();
+      }
+      if (typeof initWidgetPalette === 'function') initWidgetPalette();
+      if (typeof initCanvasSortable === 'function') initCanvasSortable();
+      if (typeof initCSSLayoutPalette === 'function') initCSSLayoutPalette();
+      if (typeof renderCSSCanvas === 'function') renderCSSCanvas();
+      if (window.Coloris) {
+        window.Coloris({
+          el: '[data-coloris]',
+          theme: 'dark',
+          themeMode: 'dark',
+          format: 'hex',
+          clearButton: false
+        });
+      }
+    }, 0);
   });
 
   function debounce(func, delay) {
@@ -605,28 +645,10 @@
 
     if (tab === 'css') {
       document.getElementById('panel-css').style.display = 'flex';
-      if (isCssVisualActive) {
-        document.getElementById('editor-css').style.display = 'none';
-        document.getElementById('css-builder-container').style.display = 'block';
-      } else {
-        document.getElementById('editor-css').style.display = 'block';
-        document.getElementById('css-builder-container').style.display = 'none';
-        if (cssEditor) {
-          setTimeout(() => cssEditor.layout(), 50);
-        }
-      }
+      syncCssModeUi({ refreshPreview: true });
     } else if (tab === 'html') {
       document.getElementById('panel-html').style.display = 'flex';
-      if (isVisualActive) {
-        document.getElementById('editor-html').style.display = 'none';
-        document.getElementById('builder-container').style.display = 'block';
-      } else {
-        document.getElementById('editor-html').style.display = 'block';
-        document.getElementById('builder-container').style.display = 'none';
-        if (htmlEditor) {
-          setTimeout(() => htmlEditor.layout(), 50);
-        }
-      }
+      syncHtmlModeUi({ refreshPreview: true });
     } else {
       document.getElementById(`panel-${tab}`).style.display = 'block';
       if (tab === 'js' && jsEditor) {
@@ -856,6 +878,23 @@
     }
     if (isCssVisualActive) {
       serializeCSSCanvasToCode();
+    } else if (cssLayouts.length > 0 || customCSS) {
+      // Keep layouts JSON in sync even when editing CSS in code mode
+      try {
+        const parsed = parseCSSToCanvasAndCustomCSS(cssEditor.getValue(), false);
+        customCSS = parsed.customCSS;
+        if (parsed.layouts && parsed.layouts.length) {
+          cssLayouts = parsed.layouts;
+        }
+      } catch (e) { /* keep existing cssLayouts */ }
+    }
+
+    // If blocks empty but HTML has widgets, hydrate before save
+    if (canvasBlocks.length === 0 && htmlEditor) {
+      parseHTMLToCanvas(htmlEditor.getValue(), { allowImportPrompt: false });
+      serializeCanvasToHTML();
+    } else if (!isVisualActive && canvasBlocks.length > 0 && !htmlCodeUnlocked) {
+      serializeCanvasToHTML();
     }
 
     const id = document.getElementById('page-id').value;
@@ -879,6 +918,8 @@
     const htmlContent = htmlEditor.getValue();
     const cssContent = cssEditor.getValue();
     const jsContent = jsEditor.getValue();
+    const blocksJson = getBlocksJsonPayload();
+    const cssLayoutsJson = getCssLayoutsJsonPayload();
 
     const payload = {
       title,
@@ -891,6 +932,8 @@
       htmlContent,
       cssContent,
       jsContent,
+      blocksJson,
+      cssLayoutsJson,
       metaRobots,
       canonicalUrl,
       ogImage,
@@ -951,6 +994,184 @@
   }
 
 
+  // ─── Style / DOM parse helpers (visual ↔ code fidelity) ─────────
+  function readInlineStyle(el, prop) {
+    if (!el || !el.style) return '';
+    return el.style.getPropertyValue(prop) || el.style[prop] || '';
+  }
+
+  function normalizeColor(color) {
+    if (!color) return '';
+    const c = String(color).trim();
+    if (c.startsWith('#')) return c;
+    const m = c.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (!m) return c;
+    return '#' + [m[1], m[2], m[3]].map((n) => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
+  }
+
+  function readColor(el, prop) {
+    return normalizeColor(readInlineStyle(el, prop));
+  }
+
+  function inferAlignment(el) {
+    const ta = readInlineStyle(el, 'text-align');
+    if (ta === 'left' || ta === 'center' || ta === 'right') return ta;
+    const ai = readInlineStyle(el, 'align-items') || readInlineStyle(el.querySelector('.widget-rendered-container'), 'align-items');
+    if (ai === 'flex-start') return 'left';
+    if (ai === 'flex-end') return 'right';
+    if (ai === 'center') return 'center';
+    const jc = readInlineStyle(el.querySelector('.widget-rendered-container'), 'justify-content');
+    if (jc === 'flex-start') return 'left';
+    if (jc === 'flex-end') return 'right';
+    if (jc === 'center') return 'center';
+    return '';
+  }
+
+  function newBlockId() {
+    return 'block-' + Math.random().toString(36).substr(2, 9);
+  }
+
+  function getBlocksJsonPayload() {
+    return JSON.stringify(canvasBlocks.map((b) => ({
+      id: b.id,
+      type: b.type,
+      config: b.config
+    })));
+  }
+
+  function getCssLayoutsJsonPayload() {
+    return JSON.stringify(cssLayouts.map((l) => ({
+      id: l.id,
+      selector: l.selector,
+      type: l.type,
+      gap: l.gap,
+      columns: l.columns,
+      align: l.align
+    })));
+  }
+
+  function loadBlocksFromJson(jsonStr) {
+    if (!jsonStr || !String(jsonStr).trim()) return false;
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (!Array.isArray(parsed)) return false;
+      canvasBlocks = parsed.filter((b) => b && b.type && WIDGET_REGISTRY[b.type]).map((b) => ({
+        id: b.id || newBlockId(),
+        type: b.type,
+        config: b.config || {}
+      }));
+      return canvasBlocks.length > 0 || parsed.length === 0;
+    } catch (e) {
+      console.error('Failed to parse blocksJson', e);
+      return false;
+    }
+  }
+
+  function loadCssLayoutsFromJson(jsonStr) {
+    if (!jsonStr || !String(jsonStr).trim()) return false;
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (!Array.isArray(parsed)) return false;
+      cssLayouts = parsed.map((l) => ({
+        id: l.id || ('layout-' + Math.random().toString(36).substr(2, 9)),
+        selector: l.selector,
+        type: l.type || 'flex',
+        gap: l.gap || '1rem',
+        columns: String(l.columns || '3'),
+        align: l.align || 'stretch'
+      })).filter((l) => l.selector);
+      return true;
+    } catch (e) {
+      console.error('Failed to parse cssLayoutsJson', e);
+      return false;
+    }
+  }
+
+  function updateHtmlDerivedBanner() {
+    const banner = document.getElementById('html-derived-banner');
+    if (!banner) return;
+    const hasStructured = canvasBlocks.some((b) => b.type !== 'custom-html');
+    const show = !isVisualActive && (hasStructured || htmlCodeUnlocked);
+    banner.style.display = show ? 'inline-flex' : 'none';
+    if (!show) return;
+    if (htmlCodeUnlocked) {
+      banner.innerHTML = `Raw HTML editing unlocked <button type="button" onclick="relockHtmlToBlocks()" class="editor-mode-btn" style="padding: 0.2rem 0.55rem; font-size: 0.72rem;">Re-lock to blocks</button>`;
+    } else {
+      banner.innerHTML = `HTML is generated from blocks <button type="button" onclick="unlockRawHtmlEditing()" class="editor-mode-btn" style="padding: 0.2rem 0.55rem; font-size: 0.72rem;">Unlock raw HTML</button>`;
+    }
+  }
+
+  function setHtmlEditorReadOnly(readOnly) {
+    if (!htmlEditor) return;
+    htmlEditor.updateOptions({ readOnly: !!readOnly });
+    updateHtmlDerivedBanner();
+  }
+
+  const previewFromBuilder = debounce(function() {
+    triggerPreviewUpdate();
+  }, 400);
+
+  /** Keep Monaco, canvas, mode chrome, and live preview aligned with current source of truth. */
+  function syncHtmlModeUi(options = {}) {
+    const { refreshPreview = true, fromBlocks = null } = options;
+    const monacoContainer = document.getElementById('editor-html');
+    const builderContainer = document.getElementById('builder-container');
+    const codeTab = document.getElementById('editor-mode-code');
+    const visualTab = document.getElementById('editor-mode-visual');
+    if (!monacoContainer || !builderContainer || !codeTab || !visualTab) return;
+
+    if (isVisualActive) {
+      codeTab.classList.remove('active-mode-btn');
+      visualTab.classList.add('active-mode-btn');
+      monacoContainer.style.display = 'none';
+      builderContainer.style.display = 'block';
+      if (fromBlocks !== false) {
+        renderCanvas();
+      }
+      if (!htmlCodeUnlocked) {
+        serializeCanvasToHTML();
+      }
+    } else {
+      codeTab.classList.add('active-mode-btn');
+      visualTab.classList.remove('active-mode-btn');
+      builderContainer.style.display = 'none';
+      monacoContainer.style.display = 'block';
+      if (!htmlCodeUnlocked && canvasBlocks.length > 0) {
+        serializeCanvasToHTML();
+      }
+      setHtmlEditorReadOnly(!htmlCodeUnlocked && canvasBlocks.some((b) => b.type !== 'custom-html'));
+      if (htmlEditor) {
+        setTimeout(() => htmlEditor.layout(), 50);
+      }
+    }
+    updateHtmlDerivedBanner();
+    if (refreshPreview) {
+      previewFromBuilder();
+    }
+  }
+
+  window.unlockRawHtmlEditing = function() {
+    if (!confirm('Unlock raw HTML editing? Structured widgets may become custom-html blocks if the markup no longer matches. Prefer the Visual Builder for widget fields.')) {
+      return;
+    }
+    htmlCodeUnlocked = true;
+    setHtmlEditorReadOnly(false);
+    updateHtmlDerivedBanner();
+    showToastMsg('Raw HTML unlocked. Switch to Visual to re-import.', true);
+  };
+
+  window.relockHtmlToBlocks = function() {
+    htmlCodeUnlocked = false;
+    if (canvasBlocks.length > 0) {
+      serializeCanvasToHTML();
+      setHtmlEditorReadOnly(canvasBlocks.some((b) => b.type !== 'custom-html'));
+    } else {
+      setHtmlEditorReadOnly(false);
+    }
+    updateHtmlDerivedBanner();
+    showToastMsg('HTML re-locked to blocks.', true);
+  };
+
   // Widget Registry & Schemas
   const WIDGET_REGISTRY = {
     hero: {
@@ -986,19 +1207,31 @@
       parse: function(el, currentConfig) {
         const config = { ...currentConfig };
         const h1 = el.querySelector('h1');
-        if (h1) config.title = h1.textContent.trim();
+        if (h1) {
+          config.title = h1.textContent.trim();
+          const tc = readColor(h1, 'color');
+          if (tc) config.titleColor = tc;
+        }
         const p = el.querySelector('p');
-        if (p) config.subtitle = p.textContent.trim();
+        if (p) {
+          config.subtitle = p.textContent.trim();
+          const sc = readColor(p, 'color');
+          if (sc) config.subtitleColor = sc;
+        }
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const align = inferAlignment(el);
+        if (align) config.alignment = align;
         const links = el.querySelectorAll('a');
         if (links[0]) {
           config.primaryBtnText = links[0].textContent.trim();
-          config.primaryBtnUrl = links[0].getAttribute('href');
+          config.primaryBtnUrl = links[0].getAttribute('href') || '#';
         } else {
           config.primaryBtnText = '';
         }
         if (links[1]) {
           config.secondaryBtnText = links[1].textContent.trim();
-          config.secondaryBtnUrl = links[1].getAttribute('href');
+          config.secondaryBtnUrl = links[1].getAttribute('href') || '#';
         } else {
           config.secondaryBtnText = '';
         }
@@ -1026,6 +1259,12 @@
         const config = { ...currentConfig };
         const container = el.querySelector('.widget-rendered-container');
         if (container) config.content = container.innerHTML.trim();
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const tc = readColor(el, 'color');
+        if (tc) config.textColor = tc;
+        const pad = readInlineStyle(el, 'padding');
+        if (pad) config.padding = pad;
         return config;
       }
     },
@@ -1044,11 +1283,12 @@
       },
       render: function(config) {
         const encoded = encodeURIComponent(JSON.stringify(config));
+        const cols = parseInt(config.columns, 10) || 3;
         return `<section data-widget="grid" data-config="${encoded}" class="widget-rendered-section" style="background-color: ${config.bgColor}; padding: 4rem 1.5rem;">
   <div class="widget-rendered-container">
     ${config.title ? `<h2 style="color: ${config.titleColor}; font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700; margin-top: 0; margin-bottom: 2rem; text-align: center;">${config.title}</h2>` : ''}
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; width: 100%;">
-      ${config.cards.map(card => `
+    <div data-grid-cols="${cols}" style="display: grid; grid-template-columns: repeat(${cols}, minmax(0, 1fr)); gap: 1.5rem; width: 100%;">
+      ${(config.cards || []).map(card => `
         <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s;">
           ${card.image ? `<div style="height: 160px; overflow: hidden; background: #1a2333; position: relative;"><img src="${card.image}" style="width:100%; height:100%; object-fit:cover;" /></div>` : ''}
           <div style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1;">
@@ -1064,7 +1304,42 @@
 </section>`;
       },
       parse: function(el, currentConfig) {
-        return currentConfig;
+        const config = { ...currentConfig };
+        const h2 = el.querySelector('h2');
+        if (h2) {
+          config.title = h2.textContent.trim();
+          const tc = readColor(h2, 'color');
+          if (tc) config.titleColor = tc;
+        }
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const grid = el.querySelector('[data-grid-cols]') || el.querySelector('.widget-rendered-container > div');
+        if (grid) {
+          const attrCols = grid.getAttribute('data-grid-cols');
+          if (attrCols) config.columns = String(attrCols);
+          else {
+            const gtc = readInlineStyle(grid, 'grid-template-columns');
+            const rep = gtc && gtc.match(/repeat\(\s*(\d+)/);
+            if (rep) config.columns = rep[1];
+          }
+          const cards = [];
+          Array.from(grid.children).forEach((cardEl) => {
+            const img = cardEl.querySelector('img');
+            const badge = cardEl.querySelector('span');
+            const titleEl = cardEl.querySelector('h3');
+            const descEl = cardEl.querySelector('p');
+            const link = cardEl.querySelector('a');
+            cards.push({
+              image: img ? (img.getAttribute('src') || '') : '',
+              badgeText: badge ? badge.textContent.trim() : '',
+              title: titleEl ? titleEl.textContent.trim() : '',
+              description: descEl ? descEl.textContent.trim() : '',
+              linkUrl: link ? (link.getAttribute('href') || '#') : ''
+            });
+          });
+          if (cards.length) config.cards = cards;
+        }
+        return config;
       }
     },
     timeline: {
@@ -1100,7 +1375,41 @@
 </section>`;
       },
       parse: function(el, currentConfig) {
-        return currentConfig;
+        const config = { ...currentConfig };
+        const h2 = el.querySelector('h2');
+        if (h2) {
+          config.title = h2.textContent.trim();
+          const tc = readColor(h2, 'color');
+          if (tc) config.titleColor = tc;
+        }
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const steps = [];
+        el.querySelectorAll('.widget-rendered-container > div > div').forEach((stepEl) => {
+          const period = stepEl.querySelector('span');
+          const h3 = stepEl.querySelector('h3');
+          const p = stepEl.querySelector('p');
+          if (!h3 && !period) return;
+          let role = '';
+          let company = '';
+          if (h3) {
+            const companySpan = h3.querySelector('span');
+            if (companySpan) {
+              company = companySpan.textContent.replace(/^@\s*/, '').trim();
+              role = h3.childNodes[0] ? h3.childNodes[0].textContent.trim() : h3.textContent.replace(companySpan.textContent, '').trim();
+            } else {
+              role = h3.textContent.trim();
+            }
+          }
+          steps.push({
+            period: period ? period.textContent.trim() : '',
+            role,
+            company,
+            description: p ? p.textContent.trim() : ''
+          });
+        });
+        if (steps.length) config.steps = steps;
+        return config;
       }
     },
     showcase: {
@@ -1134,7 +1443,27 @@
 </section>`;
       },
       parse: function(el, currentConfig) {
-        return currentConfig;
+        const config = { ...currentConfig };
+        const h2 = el.querySelector('h2');
+        if (h2) {
+          config.title = h2.textContent.trim();
+          const tc = readColor(h2, 'color');
+          if (tc) config.titleColor = tc;
+        }
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const images = [];
+        el.querySelectorAll('.widget-rendered-container > div > div').forEach((imgWrap) => {
+          const img = imgWrap.querySelector('img');
+          const caption = imgWrap.querySelector('p');
+          if (!img) return;
+          images.push({
+            url: img.getAttribute('src') || '',
+            caption: caption ? caption.textContent.trim() : ''
+          });
+        });
+        if (images.length) config.images = images;
+        return config;
       }
     },
     contact: {
@@ -1175,11 +1504,21 @@
       parse: function(el, currentConfig) {
         const config = { ...currentConfig };
         const h2 = el.querySelector('h2');
-        if (h2) config.title = h2.textContent.trim();
+        if (h2) {
+          config.title = h2.textContent.trim();
+          const tc = readColor(h2, 'color');
+          if (tc) config.titleColor = tc;
+        }
         const p = el.querySelector('p');
         if (p) config.description = p.textContent.trim();
         const btn = el.querySelector('button[type="submit"]');
-        if (btn) config.btnText = btn.textContent.trim();
+        if (btn) {
+          config.btnText = btn.textContent.trim();
+          const bc = readColor(btn, 'background') || readColor(btn, 'background-color');
+          if (bc) config.btnColor = bc;
+        }
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
         return config;
       }
     },
@@ -1252,11 +1591,31 @@
       parse: function(el, currentConfig) {
         const config = { ...currentConfig };
         const h2 = el.querySelector('h2');
-        if (h2) config.title = h2.textContent.trim();
+        if (h2) {
+          config.title = h2.textContent.trim();
+          const tc = readColor(h2, 'color');
+          if (tc) config.titleColor = tc;
+        }
         const p = el.querySelector('p');
-        if (p) config.subtitle = p.textContent.trim();
-        const badge = el.querySelector('span');
-        if (badge) config.badge = badge.textContent.trim();
+        if (p) {
+          config.subtitle = p.textContent.trim();
+          const sc = readColor(p, 'color');
+          if (sc) config.subtitleColor = sc;
+        }
+        const badge = el.querySelector('.widget-rendered-container > span');
+        if (badge) {
+          config.badge = badge.textContent.trim();
+          const bc = readColor(badge, 'color');
+          if (bc) config.badgeColor = bc;
+          const bbg = readColor(badge, 'background-color') || readColor(badge, 'background');
+          if (bbg) config.badgeBg = bbg;
+        }
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const align = inferAlignment(el);
+        if (align) config.alignment = align;
+        const divider = el.querySelector('.widget-rendered-container > div');
+        config.showLine = divider ? 'yes' : 'no';
         return config;
       }
     },
@@ -1294,7 +1653,26 @@
 </section>`;
       },
       parse: function(el, currentConfig) {
-        return currentConfig;
+        const config = { ...currentConfig };
+        const h2 = el.querySelector('h2');
+        if (h2) {
+          config.title = h2.textContent.trim();
+          const tc = readColor(h2, 'color');
+          if (tc) config.titleColor = tc;
+        }
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const items = [];
+        el.querySelectorAll('details').forEach((det) => {
+          const q = det.querySelector('summary span') || det.querySelector('summary');
+          const a = det.querySelector('div');
+          items.push({
+            question: q ? q.textContent.replace('▼', '').trim() : '',
+            answer: a ? a.innerHTML.trim() : ''
+          });
+        });
+        if (items.length) config.items = items;
+        return config;
       }
     },
     testimonial: {
@@ -1333,7 +1711,31 @@
 </section>`;
       },
       parse: function(el, currentConfig) {
-        return currentConfig;
+        const config = { ...currentConfig };
+        const quote = el.querySelector('blockquote');
+        if (quote) {
+          config.quote = quote.textContent.trim().replace(/^["“]|["”]$/g, '');
+          const qc = readColor(quote, 'color');
+          if (qc) config.textColor = qc;
+        }
+        const author = el.querySelector('h4');
+        if (author) config.author = author.textContent.trim();
+        const title = el.querySelector('h4 + p');
+        if (title) config.authorTitle = title.textContent.trim();
+        const avatar = el.querySelector('img');
+        if (avatar) config.avatar = avatar.getAttribute('src') || '';
+        const stars = el.querySelector('.widget-rendered-container > div');
+        if (stars && stars.textContent.includes('★')) {
+          config.rating = String((stars.textContent.match(/★/g) || []).length || 5);
+        }
+        const card = el.querySelector('.widget-rendered-container');
+        if (card) {
+          const bg = readColor(card, 'background-color') || readColor(card, 'background');
+          if (bg) config.bgColor = bg;
+          const border = readColor(card, 'border-color') || normalizeColor(readInlineStyle(card, 'border').split(' ').pop());
+          if (border && border !== 'none') config.borderColor = border;
+        }
+        return config;
       }
     },
     buttons: {
@@ -1367,7 +1769,23 @@
 </section>`;
       },
       parse: function(el, currentConfig) {
-        return currentConfig;
+        const config = { ...currentConfig };
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const align = inferAlignment(el);
+        if (align) config.alignment = align;
+        const items = [];
+        el.querySelectorAll('a').forEach((a) => {
+          const styleAttr = a.getAttribute('style') || '';
+          const isPrimary = styleAttr.includes('linear-gradient') || styleAttr.includes('9d5cff');
+          items.push({
+            text: a.textContent.trim(),
+            linkUrl: a.getAttribute('href') || '#',
+            style: isPrimary ? 'primary' : 'secondary'
+          });
+        });
+        if (items.length) config.items = items;
+        return config;
       }
     },
     services: {
@@ -1403,7 +1821,29 @@
 </section>`;
       },
       parse: function(el, currentConfig) {
-        return currentConfig;
+        const config = { ...currentConfig };
+        const h2 = el.querySelector('h2');
+        if (h2) {
+          config.title = h2.textContent.trim();
+          const tc = readColor(h2, 'color');
+          if (tc) config.titleColor = tc;
+        }
+        const bg = readColor(el, 'background-color');
+        if (bg) config.bgColor = bg;
+        const items = [];
+        el.querySelectorAll('.widget-rendered-container > div > div').forEach((card) => {
+          const iconEl = card.querySelector('[data-lucide]');
+          const titleEl = card.querySelector('h3');
+          const descEl = card.querySelector('p');
+          if (!titleEl) return;
+          items.push({
+            icon: iconEl ? (iconEl.getAttribute('data-lucide') || 'box') : 'box',
+            title: titleEl.textContent.trim(),
+            description: descEl ? descEl.textContent.trim() : ''
+          });
+        });
+        if (items.length) config.items = items;
+        return config;
       }
     }
   };
@@ -1801,6 +2241,7 @@
     }
     
     serializeCanvasToHTML();
+    if (typeof previewFromBuilder === 'function') previewFromBuilder();
   };
 
   window.updateBlockPreview = function(id) {
@@ -1886,22 +2327,47 @@
     }).join('\n\n');
 
     if (htmlEditor) {
-      // Set value in Monaco without triggering recursive loops
       const currentVal = htmlEditor.getValue();
       if (currentVal !== htmlString) {
         htmlEditor.setValue(htmlString);
       }
     }
+    if (!htmlCodeUnlocked) {
+      setHtmlEditorReadOnly(canvasBlocks.some((b) => b.type !== 'custom-html'));
+    }
+    if (typeof previewFromBuilder === 'function') {
+      previewFromBuilder();
+    }
   }
 
-  function parseHTMLToCanvas(htmlContent) {
-    canvasBlocks = [];
+  function parseHTMLToCanvas(htmlContent, options = {}) {
+    const { allowImportPrompt = true } = options;
+    const previousBlocks = canvasBlocks.slice();
+    lastParseWrappedCustomHtml = 0;
     const temp = document.createElement('div');
-    temp.innerHTML = htmlContent;
+    temp.innerHTML = htmlContent || '';
 
-    Array.from(temp.children).forEach(el => {
-      if (el.nodeType !== Node.ELEMENT_NODE) return;
+    const children = Array.from(temp.children).filter((el) => el.nodeType === Node.ELEMENT_NODE);
+    const hasWidgetRoots = children.some((el) => {
+      const type = el.getAttribute('data-widget');
+      return type && WIDGET_REGISTRY[type];
+    });
 
+    if (!hasWidgetRoots && children.length > 0 && allowImportPrompt) {
+      const importAsCustom = confirm(
+        'This HTML has no widget markers.\n\nOK = Import as one Custom HTML block\nCancel = Keep current canvas / stay with existing blocks'
+      );
+      if (!importAsCustom) {
+        canvasBlocks = previousBlocks;
+        renderCanvas();
+        showToastMsg('Kept existing blocks. HTML in Code was not imported.', true);
+        return { wrappedCustomHtml: 0, aborted: true };
+      }
+    }
+
+    canvasBlocks = [];
+
+    children.forEach(el => {
       const type = el.getAttribute('data-widget');
       let config = {};
 
@@ -1914,8 +2380,7 @@
             console.error('Failed to parse data-config URI payload', e);
           }
         }
-        
-        // Smart parse in case text elements were edited directly in Code Mode
+
         if (WIDGET_REGISTRY[type].parse) {
           try {
             config = WIDGET_REGISTRY[type].parse(el, config);
@@ -1925,14 +2390,14 @@
         }
 
         canvasBlocks.push({
-          id: 'block-' + Math.random().toString(36).substr(2, 9),
+          id: newBlockId(),
           type: type,
           config: config
         });
       } else {
-        // Fallback to custom html block
+        lastParseWrappedCustomHtml += 1;
         canvasBlocks.push({
-          id: 'block-' + Math.random().toString(36).substr(2, 9),
+          id: newBlockId(),
           type: 'custom-html',
           config: {
             htmlCode: el.outerHTML
@@ -1942,6 +2407,15 @@
     });
 
     renderCanvas();
+    if (lastParseWrappedCustomHtml > 0) {
+      showToastMsg(
+        lastParseWrappedCustomHtml === 1
+          ? 'Imported 1 unrecognized element as Custom HTML.'
+          : `Imported ${lastParseWrappedCustomHtml} unrecognized elements as Custom HTML.`,
+        true
+      );
+    }
+    return { wrappedCustomHtml: lastParseWrappedCustomHtml, aborted: false };
   }
 
   // 6.5 CSS Layout Builder Engines
@@ -2380,7 +2854,8 @@
   }
 
   function parseCSSToCanvas(cssCode) {
-    parseCSSToCanvasAndCustomCSS(cssCode, true);
+    const parsed = parseCSSToCanvasAndCustomCSS(cssCode, true);
+    customCSS = parsed.customCSS;
   }
 
   function serializeCSSCanvasToCode() {
@@ -2445,7 +2920,7 @@ ${layout.selector} > *:last-child {
     if (cssEditor) {
       const currentVal = cssEditor.getValue();
       const parsed = parseCSSToCanvasAndCustomCSS(currentVal, false);
-      const customCSS = parsed.customCSS.trim();
+      customCSS = parsed.customCSS.trim();
 
       const separator = '\n\n/* --- CSS Layout Classes --- */\n';
       const finalCode = customCSS + (newCSSCode ? separator + newCSSCode : '');
@@ -2457,98 +2932,123 @@ ${layout.selector} > *:last-child {
   }
 
   window.toggleCSSEditorMode = function(mode) {
-    const monacoContainer = document.getElementById('editor-css');
-    const builderContainer = document.getElementById('css-builder-container');
-    
-    const codeTab = document.getElementById('css-mode-code');
-    const visualTab = document.getElementById('css-mode-visual');
-
     if (mode === 'visual') {
-      isCssVisualActive = true;
-      codeTab.classList.remove('active-mode-btn');
-      visualTab.classList.add('active-mode-btn');
-
-      monacoContainer.style.display = 'none';
-      builderContainer.style.display = 'block';
-
       try {
-        const cssContent = cssEditor.getValue();
-        parseCSSToCanvas(cssContent);
+        if (cssLayouts.length > 0) {
+          const parsed = parseCSSToCanvasAndCustomCSS(cssEditor.getValue(), false);
+          customCSS = parsed.customCSS;
+        } else {
+          parseCSSToCanvas(cssEditor.getValue());
+        }
+        isCssVisualActive = true;
+        syncCssModeUi({ refreshPreview: true });
       } catch (err) {
         console.error('Error loading CSS Visual Builder:', err);
         showToastMsg('Error loading Visual CSS Layouts. Using Code Editor instead.', false);
         isCssVisualActive = false;
-        codeTab.classList.add('active-mode-btn');
-        visualTab.classList.remove('active-mode-btn');
-        builderContainer.style.display = 'none';
-        monacoContainer.style.display = 'block';
-        if (cssEditor) {
-          setTimeout(() => cssEditor.layout(), 50);
-        }
+        syncCssModeUi({ refreshPreview: false });
       }
     } else {
+      closeCSSConfigDrawer();
       isCssVisualActive = false;
+      serializeCSSCanvasToCode();
+      syncCssModeUi({ refreshPreview: true });
+    }
+  };
+
+  function syncCssModeUi(options = {}) {
+    const { refreshPreview = true } = options;
+    const monacoContainer = document.getElementById('editor-css');
+    const builderContainer = document.getElementById('css-builder-container');
+    const codeTab = document.getElementById('css-mode-code');
+    const visualTab = document.getElementById('css-mode-visual');
+    if (!monacoContainer || !builderContainer || !codeTab || !visualTab) return;
+
+    if (isCssVisualActive) {
+      codeTab.classList.remove('active-mode-btn');
+      visualTab.classList.add('active-mode-btn');
+      monacoContainer.style.display = 'none';
+      builderContainer.style.display = 'block';
+      renderCSSCanvas();
+    } else {
       codeTab.classList.add('active-mode-btn');
       visualTab.classList.remove('active-mode-btn');
-
       builderContainer.style.display = 'none';
       monacoContainer.style.display = 'block';
-      closeCSSConfigDrawer();
-      
-      serializeCSSCanvasToCode();
-
       if (cssEditor) {
         setTimeout(() => cssEditor.layout(), 50);
       }
     }
-  };
+    if (refreshPreview && typeof previewFromBuilder === 'function') {
+      previewFromBuilder();
+    }
+  }
 
   // 7. Toggle Mode Wrapper
   function toggleEditorMode(mode) {
-    const monacoContainer = document.getElementById('editor-html');
-    const builderContainer = document.getElementById('builder-container');
-    
-    const codeTab = document.getElementById('editor-mode-code');
-    const visualTab = document.getElementById('editor-mode-visual');
-
     if (mode === 'visual') {
-      isVisualActive = true;
-      codeTab.classList.remove('active-mode-btn');
-      visualTab.classList.add('active-mode-btn');
-
-      monacoContainer.style.display = 'none';
-      builderContainer.style.display = 'block';
-
       try {
-        const htmlContent = htmlEditor.getValue();
-        parseHTMLToCanvas(htmlContent);
+        if (htmlCodeUnlocked || canvasBlocks.length === 0) {
+          const result = parseHTMLToCanvas(htmlEditor.getValue());
+          if (result && !result.aborted) {
+            htmlCodeUnlocked = false;
+          }
+        }
+        isVisualActive = true;
+        syncHtmlModeUi({ refreshPreview: true });
       } catch (err) {
         console.error('Error loading Block Builder:', err);
         showToastMsg('Error loading Visual Builder. Using Code Editor instead.', false);
         isVisualActive = false;
-        codeTab.classList.add('active-mode-btn');
-        visualTab.classList.remove('active-mode-btn');
-        builderContainer.style.display = 'none';
-        monacoContainer.style.display = 'block';
-        if (htmlEditor) {
-          setTimeout(() => htmlEditor.layout(), 50);
-        }
+        syncHtmlModeUi({ refreshPreview: false });
       }
     } else {
-      isVisualActive = false;
-      codeTab.classList.add('active-mode-btn');
-      visualTab.classList.remove('active-mode-btn');
-
-      builderContainer.style.display = 'none';
-      monacoContainer.style.display = 'block';
       closeConfigDrawer();
-      
-      serializeCanvasToHTML();
+      isVisualActive = false;
+      // Always project blocks → code when leaving visual (unless raw unlock and empty blocks)
+      if (!htmlCodeUnlocked || canvasBlocks.length > 0) {
+        if (!htmlCodeUnlocked) {
+          serializeCanvasToHTML();
+        }
+      }
+      syncHtmlModeUi({ refreshPreview: true });
+    }
+  }
+  window.toggleEditorMode = toggleEditorMode;
 
-      if (htmlEditor) {
-        setTimeout(() => htmlEditor.layout(), 50);
+  function hydrateCanonicalBuilderState() {
+    if (savedBlocksJson && String(savedBlocksJson).trim()) {
+      if (loadBlocksFromJson(savedBlocksJson)) {
+        serializeCanvasToHTML();
+        setHtmlEditorReadOnly(canvasBlocks.some((b) => b.type !== 'custom-html'));
+      }
+    } else if (!isEdit) {
+      loadBlocksFromJson(defaultBlocksJson);
+      serializeCanvasToHTML();
+      setHtmlEditorReadOnly(true);
+    }
+
+    if (savedCssLayoutsJson && String(savedCssLayoutsJson).trim()) {
+      if (loadCssLayoutsFromJson(savedCssLayoutsJson)) {
+        const parsed = parseCSSToCanvasAndCustomCSS(cssEditor.getValue(), false);
+        customCSS = parsed.customCSS;
+        serializeCSSCanvasToCode();
+        if (typeof renderCSSCanvas === 'function') renderCSSCanvas();
+      }
+    } else if (cssEditor) {
+      const parsed = parseCSSToCanvasAndCustomCSS(cssEditor.getValue(), false);
+      customCSS = parsed.customCSS;
+      if (parsed.layouts.length) {
+        cssLayouts = parsed.layouts;
+        if (typeof renderCSSCanvas === 'function') renderCSSCanvas();
       }
     }
+
+    // Align mode chrome with hydrated state (code mode default)
+    isVisualActive = false;
+    isCssVisualActive = false;
+    if (typeof syncHtmlModeUi === 'function') syncHtmlModeUi({ refreshPreview: true });
+    if (typeof syncCssModeUi === 'function') syncCssModeUi({ refreshPreview: false });
   }
 
   // Monaco Diff Editor Rendering

@@ -16,6 +16,15 @@
 
   <a href="#hero" class="back-to-top" id="backToTop" aria-label="Back to top">&#8679;</a>
 
+  <div id="abuseModal" class="abuse-modal" hidden role="alertdialog" aria-modal="true" aria-labelledby="abuseModalTitle" aria-describedby="abuseModalBody">
+    <div class="abuse-modal-card">
+      <p class="abuse-modal-kicker">Contact form</p>
+      <h2 id="abuseModalTitle">Caught.</h2>
+      <p id="abuseModalBody" class="abuse-modal-body"></p>
+      <button type="button" class="abuse-modal-close" id="abuseModalClose">I get it</button>
+    </div>
+  </div>
+
   <!-- Floating AI Assistant Button -->
   <button id="ai-chat-toggle" class="ai-chat-toggle" onclick="toggleAIChat()" aria-label="Open AI Assistant">
     <span class="ai-icon">💬</span>

@@ -1,12 +1,190 @@
 <%- include('./partials/head') %>
 
-<section class="error-page section">
-  <div class="container text-center">
-    <div class="error-code">404</div>
-    <h1 class="error-title">Page Not Found</h1>
-    <p class="error-subtitle">The page you are looking for does not exist or has been moved.</p>
-    <a href="/" class="btn btn-primary">&larr; Back to Home</a>
+<section class="nf-page" id="nfPage" aria-labelledby="nfHeading">
+  <canvas id="nfCanvas" class="nf-canvas" aria-hidden="true"></canvas>
+  <div class="nf-scan" aria-hidden="true"></div>
+  <div class="nf-vignette" aria-hidden="true"></div>
+
+  <div class="nf-frame">
+    <div class="nf-meta">
+      <span class="nf-meta-item"><span class="nf-meta-key">STATUS</span> NOT_FOUND</span>
+      <span class="nf-meta-item"><span class="nf-meta-key">CODE</span> 404</span>
+      <span class="nf-meta-item nf-meta-path" id="nfPath"><span class="nf-meta-key">PATH</span> <span id="nfPathVal">/</span></span>
+    </div>
+
+    <div class="nf-hero">
+      <div class="nf-code" aria-hidden="true">
+        <span class="nf-code-layer nf-code-layer--a">404</span>
+        <span class="nf-code-layer nf-code-layer--b">404</span>
+        <span class="nf-code-main" id="nfDigits">404</span>
+      </div>
+
+      <div class="nf-copy">
+        <p class="nf-label">Lost signal</p>
+        <h1 class="nf-title" id="nfHeading">This page doesn’t exist</h1>
+        <p class="nf-subtitle">The URL may be mistyped, or the page was moved. Either way, there’s nothing here to render.</p>
+
+        <div class="nf-actions">
+          <a href="/" class="btn btn-primary nf-btn">Return home</a>
+          <a href="/#contact" class="btn btn-ghost nf-btn">Contact</a>
+        </div>
+
+        <nav class="nf-links" aria-label="Quick links">
+          <a href="/#projects">Projects</a>
+          <a href="/#experience">Experience</a>
+          <a href="/#about">About</a>
+          <a href="/auth">Sign in</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="nf-footer-bar" aria-hidden="true">
+      <span class="nf-cursor-readout" id="nfCoords">X 000 · Y 000</span>
+      <span class="nf-pulse"><span class="nf-pulse-dot"></span> SEARCHING</span>
+    </div>
   </div>
 </section>
+
+<script>
+(function () {
+  var pathEl = document.getElementById('nfPathVal');
+  if (pathEl) {
+    pathEl.textContent = window.location.pathname + window.location.search;
+  }
+
+  var coords = document.getElementById('nfCoords');
+  var page = document.getElementById('nfPage');
+  var digits = document.getElementById('nfDigits');
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var mouse = { x: null, y: null };
+
+  // Cursor readout + CSS vars for glow (page-level so it works over the frame)
+  if (page) {
+    page.addEventListener('mousemove', function (e) {
+      var x = e.clientX;
+      var y = e.clientY;
+      mouse.x = x;
+      mouse.y = y;
+      page.style.setProperty('--mx', (x / window.innerWidth) * 100 + '%');
+      page.style.setProperty('--my', (y / window.innerHeight) * 100 + '%');
+      if (coords) {
+        coords.textContent =
+          'X ' + String(Math.round(x)).padStart(3, '0') +
+          ' · Y ' + String(Math.round(y)).padStart(3, '0');
+      }
+      if (digits && !reduced) {
+        var nx = (x / window.innerWidth - 0.5) * 12;
+        var ny = (y / window.innerHeight - 0.5) * 8;
+        digits.style.transform = 'translate3d(' + nx + 'px,' + ny + 'px,0)';
+      }
+    }, { passive: true });
+    page.addEventListener('mouseleave', function () {
+      mouse.x = mouse.y = null;
+    }, { passive: true });
+  }
+
+  // Scramble → settle the 404 digits once
+  if (digits && !reduced) {
+    var target = '404';
+    var glyphs = '01░▒▓█#@*%<>/\\404';
+    var frames = 18;
+    var i = 0;
+    var timer = setInterval(function () {
+      i++;
+      if (i >= frames) {
+        digits.textContent = target;
+        clearInterval(timer);
+        digits.classList.add('is-settled');
+        return;
+      }
+      digits.textContent = Array.from(target).map(function (ch, idx) {
+        if (i > frames * (0.4 + idx * 0.2)) return ch;
+        return glyphs[Math.floor(Math.random() * glyphs.length)];
+      }).join('');
+    }, 45);
+  }
+
+  // Particle field
+  var canvas = document.getElementById('nfCanvas');
+  if (!canvas || reduced) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, particles;
+  var N = 70;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function create() {
+    particles = Array.from({ length: N }, function () {
+      return {
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: Math.random() * 1.4 + 0.3,
+      };
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    for (var i = 0; i < N; i++) {
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = W;
+      if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H;
+      if (p.y > H) p.y = 0;
+
+      if (mouse.x !== null) {
+        var dx = p.x - mouse.x;
+        var dy = p.y - mouse.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 140) {
+          p.x += dx / dist * 0.35;
+          p.y += dy / dist * 0.35;
+        }
+      }
+    }
+
+    for (var i = 0; i < N; i++) {
+      for (var j = i + 1; j < N; j++) {
+        var dx = particles[i].x - particles[j].x;
+        var dy = particles[i].y - particles[j].y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          var a = (1 - dist / 120) * 0.22;
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(0,212,255,' + a + ')';
+          ctx.lineWidth = 0.6;
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    for (var i = 0; i < N; i++) {
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(157,92,255,0.55)';
+      ctx.arc(particles[i].x, particles[i].y, particles[i].r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', function () { resize(); create(); }, { passive: true });
+
+  resize();
+  create();
+  draw();
+})();
+</script>
 
 <%- include('./partials/foot') %>

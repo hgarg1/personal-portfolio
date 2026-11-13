@@ -1,66 +1,74 @@
 const express = require('express');
 const router  = express.Router();
-const prisma  = require('../lib/prisma');
 const { sendContactSubmissionEmail } = require('../lib/email');
+const { screenContact, saveContactSubmission } = require('../lib/contact-guard');
 
 router.get('/', (req, res) => {
-  res.render('contact', { title: 'Contact', success: null, error: null });
+  res.render('contact', { title: 'Contact', success: null, error: null, abuse: null });
 });
 
+function wantsJson(req) {
+  return req.is('application/json') || req.headers.accept === 'application/json';
+}
+
 router.post('/', async (req, res) => {
-  const { name, email, message } = req.body;
-
-  // AJAX request — return JSON
-  if (req.is('application/json') || req.headers.accept === 'application/json') {
-    if (!name || !email || !message) {
-      return res.status(400).json({ success: false, error: 'All fields are required.' });
-    }
-    
-    try {
-      await prisma.contactSubmission.create({
-        data: { name, email, message }
-      });
-      console.log(`✉️ New message saved from ${name} <${email}>`);
-      // Send email alert asynchronously in background
-      sendContactSubmissionEmail(name, email, message).catch(err => {
-        console.error('Failed to send contact submission email (AJAX):', err);
-      });
-      return res.json({ success: true });
-    } catch (err) {
-      console.error('Contact database save error (AJAX):', err);
-      return res.status(500).json({ success: false, error: 'Internal server error.' });
-    }
-  }
-
-  // Traditional form POST — render page
-  if (!name || !email || !message) {
-    return res.render('contact', {
-      title: 'Contact',
-      success: null,
-      error: 'All fields are required.',
-    });
-  }
+  const json = wantsJson(req);
 
   try {
-    await prisma.contactSubmission.create({
-      data: { name, email, message }
-    });
+    const screen = await screenContact(req, req.body || {});
+
+    if (!screen.ok) {
+      if (screen.retryAfter) res.set('Retry-After', String(screen.retryAfter));
+      const abuse = screen.abuse
+        ? { title: screen.abuseTitle, body: screen.abuseBody }
+        : null;
+      if (json) {
+        return res.status(screen.status).json({
+          success: false,
+          error: screen.error,
+          retryAfter: screen.retryAfter || null,
+          abuse: !!screen.abuse,
+          abuseTitle: screen.abuseTitle || null,
+          abuseBody: screen.abuseBody || null,
+        });
+      }
+      return res.status(screen.status).render('contact', {
+        title: 'Contact',
+        success: null,
+        error: screen.error,
+        abuse,
+      });
+    }
+
+    try {
+      await saveContactSubmission(screen);
+    } catch (err) {
+      if (screen.release) await screen.release();
+      throw err;
+    }
+    const { name, email, messageText } = screen.fields;
     console.log(`✉️ New message saved from ${name} <${email}>`);
-    // Send email alert asynchronously in background
-    sendContactSubmissionEmail(name, email, message).catch(err => {
-      console.error('Failed to send contact submission email (traditional):', err);
+    sendContactSubmissionEmail(name, email, messageText).catch((err) => {
+      console.error('Failed to send contact submission email:', err);
     });
-    res.render('contact', {
+
+    if (json) return res.json({ success: true });
+    return res.render('contact', {
       title: 'Contact',
       success: `Thanks, ${name}! Your message has been received.`,
       error: null,
+      abuse: null,
     });
   } catch (err) {
-    console.error('Contact database save error (traditional):', err);
-    res.render('contact', {
+    console.error('Contact submission error:', err);
+    if (json) {
+      return res.status(500).json({ success: false, error: 'Internal server error.' });
+    }
+    return res.status(500).render('contact', {
       title: 'Contact',
       success: null,
       error: 'An internal server error occurred while sending your message.',
+      abuse: null,
     });
   }
 });

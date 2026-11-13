@@ -48,10 +48,41 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve uploads from dynamic dir (/tmp/uploads on Vercel, public/uploads locally)
+// Serve uploads from dynamic dir (/tmp/uploads on Vercel, public/uploads locally).
+// On Vercel /tmp is ephemeral, so fall back to durable bytes stored on CMSAsset.
 const isVercel = process.env.VERCEL === '1' || process.env.NOW_REGION !== undefined;
 const dynamicUploadsDir = isVercel ? '/tmp/uploads' : path.join(__dirname, 'public/uploads');
 app.use('/uploads', express.static(dynamicUploadsDir));
+app.get('/uploads/:filename', async (req, res, next) => {
+  try {
+    const filename = path.basename(req.params.filename);
+    if (!filename || filename === '.' || filename === '..') {
+      return res.status(400).end();
+    }
+
+    const diskPath = path.join(dynamicUploadsDir, filename);
+    if (fs.existsSync(diskPath)) {
+      return res.sendFile(diskPath);
+    }
+
+    const prisma = require('./lib/prisma');
+    const asset = await prisma.cMSAsset.findUnique({
+      where: { filename },
+      select: { data: true, mimeType: true }
+    });
+
+    if (!asset || !asset.data) {
+      return next();
+    }
+
+    res.setHeader('Content-Type', asset.mimeType || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.send(Buffer.from(asset.data));
+  } catch (err) {
+    console.error('Error serving upload from DB:', err);
+    return next();
+  }
+});
 
 app.use(cookieSession({
   name: 'session',
@@ -60,6 +91,14 @@ app.use(cookieSession({
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax'
 }));
+
+// Stamp the first page view so the contact form can reject instant bot posts.
+app.use((req, res, next) => {
+  if (req.method === 'GET' && req.session && !req.session.contactSeenAt) {
+    req.session.contactSeenAt = Date.now();
+  }
+  next();
+});
 
 const { ensureGlobalAdmin } = require('./lib/middleware');
 
@@ -180,7 +219,7 @@ app.get('/*splat', async (req, res, next) => {
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).render('404', { title: '404 – Page Not Found' });
+  res.status(404).render('404', { title: '404 – Not Found' });
 });
 
 // ─── Error Handler ────────────────────────────────────────────────────────────

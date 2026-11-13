@@ -126,15 +126,25 @@ router.post('/', isAuthenticated, hasRole(['ADMIN']), async (req, res) => {
       targetEmail: newUser.email
     });
 
-    // Send email if selected by admin
+    // Send email if selected by admin (must await on Vercel or the lambda freezes mid-send)
+    let emailSent = false;
     if (sendEmail === 'true' || sendEmail === true) {
       const subject = emailSubject || 'Welcome to Harshit Garg Portal';
       const body = emailBody || `Hello ${name || 'User'},\n\nAn account has been created for you with the role: ${role}.\nYour temporary password is: ${password}\n\nPlease login and update your password immediately.`;
       
-      sendAccountStatusEmail(newUser.email, newUser.name, subject, body);
+      emailSent = await sendAccountStatusEmail(newUser.email, newUser.name, subject, body);
     }
 
-    res.json({ success: true, message: 'User created successfully', user: newUser });
+    res.json({
+      success: true,
+      message: emailSent
+        ? 'User created successfully and email sent'
+        : (sendEmail === 'true' || sendEmail === true)
+          ? 'User created, but email failed to send'
+          : 'User created successfully',
+      emailSent,
+      user: newUser
+    });
   } catch (err) {
     console.error('Error creating user:', err);
     res.status(500).json({ error: 'Failed to create user' });
@@ -280,15 +290,24 @@ router.post('/reset-password/:id', isAuthenticated, hasRole(['ADMIN']), async (r
       targetEmail: targetUser.email
     });
 
-    // Send email if selected by admin
+    // Send email if selected by admin (must await on Vercel or the lambda freezes mid-send)
+    let emailSent = false;
     if (sendEmail === 'true' || sendEmail === true) {
       const subject = emailSubject || 'Password Reset - Harshit Garg Portal';
       const body = emailBody || `Hello ${targetUser.name || 'User'},\n\nYour account password has been reset by the administrator.\nYour new temporary password is: ${password}\n\nPlease login and update your password immediately.`;
       
-      sendAccountStatusEmail(targetUser.email, targetUser.name, subject, body);
+      emailSent = await sendAccountStatusEmail(targetUser.email, targetUser.name, subject, body);
     }
 
-    res.json({ success: true, message: 'Password reset successfully' });
+    res.json({
+      success: true,
+      message: emailSent
+        ? 'Password reset successfully and email sent'
+        : (sendEmail === 'true' || sendEmail === true)
+          ? 'Password reset, but email failed to send'
+          : 'Password reset successfully',
+      emailSent
+    });
   } catch (err) {
     console.error('Error resetting password:', err);
     res.status(500).json({ error: 'Failed to reset password' });

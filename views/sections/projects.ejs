@@ -1,43 +1,185 @@
-<section id="projects" class="section">
+<section id="projects" class="section section-projects">
   <div class="container">
-    <div class="section-header animate-on-scroll">
+    <div class="section-header projects-header animate-on-scroll">
       <span class="section-label">04 / Projects</span>
       <h2 class="section-title">What I've <span class="gradient-text">Built</span></h2>
-      <p class="section-subtitle">Production systems, not demos — every project is live.</p>
+      <p class="section-subtitle">Production systems shipped end-to-end — platforms, AI orchestration, and developer tools.</p>
     </div>
 
-    <div class="projects-grid">
-      <% projects.forEach(function(project) { %>
-      <div class="project-card animate-on-scroll <%= project.featured ? 'project-featured' : '' %>"
-           style="--card-color: <%= project.color %>; --card-glow: <%= project.glow %>;">
-        <div class="project-card-bar"></div>
-        <div class="project-card-body">
-          <div class="project-card-header">
-            <div>
-              <h3 class="project-title"><%= project.title %></h3>
-              <p class="project-role"><%= project.role %></p>
+    <%
+      var featured = projects.filter(function(p) { return p.featured; });
+      var others   = projects.filter(function(p) { return !p.featured; });
+    %>
+
+    <!-- ── Featured heroes ── -->
+    <div class="projects-featured">
+      <% featured.forEach(function(project, fi) { %>
+      <article class="proj-hero animate-on-scroll <%= fi % 2 === 1 ? 'proj-hero--flip' : '' %>"
+               style="--card-color: <%= project.color %>; --card-glow: <%= project.glow %>;"
+               data-project="<%= project.id %>">
+        <div class="proj-hero-glow" aria-hidden="true"></div>
+
+        <div class="proj-hero-visual">
+          <div class="proj-preview proj-preview--live" data-preview-url="<%= project.url %>">
+            <div class="proj-preview-chrome">
+              <span></span><span></span><span></span>
+              <div class="proj-preview-url" title="<%= project.url %>">
+                <%= project.url.replace(/^https?:\/\//, '').replace(/\/$/, '') %>
+              </div>
+              <a href="<%= project.url %>" target="_blank" rel="noopener" class="proj-preview-open" aria-label="Open <%= project.title %> in a new tab">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>
+              </a>
             </div>
-            <a href="<%= project.url %>" target="_blank" rel="noopener" class="project-external" aria-label="Open <%= project.title %>">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-            </a>
+
+            <div class="proj-preview-stage">
+              <div class="proj-preview-loader" aria-hidden="true">
+                <span class="proj-preview-spinner"></span>
+                <span>Loading live preview…</span>
+              </div>
+
+              <div class="proj-preview-frame-wrap">
+                <iframe
+                  class="proj-preview-frame"
+                  title="Live preview of <%= project.title %>"
+                  data-src="<%= project.url %>"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+                  tabindex="-1"
+                ></iframe>
+              </div>
+
+              <div class="proj-preview-shield" aria-hidden="true">
+                <span class="proj-preview-shield-hint">Live site · scroll page freely</span>
+              </div>
+
+              <!-- Fallback mock if the site refuses to frame -->
+              <div class="proj-preview-fallback" hidden>
+                <% if (project.preview === 'neural') { %>
+                <div class="proj-viz-neural">
+                  <div class="proj-viz-node proj-viz-node--a"></div>
+                  <div class="proj-viz-node proj-viz-node--b"></div>
+                  <div class="proj-viz-node proj-viz-node--c"></div>
+                  <div class="proj-viz-link"></div>
+                  <div class="proj-viz-link proj-viz-link--2"></div>
+                  <div class="proj-viz-panel">
+                    <div class="proj-viz-row"></div>
+                    <div class="proj-viz-row proj-viz-row--short"></div>
+                    <div class="proj-viz-row"></div>
+                  </div>
+                </div>
+                <% } else { %>
+                <div class="proj-viz-saas">
+                  <div class="proj-viz-sidebar">
+                    <div class="proj-viz-pill"></div>
+                    <div class="proj-viz-pill proj-viz-pill--dim"></div>
+                    <div class="proj-viz-pill proj-viz-pill--dim"></div>
+                  </div>
+                  <div class="proj-viz-main">
+                    <div class="proj-viz-stat"></div>
+                    <div class="proj-viz-stat"></div>
+                    <div class="proj-viz-chart">
+                      <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                  </div>
+                </div>
+                <% } %>
+                <p class="proj-preview-fallback-msg">Preview unavailable — <a href="<%= project.url %>" target="_blank" rel="noopener">open site</a></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="proj-hero-body">
+          <div class="proj-hero-meta">
+            <span class="proj-badge"><%= project.category %></span>
+            <% if (project.live) { %>
+            <span class="proj-live"><span class="proj-live-dot"></span> Live</span>
+            <% } else { %>
+            <span class="proj-live proj-live--oss">Open Source</span>
+            <% } %>
           </div>
 
-          <p class="project-desc"><%= project.description %></p>
+          <h3 class="proj-hero-title"><%= project.title %></h3>
+          <p class="proj-hero-tagline"><%= project.tagline %></p>
+          <p class="proj-hero-role"><%= project.role %></p>
+          <p class="proj-hero-desc"><%= project.description %></p>
 
-          <ul class="project-highlights">
-            <% project.highlights.forEach(function(h) { %>
+          <ul class="proj-hero-highlights">
+            <% project.highlights.slice(0, 3).forEach(function(h) { %>
             <li><%= h %></li>
             <% }); %>
           </ul>
 
-          <div class="project-tags">
-            <% project.tags.forEach(function(tag) { %>
-            <span class="project-tag"><%= tag %></span>
-            <% }); %>
+          <div class="proj-hero-foot">
+            <div class="proj-hero-tags">
+              <% project.tags.slice(0, 4).forEach(function(tag) { %>
+              <span class="proj-tag"><%= tag %></span>
+              <% }); %>
+            </div>
+            <% if (project.metric) { %>
+            <div class="proj-metric">
+              <span class="proj-metric-value"><%= project.metric.value %></span>
+              <span class="proj-metric-label"><%= project.metric.label %></span>
+            </div>
+            <% } %>
           </div>
+
+          <a href="<%= project.url %>" target="_blank" rel="noopener" class="proj-cta">
+            <%= project.live ? 'Open live project' : 'View on GitHub' %>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>
+          </a>
         </div>
-      </div>
+      </article>
       <% }); %>
     </div>
+
+    <!-- ── Secondary grid ── -->
+    <% if (others.length) { %>
+    <div class="projects-more animate-on-scroll">
+      <div class="projects-more-head">
+        <h3 class="projects-more-title">More systems</h3>
+        <span class="projects-more-count"><%= others.length %> projects</span>
+      </div>
+
+      <div class="projects-grid" id="projectsGrid">
+        <% others.forEach(function(project, i) { %>
+        <a href="<%= project.url %>"
+           target="_blank"
+           rel="noopener"
+           class="proj-card animate-on-scroll"
+           style="--card-color: <%= project.color %>; --card-glow: <%= project.glow %>; --i: <%= i %>;"
+           data-project="<%= project.id %>">
+          <div class="proj-card-top">
+            <span class="proj-card-cat"><%= project.category %></span>
+            <% if (project.live) { %>
+            <span class="proj-card-status"><span class="proj-live-dot"></span> Live</span>
+            <% } else { %>
+            <span class="proj-card-status proj-card-status--oss">OSS</span>
+            <% } %>
+          </div>
+
+          <div class="proj-card-icon" aria-hidden="true">
+            <span class="proj-card-initial"><%= project.title.charAt(0) %></span>
+          </div>
+
+          <h3 class="proj-card-title"><%= project.title %></h3>
+          <p class="proj-card-tagline"><%= project.tagline %></p>
+          <p class="proj-card-role"><%= project.role %></p>
+
+          <div class="proj-card-tags">
+            <% project.tags.slice(0, 3).forEach(function(tag) { %>
+            <span class="proj-tag"><%= tag %></span>
+            <% }); %>
+          </div>
+
+          <span class="proj-card-arrow" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg>
+          </span>
+        </a>
+        <% }); %>
+      </div>
+    </div>
+    <% } %>
   </div>
 </section>
