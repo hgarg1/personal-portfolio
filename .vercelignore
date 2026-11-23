@@ -1,0 +1,16 @@
+# Secrets and local-only config (set env vars in the Vercel dashboard instead)
+.env
+.env.*
+
+# Local runtime output — uploads live in /tmp + the database on Vercel
+public/uploads/
+public/fonts/
+
+# Local test artifacts
+public/images/test-*
+
+# Tooling / OS noise
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
