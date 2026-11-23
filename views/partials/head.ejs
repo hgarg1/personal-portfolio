@@ -18,14 +18,18 @@
       ogDesc = description;
     }
     
-    const ogImageUrl = `https://archie-garg.com/api/og?title=${encodeURIComponent(ogTitle)}&desc=${encodeURIComponent(ogDesc)}`;
+    const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(ogTitle)}&desc=${encodeURIComponent(ogDesc)}`;
+
+    const cmsCanonical = (typeof commit !== 'undefined' && commit) ? commit.canonicalUrl : '';
+    const canonicalUrl = resolveCanonical(cmsCanonical, typeof canonicalPath !== 'undefined' ? canonicalPath : '/');
   %>
 
   <meta name="description" content="<%= ogDesc %>" />
-  
+  <link rel="canonical" href="<%= canonicalUrl %>" />
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://archie-garg.com" />
+  <meta property="og:url" content="<%= canonicalUrl %>" />
   <meta property="og:title" content="<%= ogTitle %>" />
   <meta property="og:description" content="<%= ogDesc %>" />
   <meta property="og:image" content="<%= ogImageUrl %>" />
@@ -33,7 +37,7 @@
 
   <!-- Twitter / Discord Summary Large Image -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="https://archie-garg.com" />
+  <meta name="twitter:url" content="<%= canonicalUrl %>" />
   <meta name="twitter:title" content="<%= ogTitle %>" />
   <meta name="twitter:description" content="<%= ogDesc %>" />
   <meta name="twitter:image" content="<%= ogImageUrl %>" />

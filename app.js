@@ -112,6 +112,33 @@ app.use((req, res, next) => {
 // ─── Locals ───────────────────────────────────────────────────────────────────
 app.locals.appName = process.env.APP_NAME || 'My App';
 
+// The site is reachable on several domains (archie-garg.com, www.*, etc.);
+// harshit-garg.com is the one search engines and link previews should use.
+const SITE_URL = 'https://harshit-garg.com';
+const ALIAS_HOSTS = /^(www\.)?(harshit-garg\.com|archie-garg\.com)$/i;
+app.locals.siteUrl = SITE_URL;
+
+// Resolve a page's canonical URL. A CMS override may be a path or an absolute
+// URL; absolute URLs on one of our own alias domains are moved onto SITE_URL.
+app.locals.resolveCanonical = (override, fallbackPath) => {
+  if (override && override.trim()) {
+    const value = override.trim();
+    if (value.startsWith('/')) return SITE_URL + value;
+    try {
+      const u = new URL(value);
+      if (ALIAS_HOSTS.test(u.hostname)) return SITE_URL + u.pathname + u.search;
+      return value;
+    } catch (_) { /* not a URL — fall through to the request path */ }
+  }
+  return SITE_URL + fallbackPath;
+};
+
+app.use((req, res, next) => {
+  const p = req.path.length > 1 ? req.path.replace(/\/+$/, '') : '/';
+  res.locals.canonicalPath = p;
+  next();
+});
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 const indexRouter = require('./routes/index');
 const aboutRouter = require('./routes/about');

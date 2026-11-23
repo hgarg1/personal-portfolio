@@ -125,7 +125,7 @@ router.get('/api/og', async (req, res) => {
 
   <!-- Footer Branding -->
   <text x="120" y="540" font-family="'Liberation Sans', system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#4b5563" letter-spacing="1">
-    ARCHIE-GARG.COM
+    HARSHIT-GARG.COM
   </text>
 
   <text x="1080" y="540" font-family="'Liberation Sans', system-ui, -apple-system, sans-serif" font-size="14" font-weight="700" fill="rgba(34, 211, 238, 0.4)" text-anchor="end" letter-spacing="2">
