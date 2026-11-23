@@ -190,7 +190,7 @@ module.exports = {
       id:       'pta-ai',
       title:    'PTA.AI',
       role:     'Lead Agentic AI Engineer',
-      url:      'https://pta.ai.harshit-garg.com/',
+      url:      'https://www.pta-ai.org',
       color:    '#9d5cff',
       glow:     'rgba(157, 92, 255, 0.3)',
       tags:     ['Multi-Tenant SaaS', 'RBAC', 'Agentic AI', 'CI/CD', 'Mobile'],
